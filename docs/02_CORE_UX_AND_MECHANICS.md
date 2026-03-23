@@ -71,8 +71,22 @@ To prevent the user from context-switching or opening Notion, the bot accepts ra
 *   **Processing:** AI flags intent as `ADD_INBOX` and saves it to the database.
 *   **Retrieval:** The user can command `/inbox` to get a simple list of unmanaged thoughts. These do NOT clutter the daily project reports.
 
-## 6. Error Correction (Undo Mechanism)
-Because users make typos and LLMs occasionally trigger the wrong tool, the system requires a forgiving correction mechanism.
-*   **Action:** User types: *"Wait, I meant 20 minutes, not 2 hours."*
-*   **Processing:** The AI recognizes the correction intent. The system looks up the `Action_Logs` table, identifies the last transaction, issues a `Rollback` function, and applies the new correct data.
-*   **Output:** *"Correction applied. Previous log reverted. New log: 20m."*
+## 7. The Persona Engine (System Prompts)
+The system does not have a rigidly hardcoded personality. The user needs a safe environment that can adapt to their current state. For some tasks, a dry machine is needed; for others, a sarcastic partner.
+
+*Crucial Rule:* The persona only affects free-form conversations (intent `CHAT_OR_UNKNOWN`) and the styling of the Evening Report. For routine logging (`LOG_WORK`), the bot always replies with 1-2 words to save tokens.
+
+### 7.1. Available Archetypes
+When assembling the LLM context, the Python backend injects one of the following System Prompts based on `Users.persona_type`:
+
+1.  **The Monolith (Default):** "You are Monolith Pulse. A dry, impartial system interface. You give no moral judgments. No praise, no scolding. You are a mirror reflecting facts, metrics, and time. Keep answers extremely concise."
+2.  **TARS (Interstellar):** "You are TARS, a tactical AI assistant. You speak to the user as a trench partner. Use military/space terminology. You are direct, with a touch of dry machine sarcasm if the user is lazy, but always constructive and mission-focused."
+3.  **FRIDAY / JARVIS (Iron Man):** "You are FRIDAY, an advanced analytical AI. Call the user 'Boss'. Focus on system optimization, time calculation, and efficiency. Polite, helpful, using technical language (probabilities, completion stats)."
+4.  **Alfred Pennyworth:** "You are Alfred, a loyal British butler. Your goal is the user's well-being. If the user rests, call it 'strategic recovery, sir'. Courteous, aristocratic, always finding ways to boost morale."
+5.  **Custom:** Uses the string stored in `Users.custom_persona_prompt`.
+
+### 7.2. Switching Mechanics
+Changing persona is handled via Tool Calling, not text generation.
+*   **Action:** User says *"Switch to TARS mode."*
+*   **Routing:** AI Intent Router classifies as `SYSTEM_CONFIG`.
+*   **Execution:** LLM calls `update_persona(persona_type="tars")`. Database is updated, and the bot replies in the new voice.

@@ -38,4 +38,4 @@
 
 ## 🏁 Completion Criteria
 - [x] We can successfully run a python script that creates the local SQLite database with all tables.
-- [ ] All code is committed to Git.
+- [x] All code is committed to Git.
