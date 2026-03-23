@@ -1,8 +1,12 @@
 # Presentation Layer: Pulse Monolith Bot
 # Strictly factual and objective responses.
 
-def welcome_message() -> str:
-    return "Identity verified. I am the Pulse Monolith. Strict monitoring protocol activated. Use /start_session to begin a work block."
+def welcome_message(has_key: bool = False) -> str:
+    msg = "Identity verified. I am the Pulse Monolith. Strict monitoring protocol activated.\n\n"
+    if not has_key:
+        msg += "⚠️ Warning: No AI provider key detected. Please set your Google Gemini API key using:\n`/set_key <your_api_key>`\n\n"
+    msg += "Use /start_session to begin a work block."
+    return msg
 
 def session_started_message() -> str:
     return "Session initiated. Monitoring active."

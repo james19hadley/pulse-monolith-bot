@@ -6,3 +6,7 @@ SQLAlchemy>=2.0.29
 
 # Environment Management
 python-dotenv>=1.0.1
+cryptography==46.0.5
+google-genai==1.68.0
+pydantic==2.12.5
+pydantic_core==2.41.5

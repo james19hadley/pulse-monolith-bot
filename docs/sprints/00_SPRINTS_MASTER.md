@@ -33,3 +33,4 @@ Every new Sprint Markdown file must follow this strict structure to maintain con
 |--------|-------|--------|
 | [Sprint 01](01_foundation.md) | Foundation & Database Configuration | 🟢 Completed |
 | [Sprint 02](02_telegram_skeleton.md) | Telegram Skeleton & CLI Commands | 🟢 Completed |
+| [Sprint 03](03_intent_router.md) | AI Pipeline - Intent Router | � Active |
