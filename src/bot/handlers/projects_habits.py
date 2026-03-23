@@ -23,9 +23,12 @@ async def cmd_projects(message: Message):
             await message.answer("You don't have any active projects right now.\nUse <code>/new_project &lt;name&gt;</code> to start one.", parse_mode="HTML")
             return
             
-        lines = ["*Your Active Projects:*"]
+        lines = ["<b>Your Active Projects:</b>"]
         for p in projects:
-            lines.append(f"• <code>{p.title}</code> (<i>ID: {p.id}</i>)")
+            info = f"• <code>{p.title}</code> (<i>ID: {p.id}</i>)"
+            if p.target_minutes > 0:
+                info += f" — Target: {p.target_minutes / 60:g}h"
+            lines.append(info)
             
         await message.answer("\n".join(lines), parse_mode="HTML")
 
@@ -51,14 +54,31 @@ async def cmd_habits(message: Message):
 @router.message(Command("new_project"))
 async def cmd_new_project(message: Message, command: CommandObject):
     if not command.args:
-        await message.answer("Usage: <code>/new_project &lt;name&gt;</code>", parse_mode="HTML")
+        await message.answer("Usage: <code>/new_project &lt;name&gt; [| target_hours]</code>", parse_mode="HTML")
         return
+        
+    args_text = command.args
+    target_minutes = 0
+    title = args_text
+    
+    if "|" in args_text:
+        parts = args_text.split("|", 1)
+        title = parts[0].strip()
+        try:
+            target_minutes = int(float(parts[1].strip()) * 60)
+        except ValueError:
+            pass
+
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
-        proj = Project(user_id=user.id, title=command.args, status="active")
+        proj = Project(user_id=user.id, title=title, status="active", target_minutes=target_minutes)
         db.add(proj)
         db.commit()
-        await message.answer(f"Project created: {proj.title}")
+        
+        msg = f"Project created: {proj.title}"
+        if proj.target_minutes > 0:
+            msg += f" (Target: {proj.target_minutes / 60:g}h)"
+        await message.answer(msg)
 
 @router.message(Command("new_habit"))
 async def cmd_new_habit(message: Message, command: CommandObject):

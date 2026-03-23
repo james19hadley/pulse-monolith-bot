@@ -4,7 +4,7 @@ from src.db.repo import SessionLocal
 from src.bot.handlers.utils import get_or_create_user, log_tokens
 from src.core.security import decrypt_key
 from src.core.constants import IntentType
-from src.ai.router import get_intent, extract_system_config
+from src.ai.router import get_intent, extract_system_config, extract_entities
 from src.core.config import USER_SETTINGS_REGISTRY
 from src.bot.handlers.settings_keys import cmd_test_report
 
@@ -32,6 +32,8 @@ async def handle_freeform_text(message: Message):
 
         if intent == IntentType.SYSTEM_CONFIG:
             return await _handle_config_update(message, db, user, provider_name, real_api_key)
+        elif intent == IntentType.CREATE_ENTITIES:
+            return await _handle_create_entities(message, db, user, provider_name, real_api_key)
         elif intent == IntentType.LOG_WORK:
             await message.answer("Please use <code>/log &lt;minutes&gt; [description]</code> to log time.", parse_mode="HTML")
         elif intent == IntentType.GENERATE_REPORT:
@@ -82,5 +84,36 @@ async def _handle_config_update(message: Message, db, user, provider_name, api_k
         except Exception:
             responses.append(f"❌ Failed to parse value {val} for setting {key}")
 
+    db.commit()
+    await message.answer("\n".join(responses), parse_mode="HTML")
+
+async def _handle_create_entities(message: Message, db, user, provider_name, api_key):
+    from src.db.models import Project, Habit
+    extraction, tokens = extract_entities(message.text, provider_name, api_key)
+    
+    if tokens:
+        log_tokens(db, message.from_user.id, tokens)
+        
+    if not extraction or (not extraction.projects and not extraction.habits):
+        await message.answer("I could not determine the exact details for the project or habit to create.")
+        return
+        
+    responses = []
+    
+    for p in extraction.projects:
+        proj = Project(user_id=user.id, title=p.title, status="active", target_minutes=p.target_minutes)
+        db.add(proj)
+        db.flush()
+        msg = f"✅ Project created: <b>{proj.title}</b>"
+        if proj.target_minutes > 0:
+            msg += f" (Target: {proj.target_minutes / 60:g}h)"
+        responses.append(msg)
+        
+    for h in extraction.habits:
+        habit = Habit(user_id=user.id, title=h.title, status="active")
+        db.add(habit)
+        db.flush()
+        responses.append(f"✅ Habit created: <b>{habit.title}</b>")
+        
     db.commit()
     await message.answer("\n".join(responses), parse_mode="HTML")
