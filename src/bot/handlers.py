@@ -3,6 +3,7 @@ from aiogram import Router, F
 from aiogram.filters import Command, CommandObject
 from aiogram.types import Message
 from sqlalchemy.orm import Session as DBSession
+from sqlalchemy import func
 
 from src.db.repo import SessionLocal
 from src.db.models import User, Session, Project, TimeLog
@@ -12,7 +13,9 @@ from src.bot.views import (
     session_started_message, 
     session_already_active_message,
     no_active_session_message,
-    session_ended_message
+    session_ended_message,
+    project_created_message,
+    project_list_message
 )
 from src.core.security import encrypt_key, decrypt_key
 from src.ai.router import get_intent, extract_log_work
@@ -88,14 +91,25 @@ async def cmd_end_session(message: Message):
         # Calculate duration in minutes Math
         duration = active_session.end_time - active_session.start_time
         # Round up seconds to the nearest minute or use total_seconds properly
-        duration_minutes = int(duration.total_seconds() / 60)
+        total_minutes = int(duration.total_seconds() / 60)
         # If it's less than a minute, show 1 minute so the user knows they tracked *something*
-        if duration_minutes == 0 and duration.total_seconds() > 0:
-            duration_minutes = 1
+        if total_minutes == 0 and duration.total_seconds() > 0:
+            total_minutes = 1
+            
+        # Calculate Focused Time
+        focus_time_result = db.query(func.sum(TimeLog.duration_minutes)).filter(
+            TimeLog.session_id == active_session.id
+        ).scalar()
+        focus_minutes = focus_time_result if focus_time_result else 0
+        
+        # Calculate The Void
+        void_minutes = total_minutes - focus_minutes
+        if void_minutes < 0:
+            void_minutes = 0
             
         db.commit()
         
-    await message.answer(session_ended_message(duration_minutes))
+    await message.answer(session_ended_message(total_minutes, focus_minutes, void_minutes), parse_mode="Markdown")
 
 @router.message(Command("set_key"))
 async def cmd_set_key(message: Message, command: CommandObject):
@@ -149,23 +163,37 @@ async def cmd_my_key(message: Message):
         else:
             await message.answer("Status: No API key configured. Features limited. Use `/set_key` to add one.", parse_mode="Markdown")
 
+@router.message(Command("projects"))
+async def cmd_projects(message: Message):
+    """Lists all active projects."""
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        active_projects = db.query(Project).filter(Project.user_id == user.id, Project.status == "active").all()
+        
+    await message.answer(project_list_message(active_projects), parse_mode="Markdown")
+
 @router.message(Command("new_project"))
 async def cmd_new_project(message: Message, command: CommandObject):
-    """Temporary dev command to create a project for testing."""
+    """Creates a new active project."""
     if not command.args:
-        await message.answer("Usage: /new_project <Project Title>")
+        await message.answer("Usage: `/new_project <Project Title>`", parse_mode="Markdown")
+        return
+        
+    title = command.args.strip()
+    if len(title) > 100:
+        await message.answer("Error: Project title too long (max 100 chars).")
         return
         
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
         new_proj = Project(
             user_id=user.id,
-            title=command.args,
+            title=title,
             status="active"
         )
         db.add(new_proj)
         db.commit()
-        await message.answer(f"✅ Created project: [{new_proj.id}] {new_proj.title}")
+        await message.answer(project_created_message(new_proj.id, new_proj.title), parse_mode="Markdown")
 
 @router.message(F.text)
 async def handle_freeform_text(message: Message):
