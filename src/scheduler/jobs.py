@@ -150,13 +150,16 @@ async def daily_accountability_job(bot: Bot):
                 keys = user.api_keys
                 if keys and user.llm_provider in keys and user.llm_provider == "google":
                     try:
+                        from src.core.personas import get_persona_prompt
                         provider = GoogleProvider(api_key=decrypt_key(keys[user.llm_provider]))
-                        prompt = f"Write a 1-sentence {user.persona_type} style comment for this end-of-day report. Just output the sentence."
-                        response = provider.client.models.generate_content(
-                            model=provider.model_id,
-                            contents=prompt
-                        )
-                        ai_comment = response.text
+                        
+                        # Use the new persona engine for consistency
+                        persona_sys = get_persona_prompt(user.persona_type, user.custom_persona_prompt, config)
+                        prompt = "The user's day has ended. Look at their logged stats (if any) and write a short 1-2 sentence closing comment in your persona's tone. It will be appended to the bottom of their daily markdown report. Just output the sentence, nothing else."
+                        
+                        response, _tokens = provider.generate_chat_response(prompt, persona_sys)
+                        if response:
+                            ai_comment = response
                     except Exception as e:
                         print(f"Failed to generate AI comment: {e}")
                 

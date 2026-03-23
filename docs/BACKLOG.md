@@ -24,3 +24,8 @@ This document stores brilliant ideas, architectural improvements, and "nice-to-h
 - Add a user setting `chatty_mode` (boolean).
 - If `True`, send the `CHAT_OR_UNKNOWN` text back to the AI Provider, asking it to respond conversationally inside the constraints of the user's `persona_type`.
 - If `False`, retain the current strict, fast mapping (or just ignore/reject).
+### 4. Deep Analytics & Visualizations (Graphics)
+**Issue:** Text-based reports are great for daily accountability, but long-term trends are hard to spot.
+**Solution:**
+- Generate graphs using matplotlib/plotly showing "The Void" vs. "Focused Time" over weeks or months.
+- Goal: Visually map a user's life hours, showing exactly where time was lost and where progress was made. Currently low priority.

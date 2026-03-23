@@ -36,7 +36,8 @@ Talk to me naturally, but if the AI is slow or offline, use these slash commands
 <code>/new_project &lt;name&gt; | [target_hours]</code> - Create a new project
 <code>/new_habit &lt;name&gt;</code> - Create a new habit
 <code>/settings</code> - View or change your configurations
-<code>/stats</code> - View Token & API costs
+<code>/persona</code> - View or change your AI Persona
+<code>/tokens</code> - View AI Token usage & API costs
 <code>/test_report</code> - Force generate your daily report
 
 <b>API Keys</b>

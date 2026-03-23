@@ -82,3 +82,13 @@ def extract_entities(user_text: str, provider_name: str, api_key: str) -> Tuple[
             print(f'LLM Extraction Error: {e}')
             return None, {}
     return None, {}
+
+def generate_chat(user_text: str, provider_name: str, api_key: str, persona_prompt: str) -> Tuple[Optional[str], dict]:
+    if provider_name == 'google':
+        provider = GoogleProvider(api_key=api_key)
+        try:
+            return provider.generate_chat_response(user_text, persona_prompt)
+        except Exception as e:
+            print(f'LLM Chat Error: {e}')
+            return None, {}
+    return None, {}

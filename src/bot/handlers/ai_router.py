@@ -4,8 +4,9 @@ from src.db.repo import SessionLocal
 from src.bot.handlers.utils import get_or_create_user, log_tokens
 from src.core.security import decrypt_key
 from src.core.constants import IntentType
-from src.ai.router import get_intent, extract_system_config, extract_entities
+from src.ai.router import get_intent, extract_system_config, extract_entities, generate_chat
 from src.core.config import USER_SETTINGS_REGISTRY
+from src.core.personas import get_persona_prompt
 from src.bot.handlers.settings_keys import cmd_test_report
 
 router = Router()
@@ -42,8 +43,32 @@ async def handle_freeform_text(message: Message):
             import html
             safe_err = html.escape(str(error_msg)) if error_msg else "Unknown API error"
             await message.answer(f"I encountered an error connecting to the AI provider.\n\nError details:\n<code>{safe_err}</code>", parse_mode="HTML")
+        elif intent == IntentType.CHAT_OR_UNKNOWN:
+            return await _handle_chat(message, db, user, provider_name, real_api_key)
         else:
             await message.answer(f"Intent detected: {intent.value}, but native implementation is missing currently.")
+
+async def _handle_chat(message: Message, db, user, provider_name, api_key):
+    import html
+    persona_prompt = get_persona_prompt(user.persona_type, user.custom_persona_prompt, user.report_config)
+    
+    response_text, tokens = generate_chat(message.text, provider_name, api_key, persona_prompt)
+    if tokens:
+        log_tokens(db, message.from_user.id, tokens)
+        
+    if response_text:
+        try:
+            # We instructed the LLM to use strict HTML tags. 
+            # Send raw response first, letting aiogram parse <b>, <i>, <code>.
+            await message.answer(response_text, parse_mode="HTML")
+        except Exception as e:
+            # If the LLM still messed up HTML escaping (e.g. naked < or >), 
+            # fallback to exact escaped text to preserve the message but lose styling.
+            safe_response = html.escape(response_text)
+            err_notice = "\n\n<i>(Formatting fallback engaged)</i>"
+            await message.answer(safe_response + err_notice, parse_mode="HTML")
+    else:
+        await message.answer("I could not generate a response.")
 
 async def _handle_config_update(message: Message, db, user, provider_name, api_key):
     settings_keys = list(USER_SETTINGS_REGISTRY.keys())

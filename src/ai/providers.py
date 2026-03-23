@@ -235,3 +235,18 @@ If they don't specify blocks, use the default list."""
         except Exception as e:
             print(f"Extraction error: {e}")
             return None, {}
+
+    def generate_chat_response(self, text: str, persona_prompt: str) -> Tuple[Optional[str], dict]:
+        try:
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents=text,
+                config=types.GenerateContentConfig(
+                    system_instruction=persona_prompt,
+                    temperature=0.7 # conversational
+                ),
+            )
+            return response.text, self._get_usage(response)
+        except Exception as e:
+            print(f"Chat generation error: {e}")
+            return None, {}

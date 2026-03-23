@@ -94,8 +94,8 @@ async def cmd_my_key(message: Message):
         else:
             await message.answer("Status: No API key configured. Features limited. Use <code>/add_key google &lt;your_key&gt;</code>.", parse_mode="HTML")
 
-@router.message(Command("stats"))
-async def cmd_stats(message: Message):
+@router.message(Command("tokens"))
+async def cmd_tokens(message: Message):
     """Shows AI Token Usage"""
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
@@ -247,3 +247,32 @@ async def cmd_use_key(message: Message, command: CommandObject):
         db.commit()
         
     await message.answer(f"✅ Active AI provider switched to <code>{alias}</code>", parse_mode="HTML")
+
+@router.message(Command("persona"))
+async def cmd_persona(message: Message, command: CommandObject):
+    """
+    Shows or updates the current persona.
+    Usage: /persona [name]
+    """
+    from src.core.personas import DEFAULT_PERSONAS
+    
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        
+        if not command.args:
+            available = ", ".join(f"<code>{k}</code>" for k in DEFAULT_PERSONAS.keys())
+            current = html.escape(user.persona_type)
+            msg = f"<b>Current Persona:</b> <code>{current}</code>\n\n"
+            msg += f"<b>Available Personas:</b>\n{available}\n\n"
+            msg += "To change it, say: <code>/persona coach</code> or just tell me naturally: <i>'Change my persona to coach.'</i>"
+            await message.answer(msg, parse_mode="HTML")
+            return
+            
+        new_persona = command.args.strip().lower()
+        if new_persona not in DEFAULT_PERSONAS and new_persona != "custom":
+            await message.answer(f"Unknown persona. Available ones: {', '.join(DEFAULT_PERSONAS.keys())}")
+            return
+            
+        user.persona_type = new_persona
+        db.commit()
+        await message.answer(f"✅ Persona successfully changed to <b>{html.escape(new_persona)}</b>.", parse_mode="HTML")
