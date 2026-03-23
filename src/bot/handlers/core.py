@@ -20,28 +20,28 @@ async def cmd_start(message: Message):
 @router.message(Command("help"))
 async def cmd_help(message: Message):
     help_text = """
-*Pulse Monolith - Manual Overrides*
+<b>Pulse Monolith - Manual Overrides</b>
 Talk to me naturally, but if the AI is slow or offline, use these slash commands:
 
-*Tracking (Zero-AI)*
-`/start_session` - Begin a new tracking session
-`/end_session` - End current session and summarize
-`/log <min> [desc]` - Quick log (e.g. `/log 30 reading`)
-`/habit <id/name> [val]` - Mark habit (e.g. `/habit workout 1`)
+<b>Tracking (Zero-AI)</b>
+<code>/start_session</code> - Begin a new tracking session
+<code>/end_session</code> - End current session and summarize
+<code>/log &lt;min&gt; [desc]</code> - Quick log (e.g. <code>/log 30 reading</code>)
+<code>/habit &lt;id/name&gt; [val]</code> - Mark habit (e.g. <code>/habit workout 1</code>)
 <code>/inbox &lt;text&gt;</code> - Fast idea dump
 
-*Data & Config*
-`/projects` - List active projects and IDs
-<code>/new_project &lt;name&gt;</code> - Create a new project
-`/new_habit <name>` - Create a new habit
-`/settings` - View or change your configurations
-`/stats` - View Token & API costs
-`/test_report` - Force generate your daily report
+<b>Data & Config</b>
+<code>/projects</code> - List active projects and IDs
+<code>/new_project &lt;name&gt; | [target_hours]</code> - Create a new project
+<code>/new_habit &lt;name&gt;</code> - Create a new habit
+<code>/settings</code> - View or change your configurations
+<code>/stats</code> - View Token & API costs
+<code>/test_report</code> - Force generate your daily report
 
-*API Keys*
-`/set_key <provider> <key> [name]` - Set your API key
+<b>API Keys</b>
+<code>/set_key &lt;provider&gt; &lt;key&gt; [name]</code> - Set your API key
 <code>/my_key</code> - Check your current aliases
-`/delete_key <name>` - Remove an alias
+<code>/delete_key &lt;name&gt;</code> - Remove an alias
 """
     await message.answer(help_text, parse_mode="HTML")
 
