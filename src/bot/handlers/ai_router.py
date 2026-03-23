@@ -26,7 +26,7 @@ async def handle_freeform_text(message: Message):
         provider_name = active_key_data["provider"]
         real_api_key = decrypt_key(active_key_data["key"])
 
-        intent, tokens = get_intent(message.text, provider_name, real_api_key)
+        intent, tokens, error_msg = get_intent(message.text, provider_name, real_api_key)
         if tokens:
             log_tokens(db, message.from_user.id, tokens)
 
@@ -37,7 +37,9 @@ async def handle_freeform_text(message: Message):
         elif intent == IntentType.GENERATE_REPORT:
             return await cmd_test_report(message)
         elif intent == IntentType.ERROR:
-            await message.answer("I encountered an error connecting to the AI provider. Check your API key quotas or limits.")
+            import html
+            safe_err = html.escape(str(error_msg)) if error_msg else "Unknown API error"
+            await message.answer(f"I encountered an error connecting to the AI provider.\n\nError details:\n<code>{safe_err}</code>", parse_mode="HTML")
         else:
             await message.answer(f"Intent detected: {intent.value}, but native implementation is missing currently.")
 

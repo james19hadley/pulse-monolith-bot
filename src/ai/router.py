@@ -2,15 +2,16 @@ from typing import Optional, Tuple
 from src.ai.providers import GoogleProvider, LogWorkParams, LogHabitParams, AddInboxParams, SessionControlParams, ReportConfigParams, SystemConfigParams
 from src.core.constants import IntentType
 
-def get_intent(user_text: str, provider_name: str, api_key: str) -> Tuple[IntentType, dict]:
+def get_intent(user_text: str, provider_name: str, api_key: str) -> Tuple[IntentType, dict, Optional[str]]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
-            return provider.classify_intent(user_text)
+            intent, tokens = provider.classify_intent(user_text)
+            return intent, tokens, None
         except Exception as e:
             print(f'LLM Error: {e}')
-            return IntentType.ERROR, {}
-    return IntentType.UNKNOWN_PROVIDER, {}
+            return IntentType.ERROR, {}, str(e)
+    return IntentType.UNKNOWN_PROVIDER, {}, "Unknown provider"
 
 def extract_log_work(user_text: str, provider_name: str, api_key: str, active_projects_text: str) -> Tuple[Optional[LogWorkParams], dict]:
     if provider_name == 'google':
