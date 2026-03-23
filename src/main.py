@@ -5,7 +5,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from src.core.config import TELEGRAM_BOT_TOKEN
 from src.bot.handlers import router
-from src.scheduler.jobs import catalyst_heartbeat, stale_session_killer
+from src.scheduler.jobs import catalyst_heartbeat, stale_session_killer, daily_accountability_job
 
 # Setup logging to both console and a persistent file (bot.log)
 log_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
@@ -32,6 +32,8 @@ async def main():
     scheduler = AsyncIOScheduler()
     # Runs the heartbeat every 5 minutes to allow for custom user thresholds
     scheduler.add_job(catalyst_heartbeat, 'interval', minutes=5, args=[bot])
+    scheduler.add_job(stale_session_killer, 'interval', hours=1, args=[bot])
+    scheduler.add_job(daily_accountability_job, 'cron', minute=0, args=[bot]) # Run at the top of every hour to check for 
     scheduler.start()
     
     # Drop any pending updates before starting (so it doesn't process old missed messages)

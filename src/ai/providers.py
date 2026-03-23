@@ -24,6 +24,10 @@ class AddInboxParams(BaseModel):
 class SessionControlParams(BaseModel):
     action: str = Field(description="Strictly 'START' or 'END' depending on whether they are starting a session or finishing one.")
 
+class ReportConfigParams(BaseModel):
+    blocks: List[str] = Field(description="Blocks to include in the report. Allowed values: 'focus', 'habits', 'inbox', 'void'. Output in the order requested by user.", default=["focus", "habits", "inbox", "void"])
+    style: str = Field(description="Stylistic theme: 'strict', 'emoji', 'casual', or user's custom style.", default="emoji")
+
 class GoogleProvider:
     def __init__(self, api_key: str):
         self.client = genai.Client(api_key=api_key)
@@ -118,4 +122,23 @@ CURRENT HABITS:
             ),
         )
         return SessionControlParams.model_validate_json(response.text), self._get_usage(response)
+
+    def extract_report_config(self, text: str) -> Tuple[Optional[ReportConfigParams], dict]:
+        system_prompt = """You are a configuration parser.
+The user is describing how they want their daily accountability report to look.
+Extract their preferred visual style (e.g. strict, emoji, casual) and the blocks they want included (and in what order).
+Available blocks: 'focus', 'habits', 'inbox', 'void'.
+If you are unsure of the style, default to 'emoji'.
+If they don't specify blocks, use the default list."""
+        response = self.client.models.generate_content(
+            model=self.model_id,
+            contents=text,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                response_mime_type='application/json',
+                response_schema=ReportConfigParams,
+                temperature=0.0
+            ),
+        )
+        return ReportConfigParams.model_validate_json(response.text), self._get_usage(response)
 

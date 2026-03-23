@@ -24,12 +24,14 @@ from src.bot.views import (
     inbox_saved_message,
     undo_success_message,
     undo_fail_message,
-    nothing_to_undo_message
+    nothing_to_undo_message,
+    build_daily_report
 )
 from src.core.security import encrypt_key, decrypt_key
 from src.ai.router import (
-    get_intent, extract_log_work, extract_log_habit, extract_inbox, extract_session_control
+    get_intent, extract_log_work, extract_log_habit, extract_inbox, extract_session_control, extract_report_config
 )
+from src.ai.providers import GoogleProvider
 
 router = Router()
 
@@ -264,7 +266,10 @@ async def cmd_settings(message: Message, command: CommandObject):
     meta = USER_SETTINGS_REGISTRY[key]
     
     try:
-        val = meta['type'](val_str)
+        if val_str.lower() == "none":
+            val = None
+        else:
+            val = meta['type'](val_str)
     except ValueError:
         await message.answer(f"Error: Value must be of type {meta['type'].__name__}.", parse_mode="Markdown")
         return
@@ -308,6 +313,89 @@ async def cmd_stats(message: Message):
             stats_message(prompt_total, comp_total, cost),
             parse_mode="Markdown"
         )
+
+
+@router.message(Command("test_report"))
+async def cmd_test_report(message: Message):
+    """Developer command to instantly generate an accountability report regardless of the hour."""
+    await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
+    
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        now = datetime.datetime.utcnow()
+        last_24h = now - datetime.timedelta(hours=24)
+        config = user.report_config if user.report_config else {"blocks": ["focus", "habits", "inbox", "void"], "style": "emoji"}
+        
+        user_logs = db.query(TimeLog).filter(TimeLog.user_id == user.id, TimeLog.created_at >= last_24h).all()
+        focus_time = sum(l.duration_minutes for l in user_logs if l.project_id is not None)
+        void_time = sum(l.duration_minutes for l in user_logs if l.project_id is None)
+        
+        proj_stats = {}
+        for log in user_logs:
+            if log.project_id:
+                proj = db.query(Project).filter(Project.id == log.project_id).first()
+                p_title = proj.title if proj else "Unknown Project"
+                proj_stats[p_title] = proj_stats.get(p_title, 0) + log.duration_minutes
+                
+        user_habits = db.query(Habit).filter(Habit.user_id == user.id).all()
+        habits_data = [{"title": h.title, "current": h.current_value, "target": h.target_value} for h in user_habits]
+        
+        inbox_items = db.query(Inbox).filter(Inbox.user_id == user.id, Inbox.status == "pending").count()
+        
+        stats = {
+            "date": now.strftime("%Y-%m-%d (Test)"),
+            "focus_minutes": focus_time,
+            "void_minutes": void_time,
+            "projects": proj_stats,
+            "habits": habits_data,
+            "inbox_count": inbox_items
+        }
+        
+        ai_comment = None
+        if user.api_key_encrypted and user.llm_provider == "google":
+            try:
+                provider = GoogleProvider(api_key=decrypt_key(user.api_key_encrypted))
+                prompt = f"Write a 1-sentence {user.persona_type} style comment for this end-of-day report. Just output the sentence."
+                response = provider.client.models.generate_content(model=provider.model_id, contents=prompt)
+                ai_comment = response.text
+            except Exception as e:
+                print(f"Failed to generate AI comment: {e}")
+                
+        report_text = build_daily_report(stats, config, ai_comment)
+        await message.answer(report_text, parse_mode="Markdown")
+
+@router.message(F.forward_from_chat)
+async def cmd_bind_channel_via_forward(message: Message):
+    """Allows user to bind a channel simply by forwarding any message from it."""
+    if message.forward_from_chat.type == "channel":
+        channel_id = message.forward_from_chat.id
+        channel_title = message.forward_from_chat.title
+        with SessionLocal() as db:
+            user = get_or_create_user(db, message.from_user.id)
+            user.target_channel_id = channel_id
+            db.commit()
+        await message.answer(f"✅ Awesome! I have bound your accountability reports to the channel: **{channel_title}**", parse_mode="Markdown")
+
+from aiogram.types import ChatMemberUpdated
+from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, IS_MEMBER, IS_ADMIN, IS_NOT_MEMBER
+
+@router.my_chat_member()
+async def on_my_chat_member(event: ChatMemberUpdated):
+    """Automatically bind a channel if the bot is added to it."""
+    if event.chat.type == "channel":
+        if event.new_chat_member.status in ["administrator", "member", "creator"]:
+            with SessionLocal() as db:
+                user = get_or_create_user(db, event.from_user.id)
+                user.target_channel_id = event.chat.id
+                db.commit()
+            try:
+                await event.bot.send_message(
+                    event.from_user.id,
+                    f"✅ I noticed you added me to the channel **{event.chat.title}**!\nI\'ve automatically set it as your target.",
+                    parse_mode="Markdown"
+                )
+            except Exception:
+                pass
 
 @router.message(F.text)
 async def handle_freeform_text(message: Message):
@@ -505,7 +593,28 @@ async def handle_freeform_text(message: Message):
             await cmd_end_session(message)
         else:
             await message.answer("❌ Could not determine session action.")
+            
+    elif intent == IntentType.CONFIG_REPORT:
+        await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
+        params, p_usage = extract_report_config(message.text, provider, api_key)
+        log_tokens(message.from_user.id, p_usage)
+        
+        if params:
+            with SessionLocal() as db:
+                user = get_or_create_user(db, message.from_user.id)
+                # Store it as JSON matching the layout: e.g. {"blocks": ["focus", "habits"], "style": "strict"}
+                config_dict = {
+                    "blocks": params.blocks,
+                    "style": params.style
+                }
+                user.report_config = config_dict
+                db.commit()
+                
+                await message.answer(f"✅ **Report Configuration Updated**\nStyle: `{params.style}`\nBlocks: `{', '.join(params.blocks)}`", parse_mode="Markdown")
+        else:
+            await message.answer("❌ Could not parse report configuration.")
 
     else:
         # Temporary debugging print so you can see what the AI decided
         await message.answer(f"*[DEBUG: Router fallback to {intent.value}]*\nI couldn't classify that clearly.", parse_mode="Markdown")
+

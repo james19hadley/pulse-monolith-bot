@@ -1,5 +1,5 @@
 from typing import Optional, Tuple
-from src.ai.providers import GoogleProvider, LogWorkParams, LogHabitParams, AddInboxParams, SessionControlParams
+from src.ai.providers import GoogleProvider, LogWorkParams, LogHabitParams, AddInboxParams, SessionControlParams, ReportConfigParams
 from src.core.constants import IntentType
 
 def get_intent(user_text: str, provider_name: str, api_key: str) -> Tuple[IntentType, dict]:
@@ -47,6 +47,16 @@ def extract_session_control(user_text: str, provider_name: str, api_key: str) ->
         provider = GoogleProvider(api_key=api_key)
         try:
             return provider.extract_session_control(user_text)
+        except Exception as e:
+            print(f'LLM Extraction Error: {e}')
+            return None, {}
+    return None, {}
+
+def extract_report_config(user_text: str, provider_name: str, api_key: str) -> Tuple[Optional[ReportConfigParams], dict]:
+    if provider_name == 'google':
+        provider = GoogleProvider(api_key=api_key)
+        try:
+            return provider.extract_report_config(user_text)
         except Exception as e:
             print(f'LLM Extraction Error: {e}')
             return None, {}

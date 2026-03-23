@@ -9,6 +9,7 @@ Categorize the user's input into one of the following exact intents:
 - ADD_INBOX: The user is dumping a random raw idea, thought, or note to save for later (e.g. "Idea: add stripe later", "Don't forget to buy milk").
 - SESSION_CONTROL: The user wants to start or end a work session via text instead of a command (e.g. "I'm starting a work block", "I'm done for now").
 - SYSTEM_CONFIG: The user wants to change bot settings, like switching the persona (e.g. "Switch to Jarvis", "Be more sarcastic").
+- CONFIG_REPORT: The user is configuring how their daily accountability report should look (e.g. "Make my report strict without emojis", "Show habits first then focus time").
 - UNDO: The user is correcting a mistake they just made (e.g. "Wait, I meant 20 mins", "Undo that last log").
 - CHAT_OR_UNKNOWN: The user is just chatting, asking a question, expressing emotions, or saying something you can't categorize.
 """

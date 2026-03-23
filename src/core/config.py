@@ -26,5 +26,19 @@ USER_SETTINGS_REGISTRY = {
         "name": "Catalyst Repeat Interval",
         "description": "Minutes between recurring pings (0 to disable)",
         "default": 20
+    },
+    "channel": {
+        "db_column": "target_channel_id",
+        "type": int,
+        "name": "Target Channel ID",
+        "description": "The numeric ID of the channel to post accountability reports to.",
+        "default": None
+    },
+    "report": {
+        "db_column": "report_config",
+        "type": str,
+        "name": "Report Context Layout",
+        "description": "JSON representation of the daily report",
+        "default": None
     }
 }

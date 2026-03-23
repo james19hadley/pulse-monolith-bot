@@ -86,3 +86,54 @@ def catalyst_ping_message(hours_idle: float) -> str:
 def stale_session_closed_message() -> str:
     return "🌙 Active session auto-closed retroactively to avoid tracking empty void."
 
+# Accountability Reports (Lego Builder)
+def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str:
+    style = config.get("style", "emoji")
+    blocks = config.get("blocks", ["focus", "habits", "inbox", "void"])
+    
+    # Emojis dictionary
+    e = {
+        "focus": "⏱" if style != "strict" else "",
+        "habits": "📈" if style != "strict" else "",
+        "inbox": "📥" if style != "strict" else "",
+        "void": "🕳" if style != "strict" else "",
+        "header": "📊" if style != "strict" else ""
+    }
+    
+    date_str = stats.get('date', 'Today')
+    parts = [f"**{e['header']} Daily Accountability Report: {date_str}**\n" if e['header'] else f"**Daily Accountability Report: {date_str}**\n"]
+    
+    for block in blocks:
+        if block == "focus":
+            f_h, f_m = divmod(stats.get('focus_minutes', 0), 60)
+            parts.append(f"{e['focus']} **Deep Work:** {f_h}h {f_m}m")
+            if stats.get('projects'):
+                for p, mins in stats['projects'].items():
+                    p_h, p_m = divmod(mins, 60)
+                    parts.append(f"  - {p}: {p_h}h {p_m}m")
+        
+        elif block == "habits":
+            habits = stats.get('habits', [])
+            if habits:
+                parts.append(f"\n{e['habits']} **Habit Execution:**")
+                for h in habits:
+                    parts.append(f"  - {h['title']}: {h['current']}/{h['target']}")
+                    
+        elif block == "inbox":
+            inbox = stats.get('inbox_count', 0)
+            if inbox > 0:
+                parts.append(f"\n{e['inbox']} **Inbox Captured:** {inbox} items")
+                
+        elif block == "void":
+            v_h, v_m = divmod(stats.get('void_minutes', 0), 60)
+            parts.append(f"\n{e['void']} **The Void (Lost Time):** {v_h}h {v_m}m")
+
+    # Clean up empty lines and join
+    report = "\n".join([p for p in parts if p]).strip()
+    
+    if ai_comment:
+        report += f"\n\n_{ai_comment}_"
+        
+    return report
+
+

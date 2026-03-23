@@ -1,11 +1,14 @@
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from sqlalchemy.orm import Session as DBSession
+from sqlalchemy import func
 from src.db.repo import SessionLocal
-from src.db.models import User, Session, TimeLog
+from src.db.models import User, Session as AppSession, TimeLog, Habit, Inbox, Project
 from aiogram import Bot
 
-from src.bot.views import catalyst_ping_message, stale_session_closed_message
+from src.bot.views import catalyst_ping_message, stale_session_closed_message, build_daily_report
+from src.ai.providers import GoogleProvider
+from src.core.security import decrypt_key
 
 # In-memory storage for last ping message ids and timestamps
 last_ping_message_ids = {}
@@ -17,7 +20,7 @@ async def catalyst_heartbeat(bot: Bot):
     (no time logs) for over the user's threshold. Sends a soft ping.
     """
     with SessionLocal() as db:
-        active_sessions = db.query(Session).filter(Session.status == "active").all()
+        active_sessions = db.query(AppSession).filter(AppSession.status == "active").all()
         for session in active_sessions:
             last_log = db.query(TimeLog).filter(TimeLog.session_id == session.id).order_by(TimeLog.created_at.desc()).first()
             idle_since = last_log.created_at if last_log else session.start_time
@@ -68,7 +71,7 @@ async def stale_session_killer(bot: Bot):
     Runs periodically (e.g. every hour). Ends sessions that have been open for over 16 hours.
     """
     with SessionLocal() as db:
-        active_sessions = db.query(Session).filter(Session.status == "active").all()
+        active_sessions = db.query(AppSession).filter(AppSession.status == "active").all()
         now = datetime.utcnow()
         for session in active_sessions:
             duration_hours = (now - session.start_time).total_seconds() / 3600
@@ -92,3 +95,78 @@ async def stale_session_killer(bot: Bot):
                         )
                     except Exception as e:
                         print(f"Failed to send stale session notice to {user.telegram_id}: {e}")
+
+async def daily_accountability_job(bot: Bot):
+    """
+    Runs periodically (e.g. every hour) to build and post daily accountability reports
+    for users whose day_cutoff_time has just passed.
+    """
+    now = datetime.utcnow()
+    with SessionLocal() as db:
+        users = db.query(User).all()
+        for user in users:
+            # We assume bot runs in UTC and user day_cutoff_time is also assumed to be matched against UTC for simplicity in this MVP.
+            # In a real app we'd convert `now` to user.timezone and compare against user.day_cutoff_time.
+            # Let's say we check if current hour/minute matches cutoff time
+            if now.hour == user.day_cutoff_time.hour and 0 <= now.minute < 60: # Runs once an hour roughly
+                
+                # Default config fallback
+                config = user.report_config if user.report_config else {"blocks": ["focus", "habits", "inbox", "void"], "style": "emoji"}
+                target_chat_id = user.target_channel_id or user.telegram_id
+                
+                # Gather stats for the last 24 hours
+                last_24h = now - timedelta(hours=24)
+                
+                # Get logs
+                user_logs = db.query(TimeLog).filter(TimeLog.user_id == user.id, TimeLog.created_at >= last_24h).all()
+                focus_time = sum(l.duration_minutes for l in user_logs if l.project_id is not None)
+                void_time = sum(l.duration_minutes for l in user_logs if l.project_id is None)
+                
+                proj_stats = {}
+                for log in user_logs:
+                    if log.project_id:
+                        proj = db.query(Project).filter(Project.id == log.project_id).first()
+                        p_title = proj.title if proj else "Unknown Project"
+                        proj_stats[p_title] = proj_stats.get(p_title, 0) + log.duration_minutes
+                
+                # Get habits
+                user_habits = db.query(Habit).filter(Habit.user_id == user.id).all()
+                habits_data = [{"title": h.title, "current": h.current_value, "target": h.target_value} for h in user_habits]
+                
+                # Get inbox
+                inbox_items = db.query(Inbox).filter(Inbox.user_id == user.id, Inbox.status == "pending").count()
+                
+                stats = {
+                    "date": now.strftime("%Y-%m-%d"),
+                    "focus_minutes": focus_time,
+                    "void_minutes": void_time,
+                    "projects": proj_stats,
+                    "habits": habits_data,
+                    "inbox_count": inbox_items
+                }
+                
+                # AI Chef's Kiss Generation
+                ai_comment = None
+                if user.api_key_encrypted and user.llm_provider == "google":
+                    try:
+                        provider = GoogleProvider(api_key=decrypt_key(user.api_key_encrypted))
+                        prompt = f"Write a 1-sentence {user.persona_type} style comment for this end-of-day report. Just output the sentence."
+                        response = provider.client.models.generate_content(
+                            model=provider.model_id,
+                            contents=prompt
+                        )
+                        ai_comment = response.text
+                    except Exception as e:
+                        print(f"Failed to generate AI comment: {e}")
+                
+                # Build report via views
+                report_text = build_daily_report(stats, config, ai_comment)
+                
+                try:
+                    await bot.send_message(
+                        chat_id=target_chat_id,
+                        text=report_text,
+                        parse_mode="Markdown"
+                    )
+                except Exception as e:
+                    print(f"Failed to send accountability report to {target_chat_id}: {e}")
