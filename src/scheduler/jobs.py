@@ -66,8 +66,14 @@ async def stale_session_killer(bot: Bot):
         for session in active_sessions:
             duration_hours = (now - session.start_time).total_seconds() / 3600
             if duration_hours > 16:
+                last_log = db.query(TimeLog).filter(TimeLog.session_id == session.id).order_by(TimeLog.created_at.desc()).first()
+                if last_log:
+                    close_time = last_log.created_at + timedelta(minutes=last_log.duration_minutes or 0)
+                else:
+                    close_time = session.start_time + timedelta(minutes=1)
+                
                 session.status = "ended"
-                session.end_time = now
+                session.end_time = close_time
                 db.commit()
                 
                 user = db.query(User).filter(User.id == session.user_id).first()
@@ -75,7 +81,7 @@ async def stale_session_killer(bot: Bot):
                     try:
                         await bot.send_message(
                             chat_id=user.telegram_id,
-                            text="🌙 Active session auto-closed after 16 hours."
+                            text="🌙 Active session auto-closed retroactively to avoid tracking empty void."
                         )
                     except Exception as e:
                         print(f"Failed to send stale session notice to {user.telegram_id}: {e}")

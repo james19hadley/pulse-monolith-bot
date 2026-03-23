@@ -225,34 +225,46 @@ async def cmd_new_habit(message: Message, command: CommandObject):
 
 @router.message(Command("settings"))
 async def cmd_settings(message: Message, command: CommandObject):
-    """Update user preferences."""
+    """Update user preferences via config registry."""
     if not command.args:
         with SessionLocal() as db:
             user = get_or_create_user(db, message.from_user.id)
-            threshold = user.catalyst_threshold_minutes if user.catalyst_threshold_minutes else 60
-            await message.answer(
-                f"⚙️ **Current Settings**\n"
-                f"Catalyst Ping Threshold: `{threshold} minutes`\n\n"
-                f"To change the heartbeat threshold, use:\n`/settings catalyst <minutes>`",
-                parse_mode="Markdown"
-            )
+            
+            msg = "⚙️ **Current Settings**\n\n"
+            for key, meta in USER_SETTINGS_REGISTRY.items():
+                val = getattr(user, meta['db_column'])
+                if val is None:
+                    val = meta['default']
+                msg += f"*{meta['name']}*:\n`{val}` ({meta['description']})\nChange: `/settings {key} <value>`\n\n"
+                
+            await message.answer(msg, parse_mode="Markdown")
         return
 
     parts = command.args.split(maxsplit=1)
-    if parts[0].lower() == "catalyst":
-        if len(parts) < 2 or not parts[1].isdigit():
-            await message.answer("Error: Provide minutes. Example: `/settings catalyst 30`", parse_mode="Markdown")
-            return
-            
-        minutes = int(parts[1])
-        with SessionLocal() as db:
-            user = get_or_create_user(db, message.from_user.id)
-            user.catalyst_threshold_minutes = minutes
-            db.commit()
-            await message.answer(f"✅ Catalyst heartbeat threshold updated to `{minutes} minutes`.", parse_mode="Markdown")
+    key = parts[0].lower()
+    
+    if key not in USER_SETTINGS_REGISTRY:
+        await message.answer(f"Unknown setting '{key}'. Try `/settings` to see options.", parse_mode="Markdown")
         return
         
-    await message.answer("Unknown setting. Try `/settings` to see options.", parse_mode="Markdown")
+    if len(parts) < 2:
+        await message.answer(f"Error: Provide a value. Example: `/settings {key} 30`", parse_mode="Markdown")
+        return
+        
+    val_str = parts[1]
+    meta = USER_SETTINGS_REGISTRY[key]
+    
+    try:
+        val = meta['type'](val_str)
+    except ValueError:
+        await message.answer(f"Error: Value must be of type {meta['type'].__name__}.", parse_mode="Markdown")
+        return
+        
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        setattr(user, meta['db_column'], val)
+        db.commit()
+        await message.answer(f"✅ Setting `{key}` updated to `{val}`.", parse_mode="Markdown")
 
 def log_tokens(telegram_id: int, usage_data: dict):
     if not usage_data: return

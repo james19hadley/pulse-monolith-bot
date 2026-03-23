@@ -27,6 +27,20 @@
 - [x] Logic: If a session is active and no logs were created in the last 60 minutes, send a "Soft Ping".
 - [x] Logic: Remember the last ping message ID and delete it before sending a new one to prevent wall-of-text anxiety.
 
+
+### 4. Void Fixes & Configuration Refactoring
+- [x] Implement Retroactive Close in `stale_session_killer` so we don't track 16 hours of sleep.
+- [x] Create `USER_SETTINGS_REGISTRY` in `config.py` for settings structure.
+- [x] Refactor `/settings` in `handlers.py` to map from the registry dynamically instead of IF/ELSE chains.
+- [x] Use purely English for all config code.
+
+
+### 4. Void Fixes & Configuration Refactoring
+- [x] Implement Retroactive Close in `stale_session_killer` so we don't track 16 hours of sleep.
+- [x] Create `USER_SETTINGS_REGISTRY` in `config.py` for settings structure.
+- [x] Refactor `/settings` in `handlers.py` to map from the registry dynamically instead of IF/ELSE chains.
+- [x] Use purely English for all config code.
+
 ## 🏁 Completion Criteria
 - User can say "I'm starting" and "save this idea: buy milk" and the bot handles it flawlessly.
 - User can say "undo" and the last log is deleted.
