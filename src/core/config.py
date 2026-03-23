@@ -17,7 +17,7 @@ USER_SETTINGS_REGISTRY = {
         "db_column": "catalyst_threshold_minutes",
         "type": int,
         "name": "Catalyst Ping Threshold",
-        "description": "Minutes before the first ping",
+        "description": "Minutes before the first ping (0 to disable)",
         "default": 60
     },
     "interval": {

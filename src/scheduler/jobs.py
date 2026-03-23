@@ -27,18 +27,23 @@ async def catalyst_heartbeat(bot: Bot):
             if not user:
                 continue
                 
-            threshold_minutes = user.catalyst_threshold_minutes if user.catalyst_threshold_minutes else 60
-            interval_minutes = user.catalyst_interval_minutes if user.catalyst_interval_minutes else 20
+            threshold_minutes = user.catalyst_threshold_minutes if user.catalyst_threshold_minutes is not None else 60
+            interval_minutes = user.catalyst_interval_minutes if user.catalyst_interval_minutes is not None else 20
             telegram_id = user.telegram_id
             
-            if interval_minutes <= 0:
-                continue # User disabled pings
+            if threshold_minutes <= 0:
+                continue # User fully disabled catalyst heartbeat
                 
             if now - idle_since > timedelta(minutes=threshold_minutes):
-                # Check if we should ping based on interval
                 last_ping_time = last_ping_timestamps.get(telegram_id)
-                if last_ping_time and (now - last_ping_time) < timedelta(minutes=interval_minutes):
-                    continue
+                already_pinged = (last_ping_time is not None and last_ping_time >= idle_since)
+                
+                # Logic for interval repeat
+                if interval_minutes <= 0 and already_pinged:
+                    continue # Do not repeat ping
+                if interval_minutes > 0 and already_pinged:
+                    if (now - last_ping_time) < timedelta(minutes=interval_minutes):
+                        continue # Not enough time passed for the next ping
                 
                 # Delete old ping message if exists
                 if telegram_id in last_ping_message_ids:

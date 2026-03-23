@@ -55,7 +55,7 @@ def stats_message(prompt_total: int, comp_total: int, cost: float) -> str:
 def settings_list_message(settings_list: list) -> str:
     msg = "⚙️ **Current Settings**\n\n"
     for s in settings_list:
-        msg += f"*{s['name']}*:\n`{s['val']}` ({s['desc']})\nChange: `/settings {s['key']} <value>`\n\n"
+        msg += f"*{s['name']}*:\n`{s['val']}` {s['desc']}\nChange: `/settings {s['key']} <value>`\n\n"
     return msg
 
 # Habit
