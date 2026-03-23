@@ -53,3 +53,28 @@ Large Language Models are notoriously bad at math, time zones, and calculating r
 *   **Rule:** The LLM is **NEVER** allowed to calculate absolute timestamps.
 *   **Handling Time:** If the bot needs to schedule a ping or log a specific duration, the LLM must only extract the raw intent (e.g., `duration_minutes: 40`, `delay_minutes: 60`).
 *   **Python's Job:** The Python backend takes those raw integers, applies the user's timezone (stored in the DB, e.g., `Europe/Berlin`), and uses Python's `datetime` or `APScheduler` to handle the actual math.
+
+## 3. Entity Resolution & Data Integrity (Design Choice)
+
+To prevent database fragmentation (e.g., creating duplicate projects for "coding", "programming", "coded"), the system strictly adheres to the following principles:
+
+### 3.1 Strict Mapping (No Hallucinated Entities)
+The LLM cannot create `Projects` or `Habits` on the fly as a side effect of logging time. 
+*   Before parsing a `LOG_WORK` intent, the system fetches all of the user's `active` projects (with their database `ID`s) and injects them into the prompt prompt.
+*   The LLM maps the user's text to an existing `ID`. If no match is found, the time is logged against `project_id = Null` (useful time, but unassigned to a quest).
+
+### 3.2 The Shortcode / ID System
+Users can use exact IDs to bypass fuzzy matching.
+*   When listing projects, the bot prefixes them: `[1] Pulse Monolith`, `[2] English`.
+*   The user can explicitly state: *"Coded 1h for project 1"*.
+*   The LLM is instructed to heavily prioritize matching explicit numbers to Project IDs.
+
+### 3.3 Transparent State Feedback 
+Every AI action that alters the database MUST be reflected back to the user clearly so they know exactly what the system understood.
+*   *Example Output:* "✅ Logged: 40m -> [1] Pulse. Status: 2h total today."
+
+### 3.4 The Undo / Correction Engine
+If the bot misunderstands (e.g., logs 40 instead of 14), the user can immediately type a correction.
+*   The system uses the `ActionLog` table to store the previous state before an edit.
+*   An `UNDO` intent rolls back the last `ActionLog` entry. 
+*   A `CORRECTION` intent (e.g., "Change that to project 2") modifies the latest `TimeLog`.
