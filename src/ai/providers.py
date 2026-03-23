@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Tuple
 import json
 from google import genai
 from google.genai import types
@@ -27,27 +27,32 @@ class SessionControlParams(BaseModel):
 class GoogleProvider:
     def __init__(self, api_key: str):
         self.client = genai.Client(api_key=api_key)
-        # Using gemini-2.5-flash as it's the fastest and cheapest for strict JSON routing
-        self.model_id = "gemini-2.5-flash"
+        self.model_id = 'gemini-2.5-flash'
+
+    def _get_usage(self, response) -> dict:
+        usage = getattr(response, 'usage_metadata', None)
+        return {
+            'prompt_tokens': getattr(usage, 'prompt_token_count', 0) if usage else 0,
+            'completion_tokens': getattr(usage, 'candidates_token_count', 0) if usage else 0,
+            'total_tokens': getattr(usage, 'total_token_count', 0) if usage else 0,
+            'model_name': self.model_id
+        }
         
-    def classify_intent(self, text: str) -> IntentType:
-        """Sends the text to Gemini and forces it to return an Intent string via Structured Outputs."""
+    def classify_intent(self, text: str) -> Tuple[IntentType, dict]:
         response = self.client.models.generate_content(
             model=self.model_id,
             contents=text,
             config=types.GenerateContentConfig(
                 system_instruction=INTENT_ROUTER_SYSTEM_PROMPT,
-                response_mime_type="application/json",
+                response_mime_type='application/json',
                 response_schema=IntentResponse,
-                temperature=0.0 # Deterministic output
+                temperature=0.0
             ),
         )
-        # Parse the JSON string returned by Gemini into a dictionary
         data = json.loads(response.text)
-        return IntentType(data.get("intent", IntentType.CHAT_OR_UNKNOWN))
+        return IntentType(data.get('intent', IntentType.CHAT_OR_UNKNOWN)), self._get_usage(response)
 
-    def extract_log_work_parameters(self, text: str, active_projects_text: str) -> LogWorkParams:
-        """Extracts minutes and project ID based on the user's intent and current projects."""
+    def extract_log_work_parameters(self, text: str, active_projects_text: str) -> Tuple[Optional[LogWorkParams], dict]:
         system_prompt = f"""You are a precise data extraction tool.
 The user is logging work time. Extract the duration in minutes, the project ID, and a short description.
 If no project matches the text, return project_id as null.
@@ -61,15 +66,14 @@ CURRENT ACTIVE PROJECTS:
             contents=text,
             config=types.GenerateContentConfig(
                 system_instruction=system_prompt,
-                response_mime_type="application/json",
+                response_mime_type='application/json',
                 response_schema=LogWorkParams,
                 temperature=0.0
             ),
         )
-        return LogWorkParams.model_validate_json(response.text)
+        return LogWorkParams.model_validate_json(response.text), self._get_usage(response)
 
-    def extract_habit_parameters(self, text: str, active_habits_text: str) -> LogHabitParams:
-        """Extracts habit ID and amount."""
+    def extract_habit_parameters(self, text: str, active_habits_text: str) -> Tuple[Optional[LogHabitParams], dict]:
         system_prompt = f"""You are a precise data extraction tool.
 The user is logging a habit. Extract the habit ID and the amount completed.
 If no habit matches, return null for habit_id.
@@ -82,38 +86,36 @@ CURRENT HABITS:
             contents=text,
             config=types.GenerateContentConfig(
                 system_instruction=system_prompt,
-                response_mime_type="application/json",
+                response_mime_type='application/json',
                 response_schema=LogHabitParams,
                 temperature=0.0
             ),
         )
-        return LogHabitParams.model_validate_json(response.text)
+        return LogHabitParams.model_validate_json(response.text), self._get_usage(response)
 
-    def extract_inbox_parameters(self, text: str) -> AddInboxParams:
-        """Extracts the core idea."""
+    def extract_inbox_parameters(self, text: str) -> Tuple[Optional[AddInboxParams], dict]:
         response = self.client.models.generate_content(
             model=self.model_id,
             contents=text,
             config=types.GenerateContentConfig(
                 system_instruction="Extract the core idea from the user's message, removing filler words.",
-                response_mime_type="application/json",
+                response_mime_type='application/json',
                 response_schema=AddInboxParams,
                 temperature=0.0
             ),
         )
-        return AddInboxParams.model_validate_json(response.text)
+        return AddInboxParams.model_validate_json(response.text), self._get_usage(response)
 
-    def extract_session_control(self, text: str) -> SessionControlParams:
-        """Extracts START or END action."""
+    def extract_session_control(self, text: str) -> Tuple[Optional[SessionControlParams], dict]:
         response = self.client.models.generate_content(
             model=self.model_id,
             contents=text,
             config=types.GenerateContentConfig(
                 system_instruction="Determine if the user is starting or ending a work session.",
-                response_mime_type="application/json",
+                response_mime_type='application/json',
                 response_schema=SessionControlParams,
                 temperature=0.0
             ),
         )
-        return SessionControlParams.model_validate_json(response.text)
+        return SessionControlParams.model_validate_json(response.text), self._get_usage(response)
 

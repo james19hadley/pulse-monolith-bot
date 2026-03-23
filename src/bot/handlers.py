@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session as DBSession
 from sqlalchemy import func
 
 from src.db.repo import SessionLocal
-from src.db.models import User, Session, Project, TimeLog, Habit, Inbox, ActionLog
+from src.db.models import User, Session, Project, TimeLog, Habit, Inbox, ActionLog, TokenUsage
 from src.core.constants import IntentType
 from src.bot.views import (
     welcome_message, 
@@ -279,7 +279,8 @@ async def handle_freeform_text(message: Message):
     # Let the user know the Monolith is "thinking"
     await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
     
-    intent = get_intent(message.text, provider, api_key)
+    intent, i_usage = get_intent(message.text, provider, api_key)
+    log_tokens(message.from_user.id, i_usage)
     
     if intent == IntentType.LOG_WORK:
         with SessionLocal() as db:
@@ -300,7 +301,8 @@ async def handle_freeform_text(message: Message):
                 projects_text = "\n".join([f"ID: {p.id} | Title: {p.title}" for p in active_projects])
 
             await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
-            params = extract_log_work(message.text, provider, api_key, projects_text)
+            params, p_usage = extract_log_work(message.text, provider, api_key, projects_text)
+            log_tokens(message.from_user.id, p_usage)
 
             if not params:
                 await message.answer("❌ Error interpreting parameters from your work log.")
@@ -358,7 +360,8 @@ async def handle_freeform_text(message: Message):
                 habits_text = "\n".join([f"ID: {h.id} | Title: {h.title} | Target: {h.target_value}" for h in active_habits])
                 
             await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
-            params = extract_log_habit(message.text, provider, api_key, habits_text)
+            params, p_usage = extract_log_habit(message.text, provider, api_key, habits_text)
+            log_tokens(message.from_user.id, p_usage)
             
             if not params or not params.habit_id:
                 await message.answer("❌ Could not match a habit. Use `/new_habit` to create one first.")
@@ -387,7 +390,8 @@ async def handle_freeform_text(message: Message):
         with SessionLocal() as db:
             user = get_or_create_user(db, message.from_user.id)
             await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
-            params = extract_inbox(message.text, provider, api_key)
+            params, p_usage = extract_inbox(message.text, provider, api_key)
+            log_tokens(message.from_user.id, p_usage)
             if params and params.raw_content:
                 new_inbox = Inbox(user_id=user.id, raw_text=params.raw_content)
                 db.add(new_inbox)
@@ -438,7 +442,8 @@ async def handle_freeform_text(message: Message):
 
     elif intent == IntentType.SESSION_CONTROL:
         await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
-        params = extract_session_control(message.text, provider, api_key)
+        params, p_usage = extract_session_control(message.text, provider, api_key)
+        log_tokens(message.from_user.id, p_usage)
         if params and params.action == "START":
             await cmd_start_session(message)
         elif params and params.action == "END":
@@ -450,3 +455,83 @@ async def handle_freeform_text(message: Message):
         # Temporary debugging print so you can see what the AI decided
         await message.answer(f"*[DEBUG: Router fallback to {intent.value}]*\nI couldn't classify that clearly.", parse_mode="Markdown")
 
+
+
+def log_tokens(telegram_id: int, usage_data: dict):
+    if not usage_data: return
+    try:
+        with SessionLocal() as db:
+            user = db.query(User).filter(User.telegram_id == telegram_id).first()
+            if user:
+                tu = TokenUsage(
+                    user_id=user.id,
+                    prompt_tokens=usage_data.get('prompt_tokens', 0),
+                    completion_tokens=usage_data.get('completion_tokens', 0),
+                    total_tokens=usage_data.get('total_tokens', 0),
+                    model_name=usage_data.get('model_name', 'unknown')
+                )
+                db.add(tu)
+                db.commit()
+    except Exception as e:
+        print(f"Error logging tokens: {e}")
+
+@router.message(Command("stats"))
+async def cmd_stats(message: Message):
+    """Shows AI Token Usage"""
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        
+        prompt_total = db.query(func.sum(TokenUsage.prompt_tokens)).filter(TokenUsage.user_id == user.id).scalar() or 0
+        comp_total = db.query(func.sum(TokenUsage.completion_tokens)).filter(TokenUsage.user_id == user.id).scalar() or 0
+        
+        # Approximate cost for Gemini 2.5 Flash
+        # $0.075 per 1M input, $0.30 per 1M output
+        cost = (prompt_total / 1000000.0) * 0.075 + (comp_total / 1000000.0) * 0.30
+        
+        await message.answer(
+            f"📊 *FinOps / Token Usage*\n"
+            f"Input Tokens: `{prompt_total}`\n"
+            f"Output Tokens: `{comp_total}`\n"
+            f"Estimated Cost: `${cost:.5f}`\n",
+            parse_mode="Markdown"
+        )
+
+
+def log_tokens(telegram_id: int, usage_data: dict):
+    if not usage_data: return
+    try:
+        with SessionLocal() as db:
+            user = db.query(User).filter(User.telegram_id == telegram_id).first()
+            if user:
+                tu = TokenUsage(
+                    user_id=user.id,
+                    prompt_tokens=usage_data.get('prompt_tokens', 0),
+                    completion_tokens=usage_data.get('completion_tokens', 0),
+                    total_tokens=usage_data.get('total_tokens', 0),
+                    model_name=usage_data.get('model_name', 'unknown')
+                )
+                db.add(tu)
+                db.commit()
+    except Exception as e:
+        print(f"Error logging tokens: {e}")
+
+@router.message(Command("stats"))
+async def cmd_stats(message: Message):
+    """Shows AI Token Usage"""
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        
+        prompt_total = db.query(func.sum(TokenUsage.prompt_tokens)).filter(TokenUsage.user_id == user.id).scalar() or 0
+        comp_total = db.query(func.sum(TokenUsage.completion_tokens)).filter(TokenUsage.user_id == user.id).scalar() or 0
+        
+        # Approximate cost for Gemini 2.5 Flash
+        # $0.075 per 1M input, $0.30 per 1M output
+        cost = (prompt_total / 1000000.0) * 0.075 + (comp_total / 1000000.0) * 0.30
+        
+        await message.answer(
+            f"📊 *FinOps / Token Usage*\n"
+            f"Input Tokens: `{prompt_total}`\n"
+            f"Output Tokens: `{comp_total}`\n"
+            f"Estimated Cost: `${cost:.5f}`\n",
+            parse_mode="Markdown"
+        )
