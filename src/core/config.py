@@ -1,7 +1,15 @@
 import os
+import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
+
+def parse_time(val_str: str) -> datetime.time:
+    try:
+        h, m = map(int, val_str.split(':'))
+        return datetime.time(h, m)
+    except Exception:
+        raise ValueError("Time must be in HH:MM format")
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
@@ -40,5 +48,26 @@ USER_SETTINGS_REGISTRY = {
         "name": "Report Context Layout",
         "description": "JSON representation of the daily report",
         "default": None
+    },
+    "cutoff": {
+        "db_column": "day_cutoff_time",
+        "type": parse_time,
+        "name": "Day Cutoff Time",
+        "description": "When does your day end? (Format HH:MM, e.g. 23:00)",
+        "default": "23:00"
+    },
+    "timezone": {
+        "db_column": "timezone",
+        "type": str,
+        "name": "Timezone",
+        "description": "Your local timezone (e.g. Europe/Moscow)",
+        "default": "UTC"
+    },
+    "persona": {
+        "db_column": "persona_type",
+        "type": str,
+        "name": "Bot Persona",
+        "description": "Bot attitude (e.g. monolith)",
+        "default": "monolith"
     }
 }

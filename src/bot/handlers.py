@@ -723,6 +723,42 @@ async def handle_freeform_text(message: Message):
         else:
             await message.answer("❌ Could not parse report configuration.")
 
+    elif intent == IntentType.GENERATE_REPORT:
+        await cmd_test_report(message)
+
+    elif intent == IntentType.SYSTEM_CONFIG:
+        await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
+        registry_keys = list(USER_SETTINGS_REGISTRY.keys())
+        params, p_usage = extract_system_config(message.text, provider, api_key, registry_keys)
+        log_tokens(message.from_user.id, p_usage)
+        
+        if params:
+            key = params.setting_key.lower()
+            val_str = params.setting_value
+            
+            if key not in USER_SETTINGS_REGISTRY:
+                await message.answer(f"❌ Unknown internal setting key '{key}'.")
+                return
+                
+            meta = USER_SETTINGS_REGISTRY[key]
+            
+            try:
+                if val_str.lower() == "none":
+                    val = None
+                else:
+                    val = meta['type'](val_str)
+            except ValueError as e:
+                await message.answer(f"❌ Error setting `{key}`: {str(e)}", parse_mode="Markdown")
+                return
+                
+            with SessionLocal() as db:
+                user = get_or_create_user(db, message.from_user.id)
+                setattr(user, meta['db_column'], val)
+                db.commit()
+                await message.answer(f"✅ Setting `{key}` updated to `{val_str}`.", parse_mode="Markdown")
+        else:
+            await message.answer("❌ Could not parse system config parameters.")
+
     else:
         # Temporary debugging print so you can see what the AI decided
         await message.answer(f"*[DEBUG: Router fallback to {intent.value}]*\nI couldn't classify that clearly.", parse_mode="Markdown")

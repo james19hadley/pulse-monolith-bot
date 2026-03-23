@@ -39,4 +39,4 @@ Every new Sprint Markdown file must follow this strict structure to maintain con
 | [Sprint 06](06_AUTONOMY_AND_HABITS.md) | Autonomy & AI Completeness | 🟢 Completed |
 | [Sprint 07](07_CONFIG_FINOPS_PERSONA.md) | Configuration, FinOps & Persona | 🟢 Completed |
 | [Sprint 08](08_ACCOUNTABILITY_ENGINE.md) | Accountability Engine & Daily Reports | 🟢 Completed |
-| [Sprint 09](09_CLI_FALLBACK.md) | The CLI Fallback (Zero-AI Mode) | � Completed |
+| [Sprint 09](09_CLI_FALLBACK.md) | The CLI Fallback (Zero-AI Mode) | � Completed || [Sprint 10](10_AI_SETTINGS_ROUTER.md) | Deep Customization & AI Settings Router | � Completed |
