@@ -55,6 +55,29 @@ async def cmd_start(message: Message):
         
     await message.answer(welcome_message(has_key))
 
+@router.message(Command("help"))
+async def cmd_help(message: Message):
+    help_text = """
+*Pulse Monolith - Manual Overrides*
+Talk to me naturally, but if the AI is slow or offline, use these slash commands:
+
+*Tracking (Zero-AI)*
+`/start_session` - Begin a new tracking session
+`/end_session` - End current session and summarize
+`/log <min> [desc]` - Quick log (e.g. `/log 30 reading`)
+`/habit <id/name> [val]` - Mark habit (e.g. `/habit workout 1`)
+`/inbox <text>` - Fast idea dump
+
+*Data & Config*
+`/projects` - List active projects and IDs
+`/new_project <name>` - Create a new project
+`/new_habit <name>` - Create a new habit
+`/settings` - View or change your configurations
+`/stats` - View Token & API costs
+`/test_report` - Force generate your daily report
+"""
+    await message.answer(help_text, parse_mode="Markdown")
+
 @router.message(Command("start_session"))
 async def cmd_start_session(message: Message):
     with SessionLocal() as db:
