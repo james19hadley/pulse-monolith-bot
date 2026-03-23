@@ -209,3 +209,5 @@ __marimo__/
 # Local workspace additions
 venv/
 .env
+bots.log
+bot.log
