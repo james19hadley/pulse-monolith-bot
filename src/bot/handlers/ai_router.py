@@ -6,6 +6,7 @@ from src.core.security import decrypt_key
 from src.core.constants import IntentType
 from src.ai.router import get_intent, extract_system_config
 from src.core.config import USER_SETTINGS_REGISTRY
+from src.bot.handlers.settings_keys import cmd_test_report
 
 router = Router()
 
@@ -33,6 +34,8 @@ async def handle_freeform_text(message: Message):
             return await _handle_config_update(message, db, user, provider_name, real_api_key)
         elif intent == IntentType.LOG_WORK:
             await message.answer("Please use <code>/log &lt;minutes&gt; [description]</code> to log time.", parse_mode="HTML")
+        elif intent == IntentType.GENERATE_REPORT:
+            return await cmd_test_report(message)
         elif intent == IntentType.ERROR:
             await message.answer("I encountered an error connecting to the AI provider. Check your API key quotas or limits.")
         else:
