@@ -10,23 +10,23 @@
 
 ## 📋 Tasks
 ### Technical Debt & Housekeeping
-- [ ] Check for any pending items from Sprint 10 closure.
+- [x] Check for any pending items from Sprint 10 closure.
 
 ### 1. Database & Enum Adjustments
-- [ ] Add `CREATE_PROJECT` and `CREATE_HABIT` to `IntentType` enum in `src/core/constants.py` (if not already acting under unknown/chat intents).
-- [ ] Ensure `Project` ORM model `target_minutes` parsing is smooth and robust.
+- [x] Add `CREATE_PROJECT` and `CREATE_HABIT` to `IntentType` enum in `src/core/constants.py` (if not already acting under unknown/chat intents).
+- [x] Ensure `Project` ORM model `target_minutes` parsing is smooth and robust.
 
 ### 2. Manual CLI Tooling
-- [ ] Update `/new_project` in `src/bot/handlers/projects_habits.py` to parse `<name> | <target_hours>` or `<name>, <target_hours>`.
+- [x] Update `/new_project` in `src/bot/handlers/projects_habits.py` to parse `<name> | <target_hours>` or `<name>, <target_hours>`.
 
 ### 3. AI Pipeline Upgrade
-- [ ] Expand `INTENT_ROUTER_SYSTEM_PROMPT` inside `src/core/prompts.py` (or where defined) to teach the router about `CREATE_PROJECT` and `CREATE_HABIT` intents.
-- [ ] Define Pydantic extraction schema in `src/ai/providers.py` (`CreateProjectParams`, `CreateHabitParams`).
-- [ ] Modify `extract_*` functions in `src/ai/router.py`.
+- [x] Expand `INTENT_ROUTER_SYSTEM_PROMPT` inside `src/core/prompts.py` (or where defined) to teach the router about `CREATE_PROJECT` and `CREATE_HABIT` intents.
+- [x] Define Pydantic extraction schema in `src/ai/providers.py` (`CreateProjectParams`, `CreateHabitParams`).
+- [x] Modify `extract_*` functions in `src/ai/router.py`.
 
 ### 4. Router Wiring
-- [ ] Bind the new intents in `src/bot/handlers/ai_router.py` handle functions.
-- [ ] Translate extracted project `target_hours` or `minutes` into the database and save via `SessionLocal`.
+- [x] Bind the new intents in `src/bot/handlers/ai_router.py` handle functions.
+- [x] Translate extracted project `target_hours` or `minutes` into the database and save via `SessionLocal`.
 
 ## 🔒 Security & Architecture Notes
 - Only parse `float` or `int` safely to avoid payload crashes when users pass string text for time.
