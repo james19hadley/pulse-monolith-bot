@@ -35,4 +35,5 @@ Every new Sprint Markdown file must follow this strict structure to maintain con
 | [Sprint 02](02_telegram_skeleton.md) | Telegram Skeleton & CLI Commands | 🟢 Completed |
 | [Sprint 03](03_intent_router.md) | AI Pipeline - Intent Router | 🟢 Completed |
 | [Sprint 04](04_TOOL_CALLING.md) | AI Tool Calling & DB Operations | 🟢 Completed |
-| [Sprint 05](05_TRACKER_CORE.md) | The Tracker Core & "The Void" | � Completed |
+| [Sprint 05](05_TRACKER_CORE.md) | The Tracker Core & "The Void" | 🟢 Completed |
+| [Sprint 06](06_AUTONOMY_AND_HABITS.md) | Autonomy & AI Completeness | 🟡 Active |
