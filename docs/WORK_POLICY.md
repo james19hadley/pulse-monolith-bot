@@ -7,6 +7,7 @@ This document outlines the agreements between the User and the AI Developer (Mon
 *   We commit **frequently** and **atomically**. 
 *   A commit like `Initial database schema setup` or `Setup environment` is perfectly valid and desired. If we break the bot logic later, we can roll back to the clean database state without losing everything.
 *   **Rule of thumb:** If a Sprint task or sub-task is completed and works independently (even if it's just infrastructure), it gets committed.
+*   **STRICT POLICY:** The AI Assistant must **NEVER** push (`git push`) to the remote repository without getting explicit prior approval from the User. Doing so violates the collaborative trust model.
 
 ## 2. Testing Philosophy (Avoiding "Garbage" AI Tests)
 AI-generated Unit Tests often become a mock-heavy mess that tests the framework, not the logic. 
@@ -22,4 +23,7 @@ The system is built to not depend entirely on one corporation (Google, OpenAI, A
 *   **Concrete Implementations:** 
     *   `GoogleProvider` (uses `google-genai` or API directly).
     *   `OpenAIProvider` (uses `openai` python package).
-*   The router will check the user's `llm_provider`, instantiate the correct class, and call `.generate_response()`. This ensures adding a new provider in the future only takes ~50 lines of isolated code.
+*   The router will check the user's `llm_provider`, instantiate the correct class, and call `.generate_response()`. This ensures adding a new provider in the future only takes ~50 lines of isolated code.## 4. Technical Debt & Rolling Sprints
+
+*   **Strict Sprint Scope:** We strictly adhere to the current Sprint objectives. If we discover technical debt or architectural improvements (e.g., refactoring magic strings to Enums) during a sprint, we **do not bloat** the current sprint.
+*   **Just-in-Time Planning:** Instead of fixing non-critical debt immediately, we log it as the **first task** of the *next* sprint. This ensures forward momentum while maintaining a clear, transparent record of what needs to be fixed without derailing the current feature delivery.
