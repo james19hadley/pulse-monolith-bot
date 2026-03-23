@@ -33,6 +33,10 @@ class User(Base):
     # Links to the currently active session (if any)
     active_session_id: Mapped[Optional[int]] = mapped_column(ForeignKey("sessions.id", use_alter=True), nullable=True)
     last_ping_message_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    
+    # Catalyst Settings
+    catalyst_threshold_minutes: Mapped[int] = mapped_column(Integer, default=60)
+    catalyst_interval_minutes: Mapped[int] = mapped_column(Integer, default=20)
 
 class Session(Base):
     __tablename__ = "sessions"
@@ -96,3 +100,15 @@ class Inbox(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     raw_text: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String, default="pending") # 'pending', 'cleared'
+
+class TokenUsage(Base):
+    """FinOps: Tracks AI API Token Usage"""
+    __tablename__ = "token_usage"
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    prompt_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    completion_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    total_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    model_name: Mapped[str] = mapped_column(String)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

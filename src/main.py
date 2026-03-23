@@ -30,8 +30,8 @@ async def main():
     
     # Initialize background scheduler
     scheduler = AsyncIOScheduler()
-    # Runs the heartbeat every 20 minutes to check if 60 minutes have passed since last action
-    scheduler.add_job(catalyst_heartbeat, 'interval', minutes=20, args=[bot])
+    # Runs the heartbeat every 5 minutes to allow for custom user thresholds
+    scheduler.add_job(catalyst_heartbeat, 'interval', minutes=5, args=[bot])
     scheduler.start()
     
     # Drop any pending updates before starting (so it doesn't process old missed messages)

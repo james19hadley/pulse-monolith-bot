@@ -23,12 +23,14 @@ async def catalyst_heartbeat(bot: Bot):
             idle_since = last_log.created_at if last_log else session.start_time
             now = datetime.utcnow()
             
-            # If idle for more than 60 minutes
-            if now - idle_since > timedelta(minutes=60):
-                user = db.query(User).filter(User.id == session.user_id).first()
-                if not user:
-                    continue
-                    
+            user = db.query(User).filter(User.id == session.user_id).first()
+            if not user:
+                continue
+                
+            threshold_minutes = user.catalyst_threshold_minutes if user.catalyst_threshold_minutes else 60
+            
+            # If idle for more than the user's custom threshold
+            if now - idle_since > timedelta(minutes=threshold_minutes):
                 telegram_id = user.telegram_id
                 
                 # Try to delete previous ping to avoid wall of shame
@@ -39,7 +41,7 @@ async def catalyst_heartbeat(bot: Bot):
                         pass # Message might already be deleted or not found
                 
                 # Send new ping
-                hours_idle = int((now - idle_since).total_seconds() // 3600)
+                hours_idle = round((now - idle_since).total_seconds() / 3600, 1)
                 try:
                     msg = await bot.send_message(
                         chat_id=telegram_id, 

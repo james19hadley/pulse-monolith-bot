@@ -223,6 +223,37 @@ async def cmd_new_habit(message: Message, command: CommandObject):
         db.commit()
         await message.answer(f"✅ Created Habit: `[{new_habit.id}]` {new_habit.title} (Target: {new_habit.target_value})", parse_mode="Markdown")
 
+@router.message(Command("settings"))
+async def cmd_settings(message: Message, command: CommandObject):
+    """Update user preferences."""
+    if not command.args:
+        with SessionLocal() as db:
+            user = get_or_create_user(db, message.from_user.id)
+            threshold = user.catalyst_threshold_minutes if user.catalyst_threshold_minutes else 60
+            await message.answer(
+                f"⚙️ **Current Settings**\n"
+                f"Catalyst Ping Threshold: `{threshold} minutes`\n\n"
+                f"To change the heartbeat threshold, use:\n`/settings catalyst <minutes>`",
+                parse_mode="Markdown"
+            )
+        return
+
+    parts = command.args.split(maxsplit=1)
+    if parts[0].lower() == "catalyst":
+        if len(parts) < 2 or not parts[1].isdigit():
+            await message.answer("Error: Provide minutes. Example: `/settings catalyst 30`", parse_mode="Markdown")
+            return
+            
+        minutes = int(parts[1])
+        with SessionLocal() as db:
+            user = get_or_create_user(db, message.from_user.id)
+            user.catalyst_threshold_minutes = minutes
+            db.commit()
+            await message.answer(f"✅ Catalyst heartbeat threshold updated to `{minutes} minutes`.", parse_mode="Markdown")
+        return
+        
+    await message.answer("Unknown setting. Try `/settings` to see options.", parse_mode="Markdown")
+
 @router.message(F.text)
 async def handle_freeform_text(message: Message):
     """
