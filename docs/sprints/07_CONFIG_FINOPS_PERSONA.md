@@ -23,9 +23,9 @@
 - [ ] Allow the user to update their Catalyst settings via chat command (e.g. `/settings catalyst 30`).
 
 ### 3. Token Accounting (FinOps)
-- [ ] Update `src/ai/providers.py` to capture `usage_metadata` (prompt tokens, completion tokens) from Gemini API responses.
-- [ ] Log every `LLM` call to the `TokenUsage` database table, linked to the current Session or Intent.
-- [ ] Create a `/stats` command to output current token burn and approximate USD cost.
+- [x] Update `src/ai/providers.py` to capture `usage_metadata` (prompt tokens, completion tokens) from Gemini API responses.
+- [x] Log every `LLM` call to the `TokenUsage` database table, linked to the current Session or Intent.
+- [x] Create a `/stats` command to output current token burn and approximate USD cost.
 
 ### 4. Persona & View Engine
 - [ ] Extract hardcoded strings from `src/bot/handlers.py` and `jobs.py`.
