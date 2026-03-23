@@ -38,7 +38,7 @@ class SystemConfigParams(BaseModel):
 class GoogleProvider:
     def __init__(self, api_key: str):
         self.client = genai.Client(api_key=api_key)
-        self.model_id = 'gemini-3.0-flash'
+        self.model_id = 'gemini-2.5-flash'
 
     def _get_usage(self, response) -> dict:
         usage = getattr(response, 'usage_metadata', None)
