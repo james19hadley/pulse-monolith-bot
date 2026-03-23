@@ -17,6 +17,8 @@ Stores user preferences, SaaS state, and LLM configurations.
 *   `api_key_encrypted` (String, nullable. For Bring-Your-Own-Key functionality)
 *   `active_session_id` (Foreign Key -> `Sessions`, nullable. Tracks if the user is currently in a work block)
 *   `last_ping_message_id` (Integer, nullable. Used to DELETE the previous nudge message to avoid chat spam)
+*   `target_channel_id` (String, nullable. The Telegram ID of the user's personal channel where the Evening Report is published. E.g., '-1001234567890').
+
 
 ### 2.2. `Sessions` Table (The Boundaries of Time)
 Crucial for calculating "The Void". A user's day consists of one or multiple sessions.
