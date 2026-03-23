@@ -32,6 +32,7 @@ Talk to me naturally, but if the AI is slow or offline, use these slash commands
 
 <b>Data & Config</b>
 <code>/projects</code> - List active projects and IDs
+<code>/habits</code> - List active habits and IDs
 <code>/new_project &lt;name&gt; | [target_hours]</code> - Create a new project
 <code>/new_habit &lt;name&gt;</code> - Create a new habit
 <code>/settings</code> - View or change your configurations

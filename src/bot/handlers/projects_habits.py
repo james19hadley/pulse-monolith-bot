@@ -43,11 +43,11 @@ async def cmd_habits(message: Message):
             await message.answer("No habits tracked. Let the AI know via natural language, e.g., 'Track me writing 500 words daily'.")
             return
             
-        lines = ["*Your Habits:*"]
+        lines = ["<b>Your Habits:</b>"]
         for h in habits:
-            emoji = h.icon or '📈'
+            emoji = '📈'
             progress = f"{h.current_value}/{h.target_value}" if h.target_value else str(h.current_value)
-            lines.append(f"{emoji} {h.title}: <code>{progress}</code>")
+            lines.append(f"{emoji} {h.title} (<i>ID: {h.id}</i>): <code>{progress}</code>")
             
         await message.answer("\n".join(lines), parse_mode="HTML")
 
