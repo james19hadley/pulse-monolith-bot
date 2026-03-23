@@ -5,7 +5,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from src.core.config import TELEGRAM_BOT_TOKEN
 from src.bot.handlers import router
-from src.scheduler.jobs import catalyst_heartbeat
+from src.scheduler.jobs import catalyst_heartbeat, stale_session_killer
 
 # Setup logging to both console and a persistent file (bot.log)
 log_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
