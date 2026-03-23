@@ -1,9 +1,11 @@
 import asyncio
 import logging
 from aiogram import Bot, Dispatcher
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from src.core.config import TELEGRAM_BOT_TOKEN
 from src.bot.handlers import router
+from src.scheduler.jobs import catalyst_heartbeat
 
 # Setup logging to both console and a persistent file (bot.log)
 log_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
@@ -25,6 +27,12 @@ async def main():
     dp.include_router(router)
     
     print("⬛ Pulse Monolith bot is starting (Long Polling)...")
+    
+    # Initialize background scheduler
+    scheduler = AsyncIOScheduler()
+    # Runs the heartbeat every 20 minutes to check if 60 minutes have passed since last action
+    scheduler.add_job(catalyst_heartbeat, 'interval', minutes=20, args=[bot])
+    scheduler.start()
     
     # Drop any pending updates before starting (so it doesn't process old missed messages)
     await bot.delete_webhook(drop_pending_updates=True)

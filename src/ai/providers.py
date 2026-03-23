@@ -14,6 +14,16 @@ class LogWorkParams(BaseModel):
     project_id: Optional[int] = Field(description="The integer ID of the matching project. Null if no project matches.", default=None)
     description: Optional[str] = Field(description="A brief 1-5 word summary of what was done.", default=None)
 
+class LogHabitParams(BaseModel):
+    habit_id: Optional[int] = Field(description="The integer ID of the matching habit. Null if no habit matches.", default=None)
+    amount_completed: int = Field(description="The numeric amount completed. If user just says 'did pushups', default to 1 unless specified.", default=1)
+
+class AddInboxParams(BaseModel):
+    raw_content: str = Field(description="The actual idea, note, or thought, omitting conversational filler like 'save this idea' or 'remind me to'")
+
+class SessionControlParams(BaseModel):
+    action: str = Field(description="Strictly 'START' or 'END' depending on whether they are starting a session or finishing one.")
+
 class GoogleProvider:
     def __init__(self, api_key: str):
         self.client = genai.Client(api_key=api_key)
@@ -57,4 +67,53 @@ CURRENT ACTIVE PROJECTS:
             ),
         )
         return LogWorkParams.model_validate_json(response.text)
+
+    def extract_habit_parameters(self, text: str, active_habits_text: str) -> LogHabitParams:
+        """Extracts habit ID and amount."""
+        system_prompt = f"""You are a precise data extraction tool.
+The user is logging a habit. Extract the habit ID and the amount completed.
+If no habit matches, return null for habit_id.
+
+CURRENT HABITS:
+{active_habits_text}
+"""
+        response = self.client.models.generate_content(
+            model=self.model_id,
+            contents=text,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                response_mime_type="application/json",
+                response_schema=LogHabitParams,
+                temperature=0.0
+            ),
+        )
+        return LogHabitParams.model_validate_json(response.text)
+
+    def extract_inbox_parameters(self, text: str) -> AddInboxParams:
+        """Extracts the core idea."""
+        response = self.client.models.generate_content(
+            model=self.model_id,
+            contents=text,
+            config=types.GenerateContentConfig(
+                system_instruction="Extract the core idea from the user's message, removing filler words.",
+                response_mime_type="application/json",
+                response_schema=AddInboxParams,
+                temperature=0.0
+            ),
+        )
+        return AddInboxParams.model_validate_json(response.text)
+
+    def extract_session_control(self, text: str) -> SessionControlParams:
+        """Extracts START or END action."""
+        response = self.client.models.generate_content(
+            model=self.model_id,
+            contents=text,
+            config=types.GenerateContentConfig(
+                system_instruction="Determine if the user is starting or ending a work session.",
+                response_mime_type="application/json",
+                response_schema=SessionControlParams,
+                temperature=0.0
+            ),
+        )
+        return SessionControlParams.model_validate_json(response.text)
 

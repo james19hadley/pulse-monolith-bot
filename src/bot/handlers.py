@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session as DBSession
 from sqlalchemy import func
 
 from src.db.repo import SessionLocal
-from src.db.models import User, Session, Project, TimeLog
+from src.db.models import User, Session, Project, TimeLog, Habit, Inbox, ActionLog
 from src.core.constants import IntentType
 from src.bot.views import (
     welcome_message, 
@@ -18,7 +18,9 @@ from src.bot.views import (
     project_list_message
 )
 from src.core.security import encrypt_key, decrypt_key
-from src.ai.router import get_intent, extract_log_work
+from src.ai.router import (
+    get_intent, extract_log_work, extract_log_habit, extract_inbox, extract_session_control
+)
 
 router = Router()
 
@@ -195,6 +197,32 @@ async def cmd_new_project(message: Message, command: CommandObject):
         db.commit()
         await message.answer(project_created_message(new_proj.id, new_proj.title), parse_mode="Markdown")
 
+@router.message(Command("new_habit"))
+async def cmd_new_habit(message: Message, command: CommandObject):
+    """Creates a new tracking habit."""
+    if not command.args:
+        await message.answer("Usage: `/new_habit <Target Number> <Title>`\nExample: `/new_habit 20 Pushups`", parse_mode="Markdown")
+        return
+        
+    parts = command.args.split(maxsplit=1)
+    if len(parts) < 2 or not parts[0].isdigit():
+        await message.answer("Error: Provide target number then title. Example: `/new_habit 10 Reading pages`", parse_mode="Markdown")
+        return
+        
+    target_value = int(parts[0])
+    title = parts[1].strip()
+    
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        new_habit = Habit(
+            user_id=user.id,
+            title=title,
+            target_value=target_value
+        )
+        db.add(new_habit)
+        db.commit()
+        await message.answer(f"✅ Created Habit: `[{new_habit.id}]` {new_habit.title} (Target: {new_habit.target_value})", parse_mode="Markdown")
+
 @router.message(F.text)
 async def handle_freeform_text(message: Message):
     """
@@ -271,6 +299,16 @@ async def handle_freeform_text(message: Message):
                 proj.total_minutes_spent += params.duration_minutes
                 
             db.commit()
+            
+            # Record action for Undo Engine
+            action_log = ActionLog(
+                user_id=user.id,
+                tool_name="LOG_WORK",
+                previous_state_json={},
+                new_state_json={"timelog_id": new_log.id, "project_id": proj.id if params.project_id and proj else None, "duration_minutes": params.duration_minutes}
+            )
+            db.add(action_log)
+            db.commit()
 
             await message.answer(
                 f"✅ **Time Logged Successfully**\n"
@@ -279,7 +317,105 @@ async def handle_freeform_text(message: Message):
                 f"📝 **Note:** {params.description or 'No description'}",
                 parse_mode="Markdown"
             )
+    elif intent == IntentType.LOG_HABIT:
+        with SessionLocal() as db:
+            user = get_or_create_user(db, message.from_user.id)
+            active_habits = db.query(Habit).filter(Habit.user_id == user.id).all()
+            if not active_habits:
+                habits_text = "No habits found."
+            else:
+                habits_text = "\n".join([f"ID: {h.id} | Title: {h.title} | Target: {h.target_value}" for h in active_habits])
+                
+            await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
+            params = extract_log_habit(message.text, provider, api_key, habits_text)
+            
+            if not params or not params.habit_id:
+                await message.answer("❌ Could not match a habit. Use `/new_habit` to create one first.")
+                return
+                
+            habit = db.query(Habit).filter(Habit.id == params.habit_id, Habit.user_id == user.id).first()
+            if habit:
+                habit.current_value += params.amount_completed
+                db.commit()
+                
+                # Record action
+                action_log = ActionLog(
+                    user_id=user.id,
+                    tool_name="LOG_HABIT",
+                    previous_state_json={"habit_id": habit.id, "amount_added": params.amount_completed},
+                    new_state_json={"habit_id": habit.id, "current_value": habit.current_value}
+                )
+                db.add(action_log)
+                db.commit()
+                
+                await message.answer(f"📈 Habit `{habit.title}` updated: {habit.current_value}/{habit.target_value}")
+            else:
+                await message.answer("❌ Invalid habit ID.")
+
+    elif intent == IntentType.ADD_INBOX:
+        with SessionLocal() as db:
+            user = get_or_create_user(db, message.from_user.id)
+            await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
+            params = extract_inbox(message.text, provider, api_key)
+            if params and params.raw_content:
+                new_inbox = Inbox(user_id=user.id, raw_text=params.raw_content)
+                db.add(new_inbox)
+                db.commit()
+                await message.answer(f"📥 Saved to Inbox: _{params.raw_content}_", parse_mode="Markdown")
+            else:
+                await message.answer("❌ Failed to parse inbox note.")
+
+    elif intent == IntentType.UNDO:
+        with SessionLocal() as db:
+            user = get_or_create_user(db, message.from_user.id)
+            last_action = db.query(ActionLog).filter(ActionLog.user_id == user.id).order_by(ActionLog.id.desc()).first()
+            
+            if not last_action:
+                await message.answer("⚠️ Nothing to undo.")
+                return
+                
+            if last_action.tool_name == "LOG_WORK":
+                timelog_id = last_action.new_state_json.get("timelog_id")
+                project_id = last_action.new_state_json.get("project_id")
+                duration = last_action.new_state_json.get("duration_minutes", 0)
+                
+                t_log = db.query(TimeLog).filter(TimeLog.id == timelog_id).first()
+                if t_log:
+                    db.delete(t_log)
+                if project_id:
+                    proj = db.query(Project).filter(Project.id == project_id).first()
+                    if proj:
+                        proj.total_minutes_spent -= duration
+                        
+                db.delete(last_action)
+                db.commit()
+                await message.answer("⏪ Undo successful: Removed Time Log.")
+                
+            elif last_action.tool_name == "LOG_HABIT":
+                habit_id = last_action.previous_state_json.get("habit_id")
+                amount = last_action.previous_state_json.get("amount_added", 0)
+                
+                habit = db.query(Habit).filter(Habit.id == habit_id).first()
+                if habit:
+                    habit.current_value -= amount
+                    
+                db.delete(last_action)
+                db.commit()
+                await message.answer("⏪ Undo successful: Reverted Habit progress.")
+            else:
+                await message.answer("⚠️ Cannot undo that specific action type yet.")
+
+    elif intent == IntentType.SESSION_CONTROL:
+        await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
+        params = extract_session_control(message.text, provider, api_key)
+        if params and params.action == "START":
+            await cmd_start_session(message)
+        elif params and params.action == "END":
+            await cmd_end_session(message)
+        else:
+            await message.answer("❌ Could not determine session action.")
+
     else:
         # Temporary debugging print so you can see what the AI decided
-        await message.answer(f"*[DEBUG: Router classified intent as {intent.value}]*", parse_mode="Markdown")
+        await message.answer(f"*[DEBUG: Router fallback to {intent.value}]*\nI couldn't classify that clearly.", parse_mode="Markdown")
 
