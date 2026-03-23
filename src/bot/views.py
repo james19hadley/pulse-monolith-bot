@@ -4,7 +4,9 @@
 def welcome_message(has_key: bool = False) -> str:
     msg = "Identity verified. I am the Pulse Monolith. Strict monitoring protocol activated.\n\n"
     if not has_key:
-        msg += "⚠️ Warning: No AI provider key detected. Please set your Google Gemini API key using:\n`/set_key <your_api_key>`\n\n"
+        msg += "⚠️ Warning: No AI provider key detected. Please set your API key using:\n`/set_key <provider> <your_api_key>`\n"
+        msg += "*Available providers: `google`, `openai`, `anthropic`*\n"
+        msg += "*Example:* `/set_key google AIzaSy...`\n\n"
     msg += "Use /start_session to begin a work block."
     return msg
 

@@ -100,18 +100,53 @@ async def cmd_end_session(message: Message):
 async def cmd_set_key(message: Message, command: CommandObject):
     """Saves the user's personal API key securely to the database."""
     if not command.args:
-        await message.answer("Usage: /set_key <your_api_key>")
+        await message.answer("Usage: `/set_key <provider> <your_api_key>`\nAvailable providers: `google`, `openai`, `anthropic`", parse_mode="Markdown")
         return
         
-    api_key = command.args.strip()
+    parts = command.args.strip().split(maxsplit=1)
+    if len(parts) < 2:
+        await message.answer("Error: You must specify both the provider and the key.\nExample: `/set_key google AIzaSy...`", parse_mode="Markdown")
+        return
+        
+    provider, api_key = parts[0].lower(), parts[1]
+    
+    if provider not in ["google", "openai", "anthropic"]:
+        await message.answer("Error: Unsupported provider. Choose from: `google`, `openai`, `anthropic`", parse_mode="Markdown")
+        return
     
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
         # Encrypt the key before saving it to the database
         user.api_key_encrypted = encrypt_key(api_key)
-        user.llm_provider = "google" # Defaulting to google since you requested Gemini
+        user.llm_provider = provider
         db.commit()
         
+    await message.answer(f"API Key for provider '{provider}' successfully encrypted and secured in the database. I will use it for processing protocols.")
+
+@router.message(Command("delete_key"))
+async def cmd_delete_key(message: Message):
+    """Deletes the user's saved API key."""
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        if not user.api_key_encrypted:
+            await message.answer("You do not have any active API key to delete.")
+            return
+            
+        user.api_key_encrypted = None
+        user.llm_provider = "google" # Reset to default
+        db.commit()
+        
+    await message.answer("Your API key has been deleted from the database.")
+
+@router.message(Command("my_key"))
+async def cmd_my_key(message: Message):
+    """Checks the status of the user's current key."""
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        if user.api_key_encrypted:
+            await message.answer(f"Status: Key is configured.\nActive AI Provider: `{user.llm_provider}`", parse_mode="Markdown")
+        else:
+            await message.answer("Status: No API key configured. Features limited. Use `/set_key` to add one.", parse_mode="Markdown")
 
 @router.message(F.text)
 async def handle_freeform_text(message: Message):
@@ -141,6 +176,5 @@ async def handle_freeform_text(message: Message):
     intent = get_intent(message.text, provider, api_key)
     
     # Temporary debugging print so you can see what the AI decided
-    await message.answer(f"*[DEBUG: Router classified intent as {intent}]*", parse_mode="Markdown")
-    await message.answer("API Key successfully encrypted and secured in the database. I will use it for processing protocols.")
+    await message.answer(f"*[DEBUG: Router classified intent as {intent.value}]*", parse_mode="Markdown")
 

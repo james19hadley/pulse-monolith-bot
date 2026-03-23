@@ -1,7 +1,8 @@
 from typing import Optional
 from src.ai.providers import GoogleProvider
+from src.core.constants import IntentType
 
-def get_intent(user_text: str, provider_name: str, api_key: str) -> str:
+def get_intent(user_text: str, provider_name: str, api_key: str) -> IntentType:
     """
     Factory function that routes the request to the correct provider.
     Currently only supports Google.
@@ -12,6 +13,6 @@ def get_intent(user_text: str, provider_name: str, api_key: str) -> str:
             return provider.classify_intent(user_text)
         except Exception as e:
             print(f"LLM Error: {e}")
-            return "ERROR"
+            return IntentType.ERROR
     else:
-        return "UNKNOWN_PROVIDER"
+        return IntentType.UNKNOWN_PROVIDER

@@ -3,9 +3,10 @@ import json
 from google import genai
 from google.genai import types
 from src.core.prompts import INTENT_ROUTER_SYSTEM_PROMPT
+from src.core.constants import IntentType
 
 class IntentResponse(BaseModel):
-    intent: str
+    intent: IntentType
 
 class GoogleProvider:
     def __init__(self, api_key: str):
@@ -13,7 +14,7 @@ class GoogleProvider:
         # Using gemini-2.5-flash as it's the fastest and cheapest for strict JSON routing
         self.model_id = "gemini-2.5-flash"
         
-    def classify_intent(self, text: str) -> str:
+    def classify_intent(self, text: str) -> IntentType:
         """Sends the text to Gemini and forces it to return an Intent string via Structured Outputs."""
         response = self.client.models.generate_content(
             model=self.model_id,
@@ -27,4 +28,4 @@ class GoogleProvider:
         )
         # Parse the JSON string returned by Gemini into a dictionary
         data = json.loads(response.text)
-        return data.get("intent", "CHAT_OR_UNKNOWN")
+        return IntentType(data.get("intent", IntentType.CHAT_OR_UNKNOWN))
