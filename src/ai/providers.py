@@ -28,9 +28,12 @@ class ReportConfigParams(BaseModel):
     blocks: List[str] = Field(description="Blocks to include in the report. Allowed values: 'focus', 'habits', 'inbox', 'void'. Output in the order requested by user.", default=["focus", "habits", "inbox", "void"])
     style: str = Field(description="Stylistic theme: 'strict', 'emoji', 'casual', or user's custom style.", default="emoji")
 
-class SystemConfigParams(BaseModel):
+class SingleConfigParam(BaseModel):
     setting_key: str = Field(description="The internal key of the setting to change (e.g., 'cutoff', 'timezone', 'persona')")
     setting_value: str = Field(description="The requested correct value of the setting (e.g., '23:00', 'Europe/Moscow', 'butler')")
+
+class SystemConfigParams(BaseModel):
+    settings: List[SingleConfigParam] = Field(description="List of settings to change")
 
 class GoogleProvider:
     def __init__(self, api_key: str):
@@ -134,21 +137,7 @@ CURRENT HABITS:
             model=self.model_id,
             contents=text,
             config=types.GenerateContentConfig(
-                system_instruction=f"Extract the requested system setting configuration. Available internal keys: {keys_info}. Map natural language (e.g. 'post at midnight' -> 'cutoff', '00:00')",
-                response_mime_type='application/json',
-                response_schema=SystemConfigParams,
-                temperature=0.0
-            ),
-        )
-        return SystemConfigParams.model_validate_json(response.text), self._get_usage(response)
-
-    def extract_system_config(self, text: str, registry_keys: list[str]) -> Tuple[Optional[SystemConfigParams], dict]:
-        keys_info = ", ".join(registry_keys)
-        response = self.client.models.generate_content(
-            model=self.model_id,
-            contents=text,
-            config=types.GenerateContentConfig(
-                system_instruction=f"Extract the requested system setting configuration. Available internal keys: {keys_info}. Map natural language (e.g. 'post at midnight' -> 'cutoff', '00:00')",
+                system_instruction=f"Extract the requested system setting configuration(s). The user might request multiple settings at once. Available internal keys: {keys_info}. Map natural language (e.g. 'post at midnight' -> 'cutoff', '00:00')",
                 response_mime_type='application/json',
                 response_schema=SystemConfigParams,
                 temperature=0.0

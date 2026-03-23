@@ -147,9 +147,10 @@ async def daily_accountability_job(bot: Bot):
                 
                 # AI Chef's Kiss Generation
                 ai_comment = None
-                if user.api_key_encrypted and user.llm_provider == "google":
+                keys = user.api_keys
+                if keys and user.llm_provider in keys and user.llm_provider == "google":
                     try:
-                        provider = GoogleProvider(api_key=decrypt_key(user.api_key_encrypted))
+                        provider = GoogleProvider(api_key=decrypt_key(keys[user.llm_provider]))
                         prompt = f"Write a 1-sentence {user.persona_type} style comment for this end-of-day report. Just output the sentence."
                         response = provider.client.models.generate_content(
                             model=provider.model_id,
@@ -166,7 +167,7 @@ async def daily_accountability_job(bot: Bot):
                     await bot.send_message(
                         chat_id=target_chat_id,
                         text=report_text,
-                        parse_mode="Markdown"
+                        parse_mode="HTML"
                     )
                 except Exception as e:
                     print(f"Failed to send accountability report to {target_chat_id}: {e}")

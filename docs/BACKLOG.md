@@ -17,3 +17,10 @@ This document stores brilliant ideas, architectural improvements, and "nice-to-h
 - Gemini (and other providers) return total tokens consumed in their response payloads.
 - Create a `TokenUsage` table or add columns to `ActionLog`.
 - Goal: Create a command `/stats` or send weekly reports showing estimated USD cost and token burn.
+
+### 3. Conversational AI Toggle (`chatty_mode`)
+**Issue:** Currently, if the Intent Router evaluates a message as `CHAT_OR_UNKNOWN`, the bot either fails silently or returns a generic native string, breaking the illusion of an intelligent assistant.
+**Solution:** 
+- Add a user setting `chatty_mode` (boolean).
+- If `True`, send the `CHAT_OR_UNKNOWN` text back to the AI Provider, asking it to respond conversationally inside the constraints of the user's `persona_type`.
+- If `False`, retain the current strict, fast mapping (or just ignore/reject).

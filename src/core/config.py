@@ -69,5 +69,12 @@ USER_SETTINGS_REGISTRY = {
         "name": "Bot Persona",
         "description": "Bot attitude (e.g. monolith)",
         "default": "monolith"
+    },
+    "provider": {
+        "db_column": "llm_provider",
+        "type": str,
+        "name": "Active LLM Provider",
+        "description": "Which API to use (google, openai, anthropic)",
+        "default": "google"
     }
 }

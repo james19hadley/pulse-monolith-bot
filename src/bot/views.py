@@ -4,9 +4,9 @@
 def welcome_message(has_key: bool = False) -> str:
     msg = "Identity verified. I am the Pulse Monolith. Strict monitoring protocol activated.\n\n"
     if not has_key:
-        msg += "⚠️ Warning: No AI provider key detected. Please set your API key using:\n`/set_key <provider> <your_api_key>`\n"
-        msg += "*Available providers: `google`, `openai`, `anthropic`*\n"
-        msg += "*Example:* `/set_key google AIzaSy...`\n\n"
+        msg += "⚠️ Warning: No AI provider key detected. Please set your API key using:\n<code>/set_key &lt;provider&gt; &lt;your_api_key&gt;</code>\n"
+        msg += "<i>Available providers: <code>google</code>, <code>openai</code>, <code>anthropic</code></i>\n"
+        msg += "<i>Example:</i> <code>/set_key google AIzaSy...</code>\n\n"
     msg += "Use /start_session to begin a work block."
     return msg
 
@@ -25,49 +25,49 @@ def session_ended_message(total_minutes: int, focus_minutes: int, void_minutes: 
     v_h, v_m = divmod(void_minutes, 60)
     
     msg = f"Session closed.\n\n"
-    msg += f"**Total Time:** {t_h}h {t_m}m\n"
-    msg += f"**Focused:** {f_h}h {f_m}m\n"
-    msg += f"**The Void (Lost):** {v_h}h {v_m}m\n"
+    msg += f"<b>Total Time:</b> {t_h}h {t_m}m\n"
+    msg += f"<b>Focused:</b> {f_h}h {f_m}m\n"
+    msg += f"<b>The Void (Lost):</b> {v_h}h {v_m}m\n"
     return msg
 
 def project_created_message(project_id: int, title: str) -> str:
-    return f"✅ Created project: `[{project_id}]` {title}"
+    return f"✅ Created project: <code>[{project_id}]</code> {title}"
 
 def project_list_message(projects: list) -> str:
     if not projects:
-        return "No active projects found. Use `/new_project <title>` to create one."
+        return "No active projects found. Use <code>/new_project &lt;title&gt;</code> to create one."
     
-    lines = ["📂 **Active Projects:**"]
+    lines = ["📂 <b>Active Projects:</b>"]
     for p in projects:
-        lines.append(f"`[{p.id}]` {p.title} - {p.total_minutes_spent}m spent")
+        lines.append(f"<code>[{p.id}]</code> {p.title} - {p.total_minutes_spent}m spent")
     return "\n".join(lines)
 
 # FinOps & Stats
 def stats_message(prompt_total: int, comp_total: int, cost: float) -> str:
     return (
-        f"📊 *FinOps / Token Usage*\n"
-        f"Input Tokens: `{prompt_total}`\n"
-        f"Output Tokens: `{comp_total}`\n"
-        f"Estimated Cost: `${cost:.5f}`\n"
+        f"📊 <b>FinOps / Token Usage</b>\n"
+        f"Input Tokens: <code>{prompt_total}</code>\n"
+        f"Output Tokens: <code>{comp_total}</code>\n"
+        f"Estimated Cost: <code>${cost:.5f}</code>\n"
     )
 
 # Settings
 def settings_list_message(settings_list: list) -> str:
-    msg = "⚙️ **Current Settings**\n\n"
+    msg = "⚙️ <b>Current Settings</b>\n\n"
     for s in settings_list:
-        msg += f"*{s['name']}*:\n`{s['val']}` {s['desc']}\nChange: `/settings {s['key']} <value>`\n\n"
+        msg += f"<b>{s['name']}</b>:\n<code>{s['val']}</code> {s['desc']}\nChange: <code>/settings {s['key']} &lt;value&gt;</code>\n\n"
     return msg
 
 # Habit
 def habit_created_message(h_id: int, title: str, target: int) -> str:
-    return f"✅ Created Habit: `[{h_id}]` {title} (Target: {target})"
+    return f"✅ Created Habit: <code>[{h_id}]</code> {title} (Target: {target})"
 
 def habit_updated_message(title: str, current: int, target: int) -> str:
-    return f"📈 Habit `{title}` updated: {current}/{target}"
+    return f"📈 Habit <code>{title}</code> updated: {current}/{target}"
 
 # Inbox
 def inbox_saved_message(content: str) -> str:
-    return f"📥 Saved to Inbox: _{content}_"
+    return f"📥 Saved to Inbox: <i>{content}</i>"
 
 # Action & Undo
 def undo_success_message(target_type: str) -> str:
@@ -101,38 +101,41 @@ def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str
     }
     
     date_str = stats.get('date', 'Today')
-    parts = [f"**{e['header']} Daily Accountability Report: {date_str}**\n" if e['header'] else f"**Daily Accountability Report: {date_str}**\n"]
+    parts = [f"<b>{e['header']} Daily Accountability Report: {date_str}</b>\n" if e['header'] else f"<b>Daily Accountability Report: {date_str}</b>\n"]
     
     for block in blocks:
         if block == "focus":
             f_h, f_m = divmod(stats.get('focus_minutes', 0), 60)
-            parts.append(f"{e['focus']} **Deep Work:** {f_h}h {f_m}m")
+            parts.append(f"{e['focus']} <b>Deep Work:</b> {f_h}h {f_m}m")
             if stats.get('projects'):
                 for p, mins in stats['projects'].items():
                     p_h, p_m = divmod(mins, 60)
-                    parts.append(f"  - {p}: {p_h}h {p_m}m")
+                    import html
+                    parts.append(f"  - {html.escape(str(p))}: {p_h}h {p_m}m")
         
         elif block == "habits":
             habits = stats.get('habits', [])
             if habits:
-                parts.append(f"\n{e['habits']} **Habit Execution:**")
+                parts.append(f"\n{e['habits']} <b>Habit Execution:</b>")
                 for h in habits:
-                    parts.append(f"  - {h['title']}: {h['current']}/{h['target']}")
+                    import html
+                    parts.append(f"  - {html.escape(str(h['title']))}: {h['current']}/{h['target']}")
                     
         elif block == "inbox":
             inbox = stats.get('inbox_count', 0)
             if inbox > 0:
-                parts.append(f"\n{e['inbox']} **Inbox Captured:** {inbox} items")
+                parts.append(f"\n{e['inbox']} <b>Inbox Captured:</b> {inbox} items")
                 
         elif block == "void":
             v_h, v_m = divmod(stats.get('void_minutes', 0), 60)
-            parts.append(f"\n{e['void']} **The Void (Lost Time):** {v_h}h {v_m}m")
+            parts.append(f"\n{e['void']} <b>The Void (Lost Time):</b> {v_h}h {v_m}m")
 
     # Clean up empty lines and join
     report = "\n".join([p for p in parts if p]).strip()
     
     if ai_comment:
-        report += f"\n\n_{ai_comment}_"
+        import html
+        report += f"\n\n<i>{html.escape(str(ai_comment))}</i>"
         
     return report
 
