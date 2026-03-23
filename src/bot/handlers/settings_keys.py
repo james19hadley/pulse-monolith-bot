@@ -22,12 +22,12 @@ async def cmd_add_key(message: Message, command: CommandObject):
     Usage: /add_key <provider> <your_api_key> [alias_name]
     """
     if not command.args:
-        await message.answer("Usage: <code>/add_key &lt;provider&gt; &lt;your_api_key&gt; [alias]</code>\nAvailable providers: `google`, `openai`, `anthropic`\nExample: `/add_key google AIzaSy... my_google_2`", parse_mode="HTML")
+        await message.answer("Usage: <code>/add_key &lt;provider&gt; &lt;your_api_key&gt; [alias]</code>\nAvailable providers: <code>google</code>, <code>openai</code>, <code>anthropic</code>\nExample: <code>/add_key google AIzaSy... my_google_2</code>", parse_mode="HTML")
         return
         
     parts = command.args.strip().split()
     if len(parts) < 2:
-        await message.answer("Error: You must specify both the provider and the key.\nExample: `/add_key google AIzaSy...`", parse_mode="HTML")
+        await message.answer("Error: You must specify both the provider and the key.\nExample: <code>/add_key google AIzaSy...</code>", parse_mode="HTML")
         return
         
     provider, api_key = parts[0].lower(), parts[1]
@@ -35,7 +35,7 @@ async def cmd_add_key(message: Message, command: CommandObject):
     alias = parts[2].lower() if len(parts) > 2 else provider
     
     if provider not in ["google", "openai", "anthropic"]:
-        await message.answer("Error: Unsupported provider. Choose from: `google`, `openai`, `anthropic`", parse_mode="HTML")
+        await message.answer("Error: Unsupported provider. Choose from: <code>google</code>, <code>openai</code>, <code>anthropic</code>", parse_mode="HTML")
         return
     
     with SessionLocal() as db:
@@ -65,7 +65,7 @@ async def cmd_delete_key(message: Message, command: CommandObject):
             return
             
         if not alias_to_delete:
-            await message.answer("Usage: `/delete_key <alias>`\nSaved aliases: " + ", ".join(keys.keys()), parse_mode="HTML")
+            await message.answer("Usage: <code>/delete_key &lt;alias&gt;</code>\nSaved aliases: " + ", ".join(keys.keys()), parse_mode="HTML")
             return
             
         if alias_to_delete not in keys:
@@ -89,10 +89,10 @@ async def cmd_my_key(message: Message):
         user = get_or_create_user(db, message.from_user.id)
         keys = user.api_keys
         if keys:
-            providers = ", ".join(f"`{k}`" for k in keys.keys())
-            await message.answer(f"*Saved Keys (Aliases):* {providers}\n*Active AI Alias:* `{user.llm_provider}`\n\n_To switch your active key, you can use_ `/use_key <alias-name>`", parse_mode="HTML")
+            providers = ", ".join(f"<code>{k}</code>" for k in keys.keys())
+            await message.answer(f"<b>Saved Keys (Aliases):</b> {providers}\n<b>Active AI Alias:</b> <code>{user.llm_provider}</code>\n\n<i>To switch your active key, you can use</i> <code>/use_key &lt;alias-name&gt;</code>", parse_mode="HTML")
         else:
-            await message.answer("Status: No API key configured. Features limited. Use `/add_key google <your_key>`.", parse_mode="HTML")
+            await message.answer("Status: No API key configured. Features limited. Use <code>/add_key google &lt;your_key&gt;</code>.", parse_mode="HTML")
 
 @router.message(Command("stats"))
 async def cmd_stats(message: Message):
@@ -240,10 +240,10 @@ async def cmd_use_key(message: Message, command: CommandObject):
         keys = user.api_keys
         
         if not keys or alias not in keys:
-            await message.answer(f"Error: You do not have a key saved under the alias `{alias}`. Use <code>/my_key</code> to view your aliases.", parse_mode="HTML")
+            await message.answer(f"Error: You do not have a key saved under the alias <code>{alias}</code>. Use <code>/my_key</code> to view your aliases.", parse_mode="HTML")
             return
             
         user.llm_provider = alias
         db.commit()
         
-    await message.answer(f"✅ Active AI provider switched to `{alias}`", parse_mode="HTML")
+    await message.answer(f"✅ Active AI provider switched to <code>{alias}</code>", parse_mode="HTML")
