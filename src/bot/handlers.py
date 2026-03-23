@@ -8,6 +8,7 @@ from sqlalchemy import func
 from src.db.repo import SessionLocal
 from src.db.models import User, Session, Project, TimeLog, Habit, Inbox, ActionLog, TokenUsage
 from src.core.constants import IntentType
+from src.core.config import USER_SETTINGS_REGISTRY
 from src.bot.views import (
     welcome_message, 
     session_started_message, 
