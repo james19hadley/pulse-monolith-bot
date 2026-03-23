@@ -397,6 +397,92 @@ async def on_my_chat_member(event: ChatMemberUpdated):
             except Exception:
                 pass
 
+
+@router.message(Command("log"))
+async def cmd_log(message: Message, command: CommandObject):
+    if not command.args:
+        await message.answer("Usage: `/log <minutes> [description]`\nExample: `/log 30 reading docs`", parse_mode="Markdown")
+        return
+        
+    parts = command.args.split(maxsplit=1)
+    
+    try:
+        minutes = int(parts[0])
+    except ValueError:
+        await message.answer("Error: `<minutes>` must be a valid number.", parse_mode="Markdown")
+        return
+        
+    description = parts[1] if len(parts) > 1 else None
+    
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        if not user.active_session_id:
+            await message.answer(no_active_session_message())
+            return
+            
+        log = TimeLog(
+            user_id=user.id,
+            session_id=user.active_session_id,
+            project_id=None,
+            duration_minutes=minutes,
+            description=description
+        )
+        db.add(log)
+        db.commit()
+        await message.answer(f"✅ Logged {minutes}m: {description or 'To The Void'}")
+
+@router.message(Command("habit"))
+async def cmd_habit(message: Message, command: CommandObject):
+    if not command.args:
+        await message.answer("Usage: `/habit <id_or_title> [value_to_add]`\nExample: `/habit 1` or `/habit workout 1`", parse_mode="Markdown")
+        return
+        
+    parts = command.args.split()
+    target = parts[0]
+    
+    val = 1
+    if len(parts) > 1:
+        try:
+            val = int(parts[-1])
+            target = " ".join(parts[:-1])
+        except ValueError:
+            target = " ".join(parts)
+            
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        
+        habit = None
+        if target.isdigit():
+            habit = db.query(Habit).filter(Habit.id == int(target), Habit.user_id == user.id).first()
+        
+        if not habit:
+            habit = db.query(Habit).filter(Habit.title.ilike(f"%{target}%"), Habit.user_id == user.id).first()
+            
+        if not habit:
+            await message.answer(f"⚠️ Habit '{target}' not found.")
+            return
+            
+        habit.current_value += val
+        db.commit()
+        await message.answer(habit_updated_message(habit.title, habit.current_value, habit.target_value))
+
+@router.message(Command("inbox"))
+async def cmd_inbox(message: Message, command: CommandObject):
+    if not command.args:
+        await message.answer("Usage: `/inbox <text>`\nExample: `/inbox Buy milk`", parse_mode="Markdown")
+        return
+        
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        
+        item = Inbox(
+            user_id=user.id,
+            raw_text=command.args
+        )
+        db.add(item)
+        db.commit()
+        await message.answer(inbox_saved_message())
+
 @router.message(F.text)
 async def handle_freeform_text(message: Message):
     """

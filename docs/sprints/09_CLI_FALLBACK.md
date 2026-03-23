@@ -1,6 +1,6 @@
 # Sprint 09: The CLI Fallback (Zero-AI Mode)
 
-**Status:** `Active`
+**Status:** `Completed`
 **Date Proposed:** March 23, 2026
 **Objective:** Add hardcoded, explicit slash commands for core tracking functions (`/log`, `/habit`, `/inbox`) that bypass the AI processor completely. This ensures the bot remains 100% functional even if LLM APIs go down or tokens run out.
 
@@ -12,14 +12,14 @@
 ## 📋 Tasks
 
 ### 1. The Core Data Entry Rules
-- [ ] `/log [minutes] [description...]` - Logs time to the Void (no project) or parses a project somehow (simplest MVP = log to Void with description, or select active project).
-- [ ] `/habit [id/title] [optional: +/- value]` - Increments a habit immediately.
-- [ ] `/inbox [text...]` - Dumps an idea directly into the inbox list.
+- [x] `/log [minutes] [description...]` - Logs time to the Void (no project) or parses a project somehow (simplest MVP = log to Void with description, or select active project).
+- [x] `/habit [id/title] [optional: +/- value]` - Increments a habit immediately.
+- [x] `/inbox [text...]` - Dumps an idea directly into the inbox list.
 
 ### 2. Implementation
-- [ ] Define the commands in `src/bot/handlers.py` alongside the existing `/end_session` block.
-- [ ] Wire the logic securely to `repo.py` functions natively without relying on Pydantic `Tool_Caller`.
-- [ ] Provide clear error messages if parsing fails (no LLM magic here, pure hard syntax).
+- [x] Define the commands in `src/bot/handlers.py` alongside the existing `/end_session` block.
+- [x] Wire the logic securely to `repo.py` functions natively without relying on Pydantic `Tool_Caller`.
+- [x] Provide clear error messages if parsing fails (no LLM magic here, pure hard syntax).
 
 ## 🔒 Security & Architecture Notes
 - These commands must bypass the `llm_router`.
