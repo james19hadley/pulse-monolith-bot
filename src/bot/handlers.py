@@ -5,7 +5,8 @@ from aiogram.types import Message
 from sqlalchemy.orm import Session as DBSession
 
 from src.db.repo import SessionLocal
-from src.db.models import User, Session
+from src.db.models import User, Session, Project, TimeLog
+from src.core.constants import IntentType
 from src.bot.views import (
     welcome_message, 
     session_started_message, 
@@ -14,7 +15,7 @@ from src.bot.views import (
     session_ended_message
 )
 from src.core.security import encrypt_key, decrypt_key
-from src.ai.router import get_intent
+from src.ai.router import get_intent, extract_log_work
 
 router = Router()
 
@@ -148,6 +149,24 @@ async def cmd_my_key(message: Message):
         else:
             await message.answer("Status: No API key configured. Features limited. Use `/set_key` to add one.", parse_mode="Markdown")
 
+@router.message(Command("new_project"))
+async def cmd_new_project(message: Message, command: CommandObject):
+    """Temporary dev command to create a project for testing."""
+    if not command.args:
+        await message.answer("Usage: /new_project <Project Title>")
+        return
+        
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        new_proj = Project(
+            user_id=user.id,
+            title=command.args,
+            status="active"
+        )
+        db.add(new_proj)
+        db.commit()
+        await message.answer(f"✅ Created project: [{new_proj.id}] {new_proj.title}")
+
 @router.message(F.text)
 async def handle_freeform_text(message: Message):
     """
@@ -175,6 +194,64 @@ async def handle_freeform_text(message: Message):
     
     intent = get_intent(message.text, provider, api_key)
     
-    # Temporary debugging print so you can see what the AI decided
-    await message.answer(f"*[DEBUG: Router classified intent as {intent.value}]*", parse_mode="Markdown")
+    if intent == IntentType.LOG_WORK:
+        with SessionLocal() as db:
+            user = get_or_create_user(db, message.from_user.id)
+            active_session = db.query(Session).filter(
+                Session.user_id == user.id, 
+                Session.status == "active"
+            ).first()
+            
+            if not active_session:
+                await message.answer("⚠️ You cannot log work without an active session. Use /start_session first.")
+                return
+
+            active_projects = db.query(Project).filter(Project.user_id == user.id, Project.status == "active").all()
+            if not active_projects:
+                projects_text = "No active projects found."
+            else:
+                projects_text = "\n".join([f"ID: {p.id} | Title: {p.title}" for p in active_projects])
+
+            await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
+            params = extract_log_work(message.text, provider, api_key, projects_text)
+
+            if not params:
+                await message.answer("❌ Error interpreting parameters from your work log.")
+                return
+            
+            # Verify the project belongs to the user if an ID was returned
+            project_title = "None (Void offset)"
+            if params.project_id:
+                proj = db.query(Project).filter(Project.id == params.project_id, Project.user_id == user.id).first()
+                if proj:
+                    project_title = f"[{proj.id}] {proj.title}"
+                else:
+                    # They hallucinated an ID or it doesn't belong to them
+                    params.project_id = None
+
+            # Create TimeLog
+            new_log = TimeLog(
+                user_id=user.id,
+                session_id=active_session.id,
+                project_id=params.project_id,
+                duration_minutes=params.duration_minutes,
+                description=params.description
+            )
+            db.add(new_log)
+            
+            if params.project_id and proj:
+                proj.total_minutes_spent += params.duration_minutes
+                
+            db.commit()
+
+            await message.answer(
+                f"✅ **Time Logged Successfully**\n"
+                f"⏱ **Duration:** {params.duration_minutes} minutes\n"
+                f"📂 **Project:** {project_title}\n"
+                f"📝 **Note:** {params.description or 'No description'}",
+                parse_mode="Markdown"
+            )
+    else:
+        # Temporary debugging print so you can see what the AI decided
+        await message.answer(f"*[DEBUG: Router classified intent as {intent.value}]*", parse_mode="Markdown")
 
