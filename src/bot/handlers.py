@@ -15,7 +15,15 @@ from src.bot.views import (
     no_active_session_message,
     session_ended_message,
     project_created_message,
-    project_list_message
+    project_list_message,
+    stats_message,
+    settings_list_message,
+    habit_created_message,
+    habit_updated_message,
+    inbox_saved_message,
+    undo_success_message,
+    undo_fail_message,
+    nothing_to_undo_message
 )
 from src.core.security import encrypt_key, decrypt_key
 from src.ai.router import (
@@ -221,7 +229,7 @@ async def cmd_new_habit(message: Message, command: CommandObject):
         )
         db.add(new_habit)
         db.commit()
-        await message.answer(f"✅ Created Habit: `[{new_habit.id}]` {new_habit.title} (Target: {new_habit.target_value})", parse_mode="Markdown")
+        await message.answer(habit_created_message(new_habit.id, new_habit.title, new_habit.target_value), parse_mode="Markdown")
 
 @router.message(Command("settings"))
 async def cmd_settings(message: Message, command: CommandObject):
@@ -230,14 +238,14 @@ async def cmd_settings(message: Message, command: CommandObject):
         with SessionLocal() as db:
             user = get_or_create_user(db, message.from_user.id)
             
-            msg = "⚙️ **Current Settings**\n\n"
+            settings_list = []
             for key, meta in USER_SETTINGS_REGISTRY.items():
                 val = getattr(user, meta['db_column'])
                 if val is None:
                     val = meta['default']
-                msg += f"*{meta['name']}*:\n`{val}` ({meta['description']})\nChange: `/settings {key} <value>`\n\n"
+                settings_list.append({"key": key, "name": meta['name'], "val": val, "desc": meta['description']})
                 
-            await message.answer(msg, parse_mode="Markdown")
+            await message.answer(settings_list_message(settings_list), parse_mode="Markdown")
         return
 
     parts = command.args.split(maxsplit=1)
@@ -296,10 +304,7 @@ async def cmd_stats(message: Message):
         cost = (prompt_total / 1000000.0) * 0.075 + (comp_total / 1000000.0) * 0.30
         
         await message.answer(
-            f"📊 *FinOps / Token Usage*\n"
-            f"Input Tokens: `{prompt_total}`\n"
-            f"Output Tokens: `{comp_total}`\n"
-            f"Estimated Cost: `${cost:.5f}`\n",
+            stats_message(prompt_total, comp_total, cost),
             parse_mode="Markdown"
         )
 
@@ -431,7 +436,7 @@ async def handle_freeform_text(message: Message):
                 db.add(action_log)
                 db.commit()
                 
-                await message.answer(f"📈 Habit `{habit.title}` updated: {habit.current_value}/{habit.target_value}")
+                await message.answer(habit_updated_message(habit.title, habit.current_value, habit.target_value))
             else:
                 await message.answer("❌ Invalid habit ID.")
 
@@ -445,7 +450,7 @@ async def handle_freeform_text(message: Message):
                 new_inbox = Inbox(user_id=user.id, raw_text=params.raw_content)
                 db.add(new_inbox)
                 db.commit()
-                await message.answer(f"📥 Saved to Inbox: _{params.raw_content}_", parse_mode="Markdown")
+                await message.answer(inbox_saved_message(params.raw_content), parse_mode="Markdown")
             else:
                 await message.answer("❌ Failed to parse inbox note.")
 
@@ -455,7 +460,7 @@ async def handle_freeform_text(message: Message):
             last_action = db.query(ActionLog).filter(ActionLog.user_id == user.id).order_by(ActionLog.id.desc()).first()
             
             if not last_action:
-                await message.answer("⚠️ Nothing to undo.")
+                await message.answer(nothing_to_undo_message())
                 return
                 
             if last_action.tool_name == "LOG_WORK":
@@ -473,7 +478,7 @@ async def handle_freeform_text(message: Message):
                         
                 db.delete(last_action)
                 db.commit()
-                await message.answer("⏪ Undo successful: Removed Time Log.")
+                await message.answer(undo_success_message("Time Log"))
                 
             elif last_action.tool_name == "LOG_HABIT":
                 habit_id = last_action.previous_state_json.get("habit_id")
@@ -485,9 +490,9 @@ async def handle_freeform_text(message: Message):
                     
                 db.delete(last_action)
                 db.commit()
-                await message.answer("⏪ Undo successful: Reverted Habit progress.")
+                await message.answer(undo_success_message("Habit progress"))
             else:
-                await message.answer("⚠️ Cannot undo that specific action type yet.")
+                await message.answer(undo_fail_message())
 
     elif intent == IntentType.SESSION_CONTROL:
         await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")

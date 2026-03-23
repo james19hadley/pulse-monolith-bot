@@ -5,6 +5,8 @@ from src.db.repo import SessionLocal
 from src.db.models import User, Session, TimeLog
 from aiogram import Bot
 
+from src.bot.views import catalyst_ping_message, stale_session_closed_message
+
 # In-memory storage for last ping message ids and timestamps
 last_ping_message_ids = {}
 last_ping_timestamps = {}
@@ -49,7 +51,7 @@ async def catalyst_heartbeat(bot: Bot):
                 try:
                     msg = await bot.send_message(
                         chat_id=telegram_id, 
-                        text=f"The Void expands. You have not logged focus for {hours_idle} hour(s)."
+                        text=catalyst_ping_message(hours_idle)
                     )
                     last_ping_message_ids[telegram_id] = msg.message_id
                     last_ping_timestamps[telegram_id] = now
@@ -81,7 +83,7 @@ async def stale_session_killer(bot: Bot):
                     try:
                         await bot.send_message(
                             chat_id=user.telegram_id,
-                            text="🌙 Active session auto-closed retroactively to avoid tracking empty void."
+                            text=stale_session_closed_message()
                         )
                     except Exception as e:
                         print(f"Failed to send stale session notice to {user.telegram_id}: {e}")
