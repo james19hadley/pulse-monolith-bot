@@ -32,6 +32,9 @@ class SafeLoggingMiddleware(BaseMiddleware):
         data: Dict[str, Any]
     ) -> Any:
         try:
+            # DEBUG: Print exact payload so we see what Telegram sent
+            logging.info(f"DEBUG RAW UPDATE: {event.model_dump_json(exclude_none=True)}")
+            
             if event.message:
                 user_id = event.message.from_user.id if event.message.from_user else "Unknown"
                 text = event.message.text
@@ -40,7 +43,7 @@ class SafeLoggingMiddleware(BaseMiddleware):
                         logging.info(f"User {user_id} triggered command: {text.split()[0]}")
                     else:
                         logging.info(f"User {user_id} sent text message (length: {len(text)})")
-            elif event.callback_query:
+            elif getattr(event, "callback_query", None):
                 user_id = event.callback_query.from_user.id
                 data_cb = event.callback_query.data
                 logging.info(f"User {user_id} tapped inline button: {data_cb}")
@@ -97,9 +100,12 @@ async def main():
         
         webhook_url = f"https://{WEBHOOK_DOMAIN}{WEBHOOK_PATH}"
         print(f"⬛ Setting webhook to {webhook_url}...")
-        await bot.set_webhook(webhook_url)
         
-        print(f"⬛ Pulse Monolith bot is starting (Webhooks on {WEBAPP_HOST}:{WEBAPP_PORT})...")
+        # Explicitly ask Telegram to send all update types we setup
+        await bot.set_webhook(
+            webhook_url,
+            allowed_updates=["message", "callback_query", "inline_query", "my_chat_member"]
+        )
         
         runner = web.AppRunner(app)
         await runner.setup()
