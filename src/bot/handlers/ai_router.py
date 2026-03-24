@@ -1,4 +1,4 @@
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.types import Message
 from src.db.repo import SessionLocal
 from src.bot.handlers.utils import get_or_create_user, log_tokens
@@ -10,6 +10,10 @@ from src.core.personas import get_persona_prompt
 from src.bot.handlers.settings_keys import cmd_test_report
 
 router = Router()
+
+@router.message(F.text.startswith('/'))
+async def handle_unknown_command(message: Message):
+    await message.answer(f"Unknown command: <code>{message.text}</code>\n\nUse /help to see available commands.", parse_mode="HTML")
 
 @router.message()
 async def handle_freeform_text(message: Message):

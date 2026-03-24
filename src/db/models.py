@@ -104,7 +104,7 @@ class TimeLog(Base):
     
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
-    session_id: Mapped[int] = mapped_column(ForeignKey("sessions.id"))
+    session_id: Mapped[Optional[int]] = mapped_column(ForeignKey("sessions.id"), nullable=True)
     project_id: Mapped[Optional[int]] = mapped_column(ForeignKey("projects.id"), nullable=True)
     duration_minutes: Mapped[int] = mapped_column(Integer)
     description: Mapped[Optional[str]] = mapped_column(String, nullable=True)

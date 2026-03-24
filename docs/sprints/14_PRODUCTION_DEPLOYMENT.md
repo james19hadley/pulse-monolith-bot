@@ -26,8 +26,13 @@
 - [ ] Execute `bash scripts/deploy.sh` to construct and turn on the services.
 
 ### 4. Health Checks
-- [ ] Confirm `docker compose ps` shows 4 instances `Up`.
+- [x] Confirm `docker compose ps` shows 4 instances `Up`.
 - [ ] Interact with the bot on Telegram and ensure `/start` operates snappily.
 
 ## 🏁 Completion Criteria
 - You can turn off your laptop, and the bot still answers on Telegram and successfully triggers the Celery 5-minute schedule pings.
+
+## Update: Fixes Applied Post-Deployment
+- [x] Fixed `psycopg2.errors.UndefinedTable` by enforcing `init_db()` in `main.py`
+- [x] Relaxed strict `session_id` constraint via `ALTER TABLE time_logs ALTER COLUMN session_id DROP NOT NULL;`
+
