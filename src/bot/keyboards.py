@@ -1,4 +1,5 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 def get_main_menu() -> ReplyKeyboardMarkup:
     """Returns the persistent bottom keyboard menu."""
