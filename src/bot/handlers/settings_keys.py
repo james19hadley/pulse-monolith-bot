@@ -729,12 +729,27 @@ async def process_cutoff_text(message: Message, state: FSMContext):
 async def cq_test_report(callback: CallbackQuery):
     from src.db.repo import SessionLocal
     from src.bot.handlers.utils import get_or_create_user
-    from src.bot.views import generate_evening_report
+    from src.bot.views import build_daily_report
     
     with SessionLocal() as db:
         user = get_or_create_user(db, callback.from_user.id)
-        bot_msg = await callback.message.answer("<i>Generating test report...</i>", parse_mode="HTML")
-        report_text = await generate_evening_report(db, user)
+        
+        # Build mock data for the test report
+        stats = {
+            "total_tracked": 120,
+            "focus_tracked": 90,
+            "habits_list": ["Workout: 1/1", "Reading: 0/1"],
+            "logs_list": ["Did some coding", "Finished the book"]
+        }
+        
+        config = {
+            "persona": user.ai_persona,
+            "report_style": "standard"
+        }
+        
+        # Test AI Comment
+        ai_comment = "<i>(AI Summary would appear here based on your actual daily logs and stats)</i>"
+        report_text = build_daily_report(stats, config, ai_comment)
+        
         await callback.message.answer(report_text, parse_mode="HTML")
-        await callback.message.delete()
         await callback.answer()
