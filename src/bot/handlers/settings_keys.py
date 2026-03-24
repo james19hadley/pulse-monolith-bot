@@ -28,16 +28,36 @@ async def cmd_general_settings(message: Message):
         provider = user.llm_provider or "None"
         persona = user.persona_type or "monolith"
         tz = user.timezone or "UTC"
-        report_time = getattr(user, 'report_time', '20:00 (default)')
+        cutoff = getattr(user, 'day_cutoff_time', '23:00')
+        channel = getattr(user, 'target_channel_id', 'None')
+        catalyst = getattr(user, 'catalyst_threshold_minutes', 60)
+        interval = getattr(user, 'catalyst_interval_minutes', 20)
 
-        text = (
-            "⚙️ <b>Control Panel</b>\n\n"
-            f"<b>Active AI:</b> <code>{provider}</code>\n"
-            f"<b>Persona:</b> <code>{persona}</code>\n"
-            f"<b>Timezone:</b> <code>{tz}</code>\n"
-            f"<b>Reports:</b> <code>{report_time}</code>\n\n"
-            "<i>Select an option below to manage settings:</i>"
-        )
+        # Checking report block config
+        config = user.report_config
+        if isinstance(config, str):
+            import json
+            try:
+                config = json.loads(config)
+            except:
+                config = None
+        if not config:
+            config = {"destination": "dm"}
+            
+        reports = config.get('destination', 'dm')
+
+        text = "⚙️ <b>Pulse Monolith Control Panel</b>\n\n"
+        text += f"<code>catalyst</code>: {catalyst} <i>(Catalyst Ping Threshold)</i>\n"
+        text += f"<code>interval</code>: {interval} <i>(Catalyst Repeat Interval)</i>\n"
+        text += f"<code>channel</code>: {channel} <i>(Target Channel ID)</i>\n"
+        text += f"<code>report</code>: {reports} <i>(Dest: dm / channel / none)</i>\n"
+        text += f"<code>cutoff</code>: {cutoff} <i>(Day Cutoff Time)</i>\n"
+        text += f"<code>timezone</code>: {tz} <i>(Timezone)</i>\n"
+        text += f"<code>persona</code>: {persona} <i>(Bot Persona)</i>\n"
+        text += f"<code>provider</code>: {provider} <i>(Active LLM Provider)</i>\n\n"
+        text += "To change settings, you can simply text me (e.g. <code>'set timezone to Europe/London'</code> or <code>'disable reports'</code>).\n\n"
+        text += "<i>Select an option below for quick actions:</i>"
+
         await message.answer(text, parse_mode="HTML", reply_markup=get_settings_keyboard())
 
 @router.callback_query(F.data.startswith("settings_"))
