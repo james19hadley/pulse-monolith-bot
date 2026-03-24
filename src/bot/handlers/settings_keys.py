@@ -40,25 +40,26 @@ async def cmd_general_settings(message: Message):
         )
         await message.answer(text, parse_mode="HTML", reply_markup=get_settings_keyboard())
 
-@router.callback_query(F.data == "settings_keys")
-async def cq_manage_keys(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_text(
-        "Select your AI Provider to securely configure your API key:",
-        reply_markup=get_providers_keyboard()
-    )
-    await state.set_state(AddKeyState.waiting_for_provider)
-    await callback.answer()
-
-@router.callback_query(F.data.in_({"settings_persona", "settings_timezone", "settings_reports"}))
-async def cq_settings_stubs(callback: CallbackQuery):
-    if callback.data == "settings_persona":
+@router.callback_query(F.data.startswith("settings_"))
+async def cq_settings_stubs(callback: CallbackQuery, state: FSMContext):
+    if callback.data == "settings_keys":
+        await callback.message.edit_text(
+            "Select your AI Provider to securely configure your API key:",
+            reply_markup=get_providers_keyboard()
+        )
+        await state.set_state(AddKeyState.waiting_for_provider)
+        await callback.answer()
+    elif callback.data == "settings_persona":
         msg = "To change persona, just tell me! E.g. 'Act like a sarcastic butler' or use /settings persona sarcastic"
+        await callback.answer(msg, show_alert=True)
     elif callback.data == "settings_timezone":
         msg = "To change timezone, just tell me! E.g. 'Set my timezone to Europe/London'"
-    else:
+        await callback.answer(msg, show_alert=True)
+    elif callback.data == "settings_reports":
         msg = "To change report config, ask me naturally! E.g. 'Move my daily report to 11 PM'"
-    
-    await callback.answer(msg, show_alert=True)
+        await callback.answer(msg, show_alert=True)
+    else:
+        await callback.answer()
 
 @router.message(Command("add_key"))
 async def cmd_add_key_flow(message: Message, state: FSMContext):
