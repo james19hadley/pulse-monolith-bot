@@ -41,3 +41,105 @@ def get_settings_keyboard() -> InlineKeyboardMarkup:
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_back_settings_keyboard() -> InlineKeyboardMarkup:
+    """Keyboard to return to the main settings control panel."""
+    kb = [[InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_persona_keyboard() -> InlineKeyboardMarkup:
+    """Keyboard to pick a bot persona."""
+    kb = [
+        [
+            InlineKeyboardButton(text="⬛ Monolith", callback_data="set_persona_monolith"),
+            InlineKeyboardButton(text="🤖 TARS", callback_data="set_persona_tars")
+        ],
+        [
+            InlineKeyboardButton(text="👩‍💻 Friday", callback_data="set_persona_friday"),
+            InlineKeyboardButton(text="🤵‍♂️ Alfred", callback_data="set_persona_alfred")
+        ],
+        [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_timezone_keyboard() -> InlineKeyboardMarkup:
+    """Keyboard to pick a common timezone."""
+    kb = [
+        [
+            InlineKeyboardButton(text="UTC-5 (EST)", callback_data="set_tz_UTC-5"),
+            InlineKeyboardButton(text="UTC+0 (GMT)", callback_data="set_tz_UTC")
+        ],
+        [
+            InlineKeyboardButton(text="UTC+1 (CET)", callback_data="set_tz_UTC+1"),
+            InlineKeyboardButton(text="UTC+3 (MSK)", callback_data="set_tz_UTC+3")
+        ],
+        [
+            InlineKeyboardButton(text="UTC+8 (CST)", callback_data="set_tz_UTC+8"),
+            InlineKeyboardButton(text="UTC+9 (JST)", callback_data="set_tz_UTC+9")
+        ],
+        [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_reports_keyboard() -> InlineKeyboardMarkup:
+    """Keyboard to select report destination."""
+    kb = [
+        [
+            InlineKeyboardButton(text="📩 Send to DM", callback_data="set_report_dm"),
+            InlineKeyboardButton(text="📢 Send to Channel", callback_data="set_report_channel")
+        ],
+        [InlineKeyboardButton(text="❌ Disable Reports", callback_data="set_report_none")],
+        [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_back_settings_keyboard() -> InlineKeyboardMarkup:
+    """Keyboard to return to the main settings control panel."""
+    kb = [[InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_persona_keyboard() -> InlineKeyboardMarkup:
+    """Keyboard to pick a bot persona."""
+    kb = [
+        [
+            InlineKeyboardButton(text="⬛ Monolith", callback_data="set_persona_monolith"),
+            InlineKeyboardButton(text="🤖 TARS", callback_data="set_persona_tars")
+        ],
+        [
+            InlineKeyboardButton(text="👩‍💻 Friday", callback_data="set_persona_friday"),
+            InlineKeyboardButton(text="🤵‍♂️ Alfred", callback_data="set_persona_alfred")
+        ],
+        [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_timezone_keyboard() -> InlineKeyboardMarkup:
+    """Keyboard to pick a common timezone."""
+    kb = [
+        [
+            InlineKeyboardButton(text="UTC-5 (EST)", callback_data="set_tz_UTC-5"),
+            InlineKeyboardButton(text="UTC+0 (GMT)", callback_data="set_tz_UTC")
+        ],
+        [
+            InlineKeyboardButton(text="UTC+1 (CET)", callback_data="set_tz_UTC+1"),
+            InlineKeyboardButton(text="UTC+3 (MSK)", callback_data="set_tz_UTC+3")
+        ],
+        [
+            InlineKeyboardButton(text="UTC+8 (CST)", callback_data="set_tz_UTC+8"),
+            InlineKeyboardButton(text="UTC+9 (JST)", callback_data="set_tz_UTC+9")
+        ],
+        [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_reports_keyboard() -> InlineKeyboardMarkup:
+    """Keyboard to select report destination."""
+    kb = [
+        [
+            InlineKeyboardButton(text="📩 Send to DM", callback_data="set_report_dm"),
+            InlineKeyboardButton(text="📢 Send to Channel", callback_data="set_report_channel")
+        ],
+        [InlineKeyboardButton(text="❌ Disable Reports", callback_data="set_report_none")],
+        [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)

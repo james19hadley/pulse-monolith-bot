@@ -32,9 +32,6 @@ class SafeLoggingMiddleware(BaseMiddleware):
         data: Dict[str, Any]
     ) -> Any:
         try:
-            # DEBUG: Print exact payload so we see what Telegram sent
-            logging.info(f"DEBUG RAW UPDATE: {event.model_dump_json(exclude_none=True)}")
-            
             if event.message:
                 user_id = event.message.from_user.id if event.message.from_user else "Unknown"
                 text = event.message.text
