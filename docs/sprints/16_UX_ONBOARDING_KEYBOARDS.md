@@ -13,21 +13,29 @@ To avoid cluttering the existing `handlers.py` logic, we will introduce two new 
 ## 📋 Tasks
 
 ### 1. The Warm Onboarding & Views Refactor
-- [ ] Rewrite `welcome_message` in `src/bot/views.py` to be informative and approachable.
-- [ ] Add the hardcoded language disclaimer: *"Message me in any natural language, I understand all languages."*
-- [ ] Provide clear, hardcoded examples of natural language interaction to save AI tokens (e.g., *"Set time like in Huston and post to channel exactly at midnight"*).
+- [x] Rewrite `welcome_message` in `src/bot/views.py` to be informative and approachable.
+- [x] Add the hardcoded language disclaimer: *"Message me in any natural language, I understand all languages."*
+- [x] Provide clear, hardcoded examples of natural language interaction to save AI tokens (e.g., *"Set time like in Huston and post to channel exactly at midnight"*).
 
 ### 2. Main Menu GUI
-- [ ] Create `src/bot/keyboards.py`.
-- [ ] Implement a persistent Reply Keyboard (bottom menu) that gives quick access to the most used functions (e.g., 🟢 Start Session, 🛑 End Session, 📥 Inbox, ⚙️ Settings).
+- [x] Create `src/bot/keyboards.py`.
+- [x] Implement a persistent Reply Keyboard (bottom menu) that gives quick access to the most used functions (e.g., 🟢 Start Session, 🛑 End Session, 📥 Inbox, ⚙️ Settings).
 
 ### 3. Multi-step API Key Setup (FSM)
-- [ ] Define FSM states in `src/bot/states.py` (e.g., `AddKeyState`).
-- [ ] Refactor the `/add_key` handler.
+- [x] Define FSM states in `src/bot/states.py` (e.g., `AddKeyState`).
+- [x] Refactor the API Key handler with inline menus\n- [x] Create interactive menus for Persona, Timezone, and Reports.
     - **Step 1:** User clicks "Add Key". Bot replies: "Select Provider" + Inline Keyboard [Google] [OpenAI] [Anthropic].
     - **Step 2:** User clicks Provider. Bot replies: "Please paste your API key."
     - **Step 3:** Bot securely saves it and exits the FSM state.
 
-## 🏁 Completion Criteria
+
+### 4. Advanced Settings Inline Menus
+- [ ] Add `set_catalyst` inline menus and FSM text inputs (15/30/60/120 min or custom text).
+- [ ] Add `set_interval` inline menus and FSM text inputs.
+- [ ] Add `set_channel` sub-menu and listener to parse channel ID forwards.
+
+### 5. Help / Manual System
+- [ ] Implement a `/manual` or `/faq` command that outputs Telegraph links for Russian and English manuals.
+\n## 🏁 Completion Criteria
 - A new user presses `/start` and receives a beautiful, multi-step welcome message with examples and a bottom-bar menu.
 - Adding an API key is a guided click-and-paste process, not a syntax puzzle.

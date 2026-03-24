@@ -159,3 +159,32 @@ def get_api_keys_manage_keyboard() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_catalyst_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="15 Min", callback_data="set_catalyst_15")
+    builder.button(text="30 Min", callback_data="set_catalyst_30")
+    builder.button(text="60 Min", callback_data="set_catalyst_60")
+    builder.button(text="120 Min", callback_data="set_catalyst_120")
+    builder.button(text="Custom", callback_data="set_catalyst_custom")
+    builder.button(text="🔙 Back", callback_data="settings_main")
+    builder.adjust(2, 2, 1, 1)
+    return builder.as_markup()
+
+def get_interval_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="15 Min", callback_data="set_interval_15")
+    builder.button(text="30 Min", callback_data="set_interval_30")
+    builder.button(text="60 Min", callback_data="set_interval_60")
+    builder.button(text="Custom", callback_data="set_interval_custom")
+    builder.button(text="🔙 Back", callback_data="settings_main")
+    builder.adjust(2, 2, 1)
+    return builder.as_markup()
+
+def get_channel_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Clear Channel", callback_data="set_channel_clear")
+    builder.button(text="Custom", callback_data="set_channel_custom")
+    builder.button(text="🔙 Back", callback_data="settings_main")
+    builder.adjust(1, 1, 1)
+    return builder.as_markup()

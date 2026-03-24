@@ -75,3 +75,15 @@ async def on_my_chat_member(event: ChatMemberUpdated):
                 )
             except Exception:
                 pass
+
+@router.message(Command("faq", "manual"))
+async def cmd_faq(message: Message):
+    faq_text = """
+<b>Pulse Monolith - Documentation</b>
+
+📖 <b>English Manual:</b> <a href="https://telegra.ph/Pulse-Monolith-AI-Bot---Quickstart--FAQ-01-01">Read Here</a>
+🇷🇺 <b>Русский Мануал:</b> <a href="https://telegra.ph/Pulse-Monolith-AI-Bot---Quickstart--FAQ-RU-01-01">Читать здесь</a>
+
+<i>External links will open in Telegraph. Setup guides, command references, and troubleshooting tips are available.</i>
+"""
+    await message.answer(faq_text, parse_mode="HTML", disable_web_page_preview=True)
