@@ -752,7 +752,7 @@ async def cq_test_report(callback: CallbackQuery):
         }
         
         # Test AI Comment
-        ai_comment = "<i>(AI Summary would appear here based on your actual daily logs and stats)</i>"
+        ai_comment = "(AI Summary would appear here based on your actual daily logs and stats)"
         report_text = build_daily_report(stats, config, ai_comment)
         
         await callback.message.answer(report_text, parse_mode="HTML")

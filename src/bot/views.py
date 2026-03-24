@@ -9,6 +9,7 @@ def welcome_message(has_key: bool = False) -> str:
     msg += "<i>Feel free to message me in English, Russian, Spanish, or any other natural language. You don't need to memorize strict commands!</i>\n\n"
     
     msg += "<b>Examples of what you can say:</b>\n"
+    msg += "• <i>\"Расскажи о том что ты умеешь\"</i>\n"
     msg += "• <i>\"Create a new project for learning Python\"</i>\n"
     msg += "• <i>\"I just worked out for 45 minutes\"</i>\n"
     msg += "• <i>\"Set my timezone like in Houston and post my daily report exactly at midnight\"</i>\n\n"
@@ -21,7 +22,8 @@ def welcome_message(has_key: bool = False) -> str:
         msg += "⚠️ <b>Action Required:</b>\n"
         msg += "To start understanding your messages, I need a brain. Please click the <b>⚙️ Settings</b> button below and add your AI Provider key.\n"
     else:
-        msg += "✅ <i>AI Engine Connected. Start typing to begin!</i>\n"
+        msg += "✅ <i>AI Engine Connected. Start typing to begin!</i>\n\n📖 <b>Tip:</b> You can read the guide by clicking the <b>❓ Help</b> button below or using the /help command."
+
 
     return msg
 
