@@ -19,6 +19,7 @@ async def cmd_start(message: Message):
     await message.answer(welcome_message(has_key), parse_mode="HTML", reply_markup=get_main_menu())
 
 @router.message(Command("help"))
+@router.message(F.text == "❓ Help")
 async def cmd_help(message: Message):
     help_text = """
 <b>Pulse Monolith - Manual Overrides</b>

@@ -747,7 +747,7 @@ async def cq_test_report(callback: CallbackQuery):
         }
         
         config = {
-            "persona": user.ai_persona,
+            "persona": user.persona_type,
             "report_style": "standard"
         }
         
