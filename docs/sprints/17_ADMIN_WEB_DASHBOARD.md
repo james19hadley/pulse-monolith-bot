@@ -5,19 +5,22 @@ Build an embedded web dashboard to monitor the bot's health, user metrics, and e
 
 ## Technical Requirements
 1. **Routing:** Add a new GET route `/admin/dashboard` in `src/main.py`.
-2. **Security:** Implement `Basic Auth` middleware/check on the admin route using `ADMIN_LOGIN` and `ADMIN_PASSWORD` (or checking against `ADMIN_ID` via some bot handshake, but simple Basic Auth is easiest).
+2. **Security:** Implement `Basic Auth` middleware/check on the admin route using `ADMIN_LOGIN` and `ADMIN_PASSWORD`.
 3. **Data Source:**
    - DB Queries for simple aggregates: total users, active focus sessions, total tokens used, total time logged today.
    - In-memory `aiogram` status if possible (uptime).
-4. **Presentation:** Return a lightweight, responsive HTML template (can be injected directly into the response or using a tiny engine like `jinja2`). 
+4. **Presentation:** Return a lightweight, responsive HTML template.
    - No external frontend dependencies needed, just simple CSS.
 
-## Logging & Privacy Recap
-(Done in Sprint 16): Logging was restricted globally using `SafeLoggingMiddleware()`. Only message lengths and commands are recorded. No user content (PII) exists in logs. The dashboard will only display aggregate telemetry data.
+## Bonus Items Completed (Hotfixes)
+- Integrated Telegram ChatActionSender (`typing...`) to show smooth ongoing feedback without frustrating pauses.
+- Implemented `_handle_log_work` to process natural language inputs like (8 hours bot dev) and guide developers cleanly through Project creation -> Work logging mapping using LLMs.
+- Fixed 429 quota exceptions and provided user-friendly buttons to replace/refresh API keys dynamically.
+- Removed dead developer scripts and cleared pipeline blockages.
 
 ## Tasks
-- [ ] Parse new ENV variables for HTTP basic auth.
-- [ ] Create simple metrics queries in `repo.py`.
-- [ ] Create HTML string template for the dashboard.
-- [ ] Attach `aiohttp` handler to display the template.
-- [ ] Test via browser with the given domain and route.
+- [x] Parse new ENV variables for HTTP basic auth.
+- [x] Create simple metrics queries in `repo.py`.
+- [x] Create HTML string template for the dashboard.
+- [x] Attach `aiohttp` handler to display the template.
+- [x] Test via browser with the given domain and route.
