@@ -5,7 +5,7 @@ from src.db.repo import SessionLocal
 from src.bot.handlers.utils import get_or_create_user, log_tokens
 from src.core.security import decrypt_key
 from src.core.constants import IntentType
-from src.ai.router import get_intent, extract_system_config, extract_entities, generate_chat, extract_log_habit
+from src.ai.router import get_intent, extract_system_config, extract_entities, generate_chat, extract_log_habit, extract_log_work
 from src.core.config import USER_SETTINGS_REGISTRY
 from src.core.personas import get_persona_prompt
 from src.bot.handlers.settings_keys import cmd_test_report
@@ -43,7 +43,7 @@ async def handle_freeform_text(message: Message):
         elif intent == IntentType.LOG_HABIT:
             return await _handle_log_habit(message, db, user, provider_name, real_api_key)
         elif intent == IntentType.LOG_WORK:
-            await message.answer("Please use <code>/log &lt;minutes&gt; [description]</code> to log time.", parse_mode="HTML")
+            return await _handle_log_work(message, db, user, provider_name, real_api_key)
         elif intent == IntentType.GENERATE_REPORT:
             return await cmd_test_report(message)
         elif intent == IntentType.ERROR:
@@ -162,7 +162,7 @@ async def _handle_log_habit(message: Message, db, user, provider_name, api_key):
         active_habits_text = "User's active habits:\n" + "\n".join([f"ID: {h.id}, Title: {h.title}" for h in habits])
 
     # 2. Call AI extraction
-    extraction, tokens = extract_log_habit(message.text, provider_name, api_key, active_habits_text)
+    extraction, tokens = extract_log_habit, extract_log_work(message.text, provider_name, api_key, active_habits_text)
     
     if tokens:
         log_tokens(db, message.from_user.id, tokens)
@@ -236,3 +236,37 @@ async def cq_undo_habit(callback: aiogram.types.CallbackQuery):
             await callback.message.edit_text(f"↩️ Undid {count} completions for <b>{habit.title}</b>. Total is now {habit.completions}.", parse_mode="HTML")
         else:
             await callback.message.edit_text("❌ Could not undo (habit might not exist or count is too low).", parse_mode="HTML")
+
+@router.callback_query(F.data.startswith("create_project_"))
+async def cq_create_project(callback: aiogram.types.CallbackQuery):
+    title = callback.data.replace("create_project_", "")
+    with SessionLocal() as db:
+        user = get_or_create_user(db, callback.from_user.id)
+        from src.db.models import Project
+        project = Project(user_id=user.id, title=title)
+        db.add(project)
+        db.commit()
+        db.refresh(project)
+        await callback.message.edit_text(f"✅ Project created: <b>{project.title}</b>! Try logging time to it again.", parse_mode="HTML")
+
+@router.callback_query(F.data.startswith("undo_work_"))
+async def cq_undo_work(callback: aiogram.types.CallbackQuery):
+    log_id_str = callback.data.replace("undo_work_", "")
+    log_id = int(log_id_str)
+    
+    with SessionLocal() as db:
+        from src.db.models import TimeLog, Project
+        user = get_or_create_user(db, callback.from_user.id)
+        log = db.query(TimeLog).filter_by(id=log_id, user_id=user.id).first()
+        if log:
+            project = db.query(Project).filter_by(id=log.project_id).first()
+            if project:
+                project.total_minutes_spent -= log.duration_minutes
+                if project.total_minutes_spent < 0:
+                    project.total_minutes_spent = 0
+            
+            db.delete(log)
+            db.commit()
+            await callback.message.edit_text(f"↩️ Undid {log.duration_minutes}m log.", parse_mode="HTML")
+        else:
+            await callback.message.edit_text("❌ Could not undo (log might not exist or already undone).", parse_mode="HTML")

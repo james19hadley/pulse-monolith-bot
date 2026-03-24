@@ -12,6 +12,7 @@ class IntentResponse(BaseModel):
 class LogWorkParams(BaseModel):
     duration_minutes: int = Field(description="The total time spent, strictly converted to minutes. E.g., '1.5 hours' becomes 90.")
     project_id: Optional[int] = Field(description="The integer ID of the matching project. Null if no project matches.", default=None)
+    unmatched_project_name: Optional[str] = Field(description="If no project matches, provide the inferred name of the project here", default=None)
     description: Optional[str] = Field(description="A brief 1-5 word summary of what was done.", default=None)
 
 class LogHabitParams(BaseModel):
