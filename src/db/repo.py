@@ -10,9 +10,24 @@ load_dotenv()
 # Get DB URL, fallback to local sqlite if not found
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///db.sqlite3")
 
-# Create engine
-# echo=True will print the generated SQL to the console for learning/debugging
-engine = create_engine(DATABASE_URL, echo=True)
+# Fix for older docker/heroku setups that might use 'postgres://' instead of 'postgresql://'
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# SQLite strictly needs check_same_thread=False, but Postgres rejects it
+# Turn off echo in production so we don't spam the logs with SQL queries
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(
+        DATABASE_URL, 
+        connect_args={"check_same_thread": False},
+        echo=False
+    )
+else:
+    # PostgreSQL connection
+    engine = create_engine(
+        DATABASE_URL,
+        echo=False
+    )
 
 # Create a customized Session class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

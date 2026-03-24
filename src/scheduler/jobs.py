@@ -1,3 +1,4 @@
+import os
 import asyncio
 from datetime import datetime, timedelta, time
 from sqlalchemy.orm import Session as DBSession
@@ -10,11 +11,21 @@ from src.bot.views import catalyst_ping_message, stale_session_closed_message, b
 from src.ai.providers import GoogleProvider
 from src.core.security import decrypt_key
 
+from celery import shared_task
+from src.scheduler.tasks import run_async
+
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+if not BOT_TOKEN:
+    bot = None
+else:
+    bot = Bot(token=BOT_TOKEN)
+
 # In-memory storage for last ping message ids and timestamps
 last_ping_message_ids = {}
 last_ping_timestamps = {}
 
-async def catalyst_heartbeat(bot: Bot):
+@shared_task(name="job_catalyst_heartbeat")
+def catalyst_heartbeat():
     """
     Runs periodically. Checks for active sessions that have been idle
     (no time logs) for over the user's threshold. Sends a soft ping.
@@ -51,22 +62,25 @@ async def catalyst_heartbeat(bot: Bot):
                 # Delete old ping message if exists
                 if telegram_id in last_ping_message_ids:
                     try:
-                        await bot.delete_message(chat_id=telegram_id, message_id=last_ping_message_ids[telegram_id])
+                        if bot:
+                            run_async(bot.delete_message(chat_id=telegram_id, message_id=last_ping_message_ids[telegram_id]))
                     except Exception:
                         pass
                 
                 hours_idle = round((now - idle_since).total_seconds() / 3600, 1)
                 try:
-                    msg = await bot.send_message(
-                        chat_id=telegram_id, 
-                        text=catalyst_ping_message(hours_idle)
-                    )
-                    last_ping_message_ids[telegram_id] = msg.message_id
-                    last_ping_timestamps[telegram_id] = now
+                    if bot:
+                        msg = run_async(bot.send_message(
+                            chat_id=telegram_id, 
+                            text=catalyst_ping_message(hours_idle)
+                        ))
+                        last_ping_message_ids[telegram_id] = msg.message_id
+                        last_ping_timestamps[telegram_id] = now
                 except Exception as e:
                     print(f"Failed to send ping to {telegram_id}: {e}")
 
-async def stale_session_killer(bot: Bot):
+@shared_task(name="job_stale_session_killer")
+def stale_session_killer():
     """
     Runs periodically (e.g. every hour). Ends sessions that have been open for over 16 hours.
     """
@@ -87,16 +101,17 @@ async def stale_session_killer(bot: Bot):
                 db.commit()
                 
                 user = db.query(User).filter(User.id == session.user_id).first()
-                if user:
+                if user and bot:
                     try:
-                        await bot.send_message(
+                        run_async(bot.send_message(
                             chat_id=user.telegram_id,
                             text=stale_session_closed_message()
-                        )
+                        ))
                     except Exception as e:
                         print(f"Failed to send stale session notice to {user.telegram_id}: {e}")
 
-async def daily_accountability_job(bot: Bot):
+@shared_task(name="job_daily_accountability")
+def daily_accountability_job():
     """
     Runs periodically (e.g. every hour) to build and post daily accountability reports
     for users whose day_cutoff_time has just passed.
@@ -166,11 +181,12 @@ async def daily_accountability_job(bot: Bot):
                 # Build report via views
                 report_text = build_daily_report(stats, config, ai_comment)
                 
-                try:
-                    await bot.send_message(
-                        chat_id=target_chat_id,
-                        text=report_text,
-                        parse_mode="HTML"
-                    )
-                except Exception as e:
-                    print(f"Failed to send accountability report to {target_chat_id}: {e}")
+                if bot:
+                    try:
+                        run_async(bot.send_message(
+                            chat_id=target_chat_id,
+                            text=report_text,
+                            parse_mode="HTML"
+                        ))
+                    except Exception as e:
+                        print(f"Failed to send accountability report to {target_chat_id}: {e}")

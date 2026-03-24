@@ -29,3 +29,4 @@ This document stores brilliant ideas, architectural improvements, and "nice-to-h
 **Solution:**
 - Generate graphs using matplotlib/plotly showing "The Void" vs. "Focused Time" over weeks or months.
 - Goal: Visually map a user's life hours, showing exactly where time was lost and where progress was made. Currently low priority.
+- Monetization & AI Proxy (SaaS Subscriptions/Telegram Payments)

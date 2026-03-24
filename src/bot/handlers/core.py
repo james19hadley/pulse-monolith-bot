@@ -15,7 +15,7 @@ async def cmd_start(message: Message):
         user = get_or_create_user(db, message.from_user.id)
         has_key = bool(user.api_keys)
         
-    await message.answer(welcome_message(has_key))
+    await message.answer(welcome_message(has_key), parse_mode="HTML")
 
 @router.message(Command("help"))
 async def cmd_help(message: Message):
@@ -41,7 +41,7 @@ Talk to me naturally, but if the AI is slow or offline, use these slash commands
 <code>/test_report</code> - Force generate your daily report
 
 <b>API Keys</b>
-<code>/set_key &lt;provider&gt; &lt;key&gt; [name]</code> - Set your API key
+<code>/add_key &lt;provider&gt; &lt;key&gt; [name]</code> - Set your API key
 <code>/my_key</code> - Check your current aliases
 <code>/delete_key &lt;name&gt;</code> - Remove an alias
 """

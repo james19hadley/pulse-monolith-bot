@@ -4,9 +4,9 @@
 def welcome_message(has_key: bool = False) -> str:
     msg = "Identity verified. I am the Pulse Monolith. Strict monitoring protocol activated.\n\n"
     if not has_key:
-        msg += "⚠️ Warning: No AI provider key detected. Please set your API key using:\n<code>/set_key &lt;provider&gt; &lt;your_api_key&gt;</code>\n"
+        msg += "⚠️ Warning: No AI provider key detected. Please set your API key using:\n<code>/add_key &lt;provider&gt; &lt;your_api_key&gt;</code>\n"
         msg += "<i>Available providers: <code>google</code>, <code>openai</code>, <code>anthropic</code></i>\n"
-        msg += "<i>Example:</i> <code>/set_key google AIzaSy...</code>\n\n"
+        msg += "<i>Example:</i> <code>/add_key google AIzaSy...</code>\n\n"
     msg += "Use /start_session to begin a work block."
     return msg
 

@@ -14,28 +14,28 @@
 ## 📋 Tasks
 
 ### 1. Database Migration (PostgreSQL)
-- [ ] Add `psycopg2-binary` (or `asyncpg`) to `requirements.txt`.
-- [ ] Update `src/db/repo.py` to connect via `DATABASE_URL` environment variable matching the Postgres container.
-- [ ] Validate Alembic/SQLAlchemy can successfully build the schema into Postgres.
+- [x] Add `psycopg2-binary` (or `asyncpg`) to `requirements.txt`.
+- [x] Update `src/db/repo.py` to connect via `DATABASE_URL` environment variable matching the Postgres container.
+- [x] Validate Alembic/SQLAlchemy can successfully build the schema into Postgres.
 
 ### 2. Task Queue (Celery + Redis)
-- [ ] Add `celery` and `redis` to `requirements.txt`.
-- [ ] Setup `src/worker.py` (Celery app initialization).
-- [ ] Extract jobs from `src/scheduler/jobs.py` into Celery tasks.
-- [ ] Re-wire `trigger_catalyst_ping` so it enqueues a Celery task with an ETA (Estimated Time of Arrival) instead of using in-memory APScheduler logic.
-- [ ] Setup Celery Beat for scheduled intervals (like the midnight `daily_accountability_job`).
+- [x] Add `celery` and `redis` to `requirements.txt`.
+- [x] Setup `src/worker.py` (Celery app initialization).
+- [x] Extract jobs from `src/scheduler/jobs.py` into Celery tasks.
+- [x] Re-wire `trigger_catalyst_ping` so it enqueues a Celery task with an ETA (Estimated Time of Arrival) instead of using in-memory APScheduler logic.
+- [x] Setup Celery Beat for scheduled intervals (like the midnight `daily_accountability_job`).
 
 ### 3. Containerization (Docker)
-- [ ] Create a robust `Dockerfile` for the Python application.
-- [ ] Create `docker-compose.yml` to orchestrate 4 services: 
+- [x] Create a robust `Dockerfile` for the Python application.
+- [x] Create `docker-compose.yml` to orchestrate 4 services: 
   1. `db` (Postgres)
   2. `redis` (Message Broker)
   3. `bot` (The main aiogram runner)
   4. `worker` (Celery worker process for background tasks)
 
 ### 4. Configuration & Environment
-- [ ] Update `.env.example` with Postgres/Redis connection strings.
-- [ ] Make sure bot fails gracefully if `DATABASE_URL` is missing.
+- [x] Update `.env.example` with Postgres/Redis connection strings.
+- [x] Make sure bot fails gracefully if `DATABASE_URL` is missing.
 
 ## 🏁 Completion Criteria
 - You can run `docker compose up --build -d` and the entire bot ecosystem starts seamlessly.
