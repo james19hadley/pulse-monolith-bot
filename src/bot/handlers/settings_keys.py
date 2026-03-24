@@ -13,13 +13,55 @@ from src.bot.views import stats_message, build_daily_report
 from src.core.security import encrypt_key, decrypt_key
 from src.ai.providers import GoogleProvider
 from src.bot.handlers.utils import get_or_create_user
-from src.bot.keyboards import get_providers_keyboard
+from src.bot.keyboards import get_providers_keyboard, get_settings_keyboard
 from src.bot.states import AddKeyState
 
 router = Router()
-@router.message(Command("add_key"))
+
 @router.message(F.text == "⚙️ Settings")
-async def cmd_settings_menu(message: Message, state: FSMContext):
+async def cmd_general_settings(message: Message):
+    if not message.from_user:
+        return
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        
+        provider = user.llm_provider or "None"
+        persona = user.persona or "monolith"
+        tz = user.timezone or "UTC"
+        report_time = getattr(user, 'report_time', '20:00 (default)')
+
+        text = (
+            "⚙️ <b>Control Panel</b>\n\n"
+            f"<b>Active AI:</b> <code>{provider}</code>\n"
+            f"<b>Persona:</b> <code>{persona}</code>\n"
+            f"<b>Timezone:</b> <code>{tz}</code>\n"
+            f"<b>Reports:</b> <code>{report_time}</code>\n\n"
+            "<i>Select an option below to manage settings:</i>"
+        )
+        await message.answer(text, parse_mode="HTML", reply_markup=get_settings_keyboard())
+
+@router.callback_query(F.data == "settings_keys")
+async def cq_manage_keys(callback: CallbackQuery, state: FSMContext):
+    await callback.message.edit_text(
+        "Select your AI Provider to securely configure your API key:",
+        reply_markup=get_providers_keyboard()
+    )
+    await state.set_state(AddKeyState.waiting_for_provider)
+    await callback.answer()
+
+@router.callback_query(F.data.in_({"settings_persona", "settings_timezone", "settings_reports"}))
+async def cq_settings_stubs(callback: CallbackQuery):
+    if callback.data == "settings_persona":
+        msg = "To change persona, just tell me! E.g. 'Act like a sarcastic butler' or use /settings persona sarcastic"
+    elif callback.data == "settings_timezone":
+        msg = "To change timezone, just tell me! E.g. 'Set my timezone to Europe/London'"
+    else:
+        msg = "To change report config, ask me naturally! E.g. 'Move my daily report to 11 PM'"
+    
+    await callback.answer(msg, show_alert=True)
+
+@router.message(Command("add_key"))
+async def cmd_add_key_flow(message: Message, state: FSMContext):
     await message.answer(
         "Select your AI Provider to securely configure your API key:",
         reply_markup=get_providers_keyboard()
