@@ -1,16 +1,17 @@
 from typing import Optional, Tuple
-from src.ai.providers import GoogleProvider, LogWorkParams, LogHabitParams, AddInboxParams, SessionControlParams, ReportConfigParams, SystemConfigParams
+from src.ai.providers import GoogleProvider, LogWorkParams, LogHabitParams, AddInboxParams, SessionControlParams, ReportConfigParams, SystemConfigParams, CreateEntitiesParams
 from src.core.constants import IntentType
 
-def get_intent(user_text: str, provider_name: str, api_key: str) -> Tuple[IntentType, dict]:
+def get_intent(user_text: str, provider_name: str, api_key: str) -> Tuple[IntentType, dict, Optional[str]]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
-            return provider.classify_intent(user_text)
+            intent, tokens = provider.classify_intent(user_text)
+            return intent, tokens, None
         except Exception as e:
             print(f'LLM Error: {e}')
-            return IntentType.ERROR, {}
-    return IntentType.UNKNOWN_PROVIDER, {}
+            return IntentType.ERROR, {}, str(e)
+    return IntentType.UNKNOWN_PROVIDER, {}, "Unknown provider"
 
 def extract_log_work(user_text: str, provider_name: str, api_key: str, active_projects_text: str) -> Tuple[Optional[LogWorkParams], dict]:
     if provider_name == 'google':
@@ -69,5 +70,25 @@ def extract_system_config(user_text: str, provider_name: str, api_key: str, regi
             return provider.extract_system_config(user_text, registry_keys)
         except Exception as e:
             print(f'LLM Extraction Error: {e}')
+            return None, {}
+    return None, {}
+
+def extract_entities(user_text: str, provider_name: str, api_key: str) -> Tuple[Optional[CreateEntitiesParams], dict]:
+    if provider_name == 'google':
+        provider = GoogleProvider(api_key=api_key)
+        try:
+            return provider.extract_create_entities(user_text)
+        except Exception as e:
+            print(f'LLM Extraction Error: {e}')
+            return None, {}
+    return None, {}
+
+def generate_chat(user_text: str, provider_name: str, api_key: str, persona_prompt: str) -> Tuple[Optional[str], dict]:
+    if provider_name == 'google':
+        provider = GoogleProvider(api_key=api_key)
+        try:
+            return provider.generate_chat_response(user_text, persona_prompt)
+        except Exception as e:
+            print(f'LLM Chat Error: {e}')
             return None, {}
     return None, {}

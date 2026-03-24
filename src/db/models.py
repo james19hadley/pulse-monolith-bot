@@ -40,6 +40,33 @@ class User(Base):
     target_channel_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     report_config: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)
 
+    @property
+    def api_keys(self) -> dict:
+        import json
+        if not self.api_key_encrypted:
+            return {}
+        if self.api_key_encrypted.startswith('{'):
+            try:
+                data = json.loads(self.api_key_encrypted)
+                # auto-migrate old formats
+                res = {}
+                for k, v in data.items():
+                    if isinstance(v, str):
+                        res[k] = {"provider": k, "key": v}
+                    else:
+                        res[k] = v
+                return res
+            except:
+                return {}
+        return {self.llm_provider: {"provider": self.llm_provider, "key": self.api_key_encrypted}}
+
+    def set_api_keys(self, keys_dict: dict):
+        import json
+        if not keys_dict:
+            self.api_key_encrypted = None
+        else:
+            self.api_key_encrypted = json.dumps(keys_dict)
+
 class Session(Base):
     __tablename__ = "sessions"
     
