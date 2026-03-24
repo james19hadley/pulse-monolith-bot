@@ -61,7 +61,8 @@ class User(Base):
                 return {}
         return {self.llm_provider: {"provider": self.llm_provider, "key": self.api_key_encrypted}}
 
-    def set_api_keys(self, keys_dict: dict):
+    @api_keys.setter
+    def api_keys(self, keys_dict: dict):
         import json
         if not keys_dict:
             self.api_key_encrypted = None

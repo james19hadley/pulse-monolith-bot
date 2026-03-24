@@ -13,8 +13,8 @@ from src.bot.views import stats_message, build_daily_report
 from src.core.security import encrypt_key, decrypt_key
 from src.ai.providers import GoogleProvider
 from src.bot.handlers.utils import get_or_create_user
-from src.bot.keyboards import get_providers_keyboard, get_settings_keyboard, get_persona_keyboard, get_reports_keyboard, get_timezone_keyboard, get_back_settings_keyboard
-from src.bot.states import AddKeyState
+from src.bot.keyboards import get_providers_keyboard, get_settings_keyboard, get_persona_keyboard, get_reports_keyboard, get_timezone_keyboard, get_back_settings_keyboard, get_api_keys_manage_keyboard
+from src.bot.states import AddKeyState, SettingsState, SettingsState
 
 router = Router()
 
@@ -101,6 +101,22 @@ async def cmd_general_settings(message: Message):
 async def cq_settings_stubs(callback: CallbackQuery, state: FSMContext):
     try:
         if callback.data == "settings_keys":
+            with SessionLocal() as db:
+                user = get_or_create_user(db, callback.from_user.id)
+                keys = user.api_keys or {}
+                if not keys:
+                    msg = "<b>API Keys</b>\n\nYou have no keys configured yet."
+                else:
+                    msg = "<b>API Keys</b>\n\nYou have configured:\n"
+                    for k in keys.keys():
+                        msg += f"✅ <code>{k}</code>\n"
+            await callback.message.edit_text(
+                msg,
+                reply_markup=get_api_keys_manage_keyboard(),
+                parse_mode="HTML"
+            )
+            await callback.answer()
+        elif callback.data == "settings_add_key":
             await callback.message.edit_text(
                 "Select your AI Provider to securely configure your API key:",
                 reply_markup=get_providers_keyboard()
@@ -111,12 +127,14 @@ async def cq_settings_stubs(callback: CallbackQuery, state: FSMContext):
             await callback.message.edit_text("<b>Choose a Persona:</b>\n\nEach persona has a different style.", parse_mode="HTML", reply_markup=get_persona_keyboard())
             await callback.answer()
         elif callback.data == "settings_timezone":
-            await callback.message.edit_text("<b>Select your Timezone:</b>", parse_mode="HTML", reply_markup=get_timezone_keyboard())
+            await callback.message.edit_text("<b>Select your Timezone:</b>\n\nChoose from below, or just type your city/offset in the chat (e.g. 'Moscow', 'UTC+3', '+03:00') right now.", parse_mode="HTML", reply_markup=get_timezone_keyboard())
+            await state.set_state(SettingsState.waiting_for_tz_text)
             await callback.answer()
         elif callback.data == "settings_reports":
             await callback.message.edit_text("<b>Report Destination:</b>\n\nWhere should I send your daily Evening Report?", parse_mode="HTML", reply_markup=get_reports_keyboard())
             await callback.answer()
         elif callback.data == "settings_back":
+            await state.clear()
             with SessionLocal() as db:
                 user = get_or_create_user(db, callback.from_user.id)
                 text = get_control_panel_text(user)
@@ -153,7 +171,10 @@ async def process_provider_selection(callback: CallbackQuery, state: FSMContext)
 @router.callback_query(F.data == "cancel_fsm")
 async def process_fsm_cancel(callback: CallbackQuery, state: FSMContext):
     await state.clear()
-    await callback.message.edit_text("❌ Operation cancelled.")
+    with SessionLocal() as db:
+        user = get_or_create_user(db, callback.from_user.id)
+        text = get_control_panel_text(user)
+        await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_settings_keyboard())
     await callback.answer()
 
 @router.message(AddKeyState.waiting_for_key)
@@ -436,3 +457,27 @@ async def cq_set_report(callback: CallbackQuery):
         text = get_control_panel_text(user)
         await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_settings_keyboard())
     await callback.answer(f"Report destination set to {dest}!")
+
+@router.message(SettingsState.waiting_for_tz_text)
+async def process_manual_tz(message: Message, state: FSMContext):
+    tz = message.text.strip()
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        user.timezone = tz
+        db.commit()
+        db.refresh(user)
+        text = get_control_panel_text(user)
+        await message.answer(f"✅ Timezone set to {tz}\n\n" + text, parse_mode="HTML", reply_markup=get_settings_keyboard())
+    await state.clear()
+
+@router.message(SettingsState.waiting_for_tz_text)
+async def process_manual_tz(message: Message, state: FSMContext):
+    tz = message.text.strip()
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        user.timezone = tz
+        db.commit()
+        db.refresh(user)
+        text = get_control_panel_text(user)
+        await message.answer(f"✅ Timezone set to {tz}\n\n" + text, parse_mode="HTML", reply_markup=get_settings_keyboard())
+    await state.clear()
