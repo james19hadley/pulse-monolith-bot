@@ -38,6 +38,13 @@ def get_settings_keyboard() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton(text="🌍 Timezone", callback_data="settings_timezone"),
             InlineKeyboardButton(text="📊 Reports", callback_data="settings_reports")
+        ],
+        [
+            InlineKeyboardButton(text="⏱️ Catalyst", callback_data="settings_catalyst"),
+            InlineKeyboardButton(text="🔁 Interval", callback_data="settings_interval")
+        ],
+        [
+            InlineKeyboardButton(text="📢 Channel", callback_data="settings_channel")
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
