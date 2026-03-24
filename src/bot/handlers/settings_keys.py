@@ -104,7 +104,7 @@ async def cmd_general_settings(message: Message):
 
         await message.answer(text, parse_mode="HTML", reply_markup=get_settings_keyboard())
 
-@router.callback_query(F.data.in_({"settings_keys", "settings_add_key", "settings_persona", "settings_timezone", "settings_reports", "settings_back", "settings_main", "settings_pulse", "settings_cutoff"}))
+@router.callback_query(F.data.in_({"settings_keys", "settings_add_key", "settings_persona", "settings_timezone", "settings_reports", "settings_back", "settings_main"}))
 async def cq_settings_stubs(callback: CallbackQuery, state: FSMContext):
     try:
         if callback.data == "settings_keys":
