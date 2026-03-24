@@ -493,11 +493,16 @@ async def process_manual_tz(message: Message, state: FSMContext):
 # --- Catalyst ---
 @router.callback_query(F.data == "settings_catalyst")
 async def cq_settings_catalyst(callback: CallbackQuery):
-    await callback.message.edit_text(
-        "⏱️ <b>Catalyst Limit</b> (Minutes)\n\nHow long before an overdue habit pushes a notification?",
-        reply_markup=get_catalyst_keyboard(),
-        parse_mode="HTML"
-    )
+    with SessionLocal() as db:
+        from src.bot.handlers.utils import get_or_create_user
+        user = get_or_create_user(db, callback.from_user.id)
+        current = getattr(user, 'catalyst_limit', 60)
+    text = f"⏱️ <b>Catalyst Limit</b> (Minutes)
+
+<i>How much time should pass after the deadline before I notify you?</i>
+
+<b>Current:</b> <code>{current}</code>"
+    await callback.message.edit_text(text, reply_markup=get_catalyst_keyboard(), parse_mode="HTML")
 
 @router.callback_query(F.data.startswith("set_catalyst_"))
 async def cq_set_catalyst_action(callback: CallbackQuery, state: FSMContext):
@@ -542,11 +547,16 @@ async def process_catalyst_text(message: Message, state: FSMContext):
 # --- Interval ---
 @router.callback_query(F.data == "settings_interval")
 async def cq_settings_interval(callback: CallbackQuery):
-    await callback.message.edit_text(
-        "⏱️ <b>Ping Interval</b> (Minutes)\n\nHow often should I ping you if you are overdue?",
-        reply_markup=get_interval_keyboard(),
-        parse_mode="HTML"
-    )
+    with SessionLocal() as db:
+        from src.bot.handlers.utils import get_or_create_user
+        user = get_or_create_user(db, callback.from_user.id)
+        current = getattr(user, 'interval_limit', 20)
+    text = f"⏱️ <b>Ping Interval</b> (Minutes)
+
+<i>How often should I ping you to remind you about the overdue habit?</i>
+
+<b>Current:</b> <code>{current}</code>"
+    await callback.message.edit_text(text, reply_markup=get_interval_keyboard(), parse_mode="HTML")
 
 @router.callback_query(F.data.startswith("set_interval_"))
 async def cq_set_interval_action(callback: CallbackQuery, state: FSMContext):
@@ -591,11 +601,16 @@ async def process_interval_text(message: Message, state: FSMContext):
 # --- Channel ---
 @router.callback_query(F.data == "settings_channel")
 async def cq_settings_channel(callback: CallbackQuery):
-    await callback.message.edit_text(
-        "📣 <b>Target Channel</b>\n\nWhere should I post reports?",
-        reply_markup=get_channel_keyboard(),
-        parse_mode="HTML"
-    )
+    with SessionLocal() as db:
+        from src.bot.handlers.utils import get_or_create_user
+        user = get_or_create_user(db, callback.from_user.id)
+        current = getattr(user, 'target_channel_id', 'None')
+    text = f"📣 <b>Target Channel</b>
+
+Where should I post reports?
+
+<b>Current:</b> <code>{current}</code>"
+    await callback.message.edit_text(text, reply_markup=get_channel_keyboard(), parse_mode="HTML")
 
 @router.callback_query(F.data.startswith("set_channel_"))
 async def cq_set_channel_action(callback: CallbackQuery, state: FSMContext):
@@ -636,20 +651,42 @@ async def process_channel_text(message: Message, state: FSMContext):
 # --- Pulse Intervals Menu ---
 @router.callback_query(F.data == "settings_pulse")
 async def cq_settings_pulse(callback: CallbackQuery):
-    await callback.message.edit_text(
-        "💓 <b>Pulse Intervals</b>\n\nConfigure the catalyst threshold and ping frequency for your overdue habits.",
-        reply_markup=get_pulse_menu_keyboard(),
-        parse_mode="HTML"
+    with SessionLocal() as db:
+        from src.bot.handlers.utils import get_or_create_user
+        user = get_or_create_user(db, callback.from_user.id)
+        catalyst = getattr(user, 'catalyst_limit', 60)
+        interval = getattr(user, 'interval_limit', 20)
+    
+    text = (
+        "💓 <b>Pulse Intervals</b>
+
+"
+        "• <b>Catalyst Limit</b>: How long (in minutes) to wait after a deadline before pushing the first notification.
+"
+        "• <b>Ping Interval</b>: How frequently (in minutes) to repeat the notification if the habit remains overdue.
+
+"
+        f"<b>Current Settings:</b>
+"
+        f"Catalyst: <code>{catalyst}</code> min
+"
+        f"Ping: <code>{interval}</code> min"
     )
+    await callback.message.edit_text(text, reply_markup=get_pulse_menu_keyboard(), parse_mode="HTML")
 
 # --- Cutoff Time ---
 @router.callback_query(F.data == "settings_cutoff")
 async def cq_settings_cutoff(callback: CallbackQuery):
-    await callback.message.edit_text(
-        "⏰ <b>Report Time (Day Cutoff)</b>\n\nWhen does your day end? I will send your Daily Accountability Report and wipe habits at this time.",
-        reply_markup=get_cutoff_keyboard(),
-        parse_mode="HTML"
-    )
+    with SessionLocal() as db:
+        from src.bot.handlers.utils import get_or_create_user
+        user = get_or_create_user(db, callback.from_user.id)
+        current = getattr(user, 'day_cutoff_time', '23:00')
+    text = f"⏰ <b>Day Cutoff Time</b>
+
+At what time should the day end for reporting purposes? (Format: HH:MM)
+
+<b>Current:</b> <code>{current}</code>"
+    await callback.message.edit_text(text, reply_markup=get_cutoff_keyboard(), parse_mode="HTML")
 
 @router.callback_query(F.data.startswith("set_cutoff_"))
 async def cq_set_cutoff_action(callback: CallbackQuery, state: FSMContext):
