@@ -18,56 +18,57 @@ async def handle_unknown_command(message: Message):
 
 @router.message()
 async def handle_freeform_text(message: Message):
-    await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
+    from aiogram.utils.chat_action import ChatActionSender
+    async with ChatActionSender.typing(bot=message.bot, chat_id=message.chat.id):
     
-    with SessionLocal() as db:
-        user = get_or_create_user(db, message.from_user.id)
+        with SessionLocal() as db:
+            user = get_or_create_user(db, message.from_user.id)
         
-        keys = user.api_keys
-        if not keys or user.llm_provider not in keys:
-            await message.answer("Please configure an API key using `/add_key google <your_key>`", parse_mode="HTML")
-            return
+            keys = user.api_keys
+            if not keys or user.llm_provider not in keys:
+                await message.answer("Please configure an API key using `/add_key google <your_key>`", parse_mode="HTML")
+                return
 
-        active_key_data = keys[user.llm_provider]
-        provider_name = active_key_data["provider"]
-        real_api_key = decrypt_key(active_key_data["key"])
+            active_key_data = keys[user.llm_provider]
+            provider_name = active_key_data["provider"]
+            real_api_key = decrypt_key(active_key_data["key"])
 
-        intent, tokens, error_msg = get_intent(message.text, provider_name, real_api_key)
-        if tokens:
-            log_tokens(db, message.from_user.id, tokens)
+            intent, tokens, error_msg = get_intent(message.text, provider_name, real_api_key)
+            if tokens:
+                log_tokens(db, message.from_user.id, tokens)
 
-        if intent == IntentType.SYSTEM_CONFIG:
-            return await _handle_config_update(message, db, user, provider_name, real_api_key)
-        elif intent == IntentType.CREATE_ENTITIES:
-            return await _handle_create_entities(message, db, user, provider_name, real_api_key)
-        elif intent == IntentType.LOG_HABIT:
-            return await _handle_log_habit(message, db, user, provider_name, real_api_key)
-        elif intent == IntentType.LOG_WORK:
-            return await _handle_log_work(message, db, user, provider_name, real_api_key)
-        elif intent == IntentType.GENERATE_REPORT:
-            return await cmd_test_report(message)
-        elif intent == IntentType.ERROR:
-            import html
-            raw_err = str(error_msg) if error_msg else ""
-            safe_err = html.escape(raw_err) if raw_err else "Unknown API error"
+            if intent == IntentType.SYSTEM_CONFIG:
+                return await _handle_config_update(message, db, user, provider_name, real_api_key)
+            elif intent == IntentType.CREATE_ENTITIES:
+                return await _handle_create_entities(message, db, user, provider_name, real_api_key)
+            elif intent == IntentType.LOG_HABIT:
+                return await _handle_log_habit(message, db, user, provider_name, real_api_key)
+            elif intent == IntentType.LOG_WORK:
+                return await _handle_log_work(message, db, user, provider_name, real_api_key)
+            elif intent == IntentType.GENERATE_REPORT:
+                return await cmd_test_report(message)
+            elif intent == IntentType.ERROR:
+                import html
+                raw_err = str(error_msg) if error_msg else ""
+                safe_err = html.escape(raw_err) if raw_err else "Unknown API error"
             
-            if "429" in raw_err or "quota" in raw_err.lower():
-                from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-                keyboard = InlineKeyboardMarkup(inline_keyboard=[[
-                    InlineKeyboardButton(text="🔑 Add / Change API Key", callback_data="settings_keys")
-                ]])
-                msg = (
-                    "⚠️ <b>AI Provider Quota Exceeded</b>\n\n"
-                    "It looks like you've hit the limit for the current API key. "
-                    "Please add a new key or switch AI providers to continue."
-                )
-                await message.answer(msg, parse_mode="HTML", reply_markup=keyboard)
+                if "429" in raw_err or "quota" in raw_err.lower():
+                    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+                    keyboard = InlineKeyboardMarkup(inline_keyboard=[[
+                        InlineKeyboardButton(text="🔑 Add / Change API Key", callback_data="settings_keys")
+                    ]])
+                    msg = (
+                        "⚠️ <b>AI Provider Quota Exceeded</b>\n\n"
+                        "It looks like you've hit the limit for the current API key. "
+                        "Please add a new key or switch AI providers to continue."
+                    )
+                    await message.answer(msg, parse_mode="HTML", reply_markup=keyboard)
+                else:
+                    await message.answer(f"I encountered an error connecting to the AI provider.\n\nError details:\n<code>{safe_err}</code>", parse_mode="HTML")
+            elif intent == IntentType.CHAT_OR_UNKNOWN:
+                return await _handle_chat(message, db, user, provider_name, real_api_key)
             else:
-                await message.answer(f"I encountered an error connecting to the AI provider.\n\nError details:\n<code>{safe_err}</code>", parse_mode="HTML")
-        elif intent == IntentType.CHAT_OR_UNKNOWN:
-            return await _handle_chat(message, db, user, provider_name, real_api_key)
-        else:
-            await message.answer(f"Intent detected: {intent.value}, but native implementation is missing currently.")
+                await message.answer(f"Intent detected: {intent.value}, but native implementation is missing currently.")
 
 async def _handle_chat(message: Message, db, user, provider_name, api_key):
     import html
@@ -176,7 +177,7 @@ async def _handle_log_habit(message: Message, db, user, provider_name, api_key):
         active_habits_text = "User's active habits:\n" + "\n".join([f"ID: {h.id}, Title: {h.title}" for h in habits])
 
     # 2. Call AI extraction
-    extraction, tokens = extract_log_habit, extract_log_work(message.text, provider_name, api_key, active_habits_text)
+    extraction, tokens = extract_log_habit(message.text, provider_name, api_key, active_habits_text)
     
     if tokens:
         log_tokens(db, message.from_user.id, tokens)
@@ -219,6 +220,74 @@ async def _handle_log_habit(message: Message, db, user, provider_name, api_key):
     await message.answer(
         f"✅ <b>{habit.title}</b> logged! (+{extraction.amount_completed} completion)\n" \
         f"🏃 Total: {habit.completions}{append_desc}",
+        parse_mode="HTML",
+        reply_markup=keyboard
+    )
+
+
+async def _handle_log_work(message: Message, db, user, provider_name, api_key):
+    from src.db.models import Project, TimeLog
+    from datetime import datetime, timezone
+
+    # 1. Fetch active projects formatting for AI prompt
+    projects = db.query(Project).filter(Project.user_id == user.id, Project.status == 'active').all()
+    if not projects:
+        active_projects_text = "User has no active projects yet."
+    else:
+        active_projects_text = "User's active projects:\n" + "\n".join([f"ID: {p.id}, Title: {p.title}" for p in projects])
+
+    # 2. Call AI extraction
+    extraction, tokens = extract_log_work(message.text, provider_name, api_key, active_projects_text)
+    
+    if tokens:
+        log_tokens(db, message.from_user.id, tokens)
+        
+    if not extraction:
+        await message.answer("I could not verify the exact work/project to log.")
+        return
+
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+    if extraction.project_id is None:
+        title = extraction.unmatched_project_name or "New Project"
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="✅ Click to Create", callback_data=f"create_project_{title[:32]}")
+        ]])
+        await message.answer(f"🧩 I couldn't find a matching project. Do you want to create <b>{title}</b> first?", parse_mode="HTML", reply_markup=keyboard)
+        return
+        
+    project = db.query(Project).filter_by(id=extraction.project_id, user_id=user.id).first()
+    if not project:
+        await message.answer("Error: AI returned an invalid Project ID.")
+        return
+
+    # Log it
+    log_entry = TimeLog(
+        user_id=user.id,
+        project_id=project.id,
+        duration_minutes=extraction.duration_minutes,
+        description=extraction.description,
+        is_manual=True,
+        started_at=datetime.now(timezone.utc),
+        ended_at=datetime.now(timezone.utc)
+    )
+    db.add(log_entry)
+    project.total_minutes_spent += extraction.duration_minutes
+    db.commit()
+    db.refresh(log_entry)
+
+    import html
+    desc = html.escape(extraction.description) if extraction.description else ""
+    append_desc = f"\n💬 <i>{desc}</i>" if desc else ""
+    
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="↩️ Undo", callback_data=f"undo_work_{log_entry.id}")
+    ]])
+    
+    hours = extraction.duration_minutes / 60
+    await message.answer(
+        f"✅ Logged <b>{hours:g}h</b> to <b>{project.title}</b>!{append_desc}\n" \
+        f"📈 Total: {project.total_minutes_spent / 60:g}h",
         parse_mode="HTML",
         reply_markup=keyboard
     )
