@@ -3,6 +3,7 @@ from typing import Optional, Any
 from sqlalchemy import (
     String, 
     Integer, 
+    BigInteger,
     DateTime, 
     Time, 
     Date, 
@@ -19,7 +20,7 @@ class User(Base):
     __tablename__ = "users"
     
     id: Mapped[int] = mapped_column(primary_key=True)
-    telegram_id: Mapped[int] = mapped_column(unique=True, index=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
     timezone: Mapped[str] = mapped_column(String, default="UTC")
     # Determines when the "day" ends for the Evening Report
     day_cutoff_time: Mapped[time] = mapped_column(Time, default=time(23, 0)) # 23:00 (11 PM) by default
@@ -37,7 +38,7 @@ class User(Base):
     # Catalyst Settings
     catalyst_threshold_minutes: Mapped[int] = mapped_column(Integer, default=60)
     catalyst_interval_minutes: Mapped[int] = mapped_column(Integer, default=20)
-    target_channel_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    target_channel_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
     report_config: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)
 
     @property
