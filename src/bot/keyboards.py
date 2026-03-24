@@ -210,7 +210,7 @@ def get_interval_keyboard() -> InlineKeyboardMarkup:
 
 def get_channel_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    builder.button(text="Clear Channel", callback_data="set_channel_clear")
+    builder.button(text="Untie Channel", callback_data="set_channel_clear")
     builder.button(text="Custom", callback_data="set_channel_custom")
     builder.button(text="🔙 Back", callback_data="settings_main")
     builder.adjust(1, 1, 1)

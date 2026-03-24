@@ -19,6 +19,13 @@ from src.bot.states import AddKeyState, SettingsState, SettingsState
 router = Router()
 
 
+
+def get_control_panel_data(user_id: int):
+    with SessionLocal() as db:
+        user = get_or_create_user(db, user_id)
+        text = get_control_panel_text(user)
+    return text, get_settings_keyboard()
+
 def get_control_panel_text(user) -> str:
     provider = user.llm_provider or "None"
     persona = user.persona_type or "monolith"
@@ -513,7 +520,7 @@ async def cq_set_catalyst_action(callback: CallbackQuery, state: FSMContext):
         await callback.answer(f"Error: {e}", show_alert=True)
         return
 
-    text, markup = get_control_panel_text(callback.from_user.id)
+    text, markup = get_control_panel_data(callback.from_user.id)
     await callback.message.edit_text(text, reply_markup=markup, parse_mode="HTML")
 
 
@@ -527,7 +534,7 @@ async def process_catalyst_text(message: Message, state: FSMContext):
             db.commit()
         await state.clear()
         
-        text, markup = get_control_panel_text(message.from_user.id)
+        text, markup = get_control_panel_data(message.from_user.id)
         await message.answer(f"✅ Catalyst updated.\n\n{text}", reply_markup=markup, parse_mode="HTML")
     except ValueError:
         await message.answer("Please send a valid number.")
@@ -562,7 +569,7 @@ async def cq_set_interval_action(callback: CallbackQuery, state: FSMContext):
         await callback.answer(f"Error: {e}", show_alert=True)
         return
 
-    text, markup = get_control_panel_text(callback.from_user.id)
+    text, markup = get_control_panel_data(callback.from_user.id)
     await callback.message.edit_text(text, reply_markup=markup, parse_mode="HTML")
 
 
@@ -576,7 +583,7 @@ async def process_interval_text(message: Message, state: FSMContext):
             db.commit()
         await state.clear()
         
-        text, markup = get_control_panel_text(message.from_user.id)
+        text, markup = get_control_panel_data(message.from_user.id)
         await message.answer(f"✅ Interval updated.\n\n{text}", reply_markup=markup, parse_mode="HTML")
     except ValueError:
         await message.answer("Please send a valid number.")
@@ -598,7 +605,7 @@ async def cq_set_channel_action(callback: CallbackQuery, state: FSMContext):
             user = get_or_create_user(db, callback.from_user.id)
             user.target_channel_id = None
             db.commit()
-        text, markup = get_control_panel_text(callback.from_user.id)
+        text, markup = get_control_panel_data(callback.from_user.id)
         await callback.message.edit_text(text, reply_markup=markup, parse_mode="HTML")
         return
         
@@ -620,7 +627,7 @@ async def process_channel_text(message: Message, state: FSMContext):
             db.commit()
         await state.clear()
         
-        text, markup = get_control_panel_text(message.from_user.id)
+        text, markup = get_control_panel_data(message.from_user.id)
         await message.answer(f"✅ Channel updated.\n\n{text}", reply_markup=markup, parse_mode="HTML")
     except ValueError:
         await message.answer("Please send a valid ID.")
@@ -666,7 +673,7 @@ async def cq_set_cutoff_action(callback: CallbackQuery, state: FSMContext):
         await callback.answer(f"Error: {e}", show_alert=True)
         return
 
-    text, markup = get_control_panel_text(callback.from_user.id)
+    text, markup = get_control_panel_data(callback.from_user.id)
     await callback.message.edit_text(text, reply_markup=markup, parse_mode="HTML")
 
 @router.message(SettingsState.waiting_for_cutoff)
@@ -681,7 +688,7 @@ async def process_cutoff_text(message: Message, state: FSMContext):
             db.commit()
         await state.clear()
         
-        text, markup = get_control_panel_text(message.from_user.id)
+        text, markup = get_control_panel_data(message.from_user.id)
         await message.answer(f"✅ Cutoff time updated.\n\n{text}", reply_markup=markup, parse_mode="HTML")
     except ValueError:
         await message.answer("Please send a valid time like '23:00'.")
