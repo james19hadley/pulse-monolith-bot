@@ -64,6 +64,27 @@ services:
       - REDIS_URL=redis://redis:6379/0
     command: celery -A src.worker worker -B --loglevel=info
 
+  # 5. Caddy Web Server (For SSL/Webhooks)
+  caddy:
+    image: caddy:2-alpine
+    container_name: pulse_caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - .env
+    environment:
+      - WEBHOOK_DOMAIN=${WEBHOOK_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - bot
+
 volumes:
   postgres_data:
   redis_data:
+  caddy_data:
+  caddy_config:

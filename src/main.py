@@ -1,9 +1,10 @@
 import asyncio
 import logging
 from aiogram import Bot, Dispatcher
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiohttp import web
 
-
-from src.core.config import TELEGRAM_BOT_TOKEN
+from src.core.config import TELEGRAM_BOT_TOKEN, WEBHOOK_DOMAIN, WEBHOOK_PATH, WEBAPP_HOST, WEBAPP_PORT
 from src.bot import routers
 
 
@@ -53,12 +54,34 @@ async def main():
     from src.db.repo import init_db
     init_db()
     
-    print("⬛ Pulse Monolith bot is starting (Long Polling)...")
-    
-    
     # Drop any pending updates before starting (so it doesn't process old missed messages)
     await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
+    
+    if WEBHOOK_DOMAIN:
+        app = web.Application()
+        webhook_requests_handler = SimpleRequestHandler(
+            dispatcher=dp,
+            bot=bot,
+        )
+        webhook_requests_handler.register(app, path=WEBHOOK_PATH)
+        setup_application(app, dp, bot=bot)
+        
+        webhook_url = f"https://{WEBHOOK_DOMAIN}{WEBHOOK_PATH}"
+        print(f"⬛ Setting webhook to {webhook_url}...")
+        await bot.set_webhook(webhook_url)
+        
+        print(f"⬛ Pulse Monolith bot is starting (Webhooks on {WEBAPP_HOST}:{WEBAPP_PORT})...")
+        
+        runner = web.AppRunner(app)
+        await runner.setup()
+        site = web.TCPSite(runner, host=WEBAPP_HOST, port=WEBAPP_PORT)
+        await site.start()
+        
+        while True:
+            await asyncio.sleep(3600)
+    else:
+        print("⬛ Pulse Monolith bot is starting (Long Polling)...")
+        await dp.start_polling(bot)
 
 if __name__ == "__main__":
     try:

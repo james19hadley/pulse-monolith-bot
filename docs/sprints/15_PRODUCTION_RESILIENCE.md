@@ -18,10 +18,10 @@
 - [ ] Add the script to the server's crontab (e.g., run every midnight).
 
 ### 2. Webhooks & SSL Server Setup
-- [ ] Determine domain strategy (User's own domain, `nip.io` dynamic domain, or Self-Signed SSL for the IP).
-- [ ] Refactor `src/main.py` to use `aiohttp` or `FastAPI` wrapped around the Aiogram dispatcher.
-- [ ] Update `docker-compose.yml` to expose web ports (80/443 or 8443) and map them to the bot container.
-- [ ] Update `.env` to hold the `WEBHOOK_URL` and `WEBHOOK_PATH`.
+- [x] Determine domain strategy (`nip.io` dynamic domain).
+- [x] Refactor `src/main.py` to use `aiohttp` wrapped around the Aiogram dispatcher.
+- [x] Update `docker-compose.yml` to include Caddy web server mapping to the bot container to handle SSL natively.
+- [x] Update `.env.example` to hold the `WEBHOOK_DOMAIN` and `WEBHOOK_PATH`.
 
 ## 🏁 Completion Criteria
 - A cron job natively backs up Postgres every night.

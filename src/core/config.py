@@ -14,6 +14,11 @@ def parse_time(val_str: str) -> datetime.time:
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
 
+WEBHOOK_DOMAIN = os.getenv("WEBHOOK_DOMAIN")
+WEBHOOK_PATH = os.getenv("WEBHOOK_PATH", "/webhook")
+WEBAPP_HOST = os.getenv("WEBAPP_HOST", "0.0.0.0")
+WEBAPP_PORT = int(os.getenv("WEBAPP_PORT", "8080"))
+
 if not TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN == "your_telegram_bot_token_here":
     raise ValueError("TELEGRAM_BOT_TOKEN is not set in the .env file. Please configure it.")
 
