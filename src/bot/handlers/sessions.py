@@ -49,6 +49,7 @@ async def cmd_end_session(message: Message):
             # Log time
             log = TimeLog(
                 user_id=user.id,
+                session_id=session.id,
                 duration_minutes=actual_duration_minutes,
                 project_id=None,
                 description="Completed Focus Session"
@@ -81,6 +82,7 @@ async def cmd_log(message: Message, command: CommandObject):
         user = get_or_create_user(db, message.from_user.id)
         log = TimeLog(
             user_id=user.id,
+            session_id=user.active_session_id if user.active_session_id else None,
             duration_minutes=minutes,
             description=desc
         )
