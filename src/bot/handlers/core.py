@@ -28,7 +28,7 @@ Talk to me naturally, but if the AI is slow or offline, use these slash commands
 /start_session - Begin a new tracking session
 /end_session - End current session and summarize
 /log &lt;min&gt; [desc] - Quick log (e.g. /log 30 reading)
-/habit &lt;id/name&gt; [val] - Mark habit (e.g. <code>/habit workout 1)
+/habit &lt;id/name&gt; [val] - Mark habit (e.g. /habit workout 1)
 /inbox &lt;text&gt; - Fast idea dump
 
 <b>Data & Config</b>

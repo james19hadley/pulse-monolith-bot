@@ -736,10 +736,14 @@ async def cq_test_report(callback: CallbackQuery):
         
         # Build mock data for the test report
         stats = {
-            "total_tracked": 120,
-            "focus_tracked": 90,
-            "habits_list": ["Workout: 1/1", "Reading: 0/1"],
-            "logs_list": ["Did some coding", "Finished the book"]
+            "focus_minutes": 150,
+            "void_minutes": 30,
+            "projects": {"Deep Work": 120, "Admin": 30},
+            "habits": [
+                {"title": "Workout", "current": 1, "target": 1},
+                {"title": "Reading", "current": 0, "target": 1}
+            ],
+            "inbox_count": 3
         }
         
         config = {
