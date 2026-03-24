@@ -10,7 +10,9 @@ git pull
 # 2. Rebuild and restart the containers
 echo "🏗️ Building and restarting Docker containers..."
 docker compose down
-docker compose up --build -d
+docker builder prune -af
+  docker compose build --no-cache
+  docker compose up -d
 
 # 3. Ensure backup cron job is registered
 echo "⏰ Configuring auto-backups (cron)..."
