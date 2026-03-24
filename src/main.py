@@ -3,10 +3,12 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
+from typing import Any, Awaitable, Callable, Dict
+from aiogram import BaseMiddleware
+from aiogram.types import TelegramObject
 
 from src.core.config import TELEGRAM_BOT_TOKEN, WEBHOOK_DOMAIN, WEBHOOK_PATH, WEBAPP_HOST, WEBAPP_PORT
 from src.bot import routers
-
 
 # Setup logging to both console and a persistent file (bot.log)
 log_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
@@ -19,43 +21,6 @@ console_handler.setFormatter(log_formatter)
 
 logging.basicConfig(level=logging.INFO, handlers=[file_handler, console_handler])
 
-from typing import Any, Awaitable, Callable, Dict
-from aiogram import BaseMiddleware
-from aiogram.types import TelegramObject
-
-# Suppress aiogram's default event log which prints full messages
-logging.getLogger("aiogram.event").setLevel(logging.WARNING)
-
-class SafeLoggingMiddleware(BaseMiddleware):
-    async def __call__(
-        self,
-        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
-        event: TelegramObject,
-        data: Dict[str, Any]
-    ) -> Any:
-        # Avoid crashing on missing user/message
-        try:
-            if event.message:
-                user_id = event.message.from_user.id if event.message.from_user else "Unknown"
-                text = event.message.text
-                if text:
-                    if text.startswith('/'):
-                        logging.info(f"User {user_id} triggered command: {text.split()[0]}")
-                    else:
-                        logging.info(f"User {user_id} sent text message (length: {len(text)})")
-            elif event.callback_query:
-                user_id = event.callback_query.from_user.id
-                data_cb = event.callback_query.data
-                logging.info(f"User {user_id} tapped inline button: {data_cb}")
-        except Exception:
-            pass
-            
-        return await handler(event, data)
-
-from typing import Any, Awaitable, Callable, Dict
-from aiogram import BaseMiddleware
-from aiogram.types import TelegramObject
-
 # Suppress aiogram's default event log which prints full messages
 logging.getLogger("aiogram.event").setLevel(logging.WARNING)
 
@@ -79,39 +44,8 @@ class SafeLoggingMiddleware(BaseMiddleware):
                 user_id = event.callback_query.from_user.id
                 data_cb = event.callback_query.data
                 logging.info(f"User {user_id} tapped inline button: {data_cb}")
-        except Exception:
-            pass
-        return await handler(event, data)
-
-from typing import Any, Awaitable, Callable, Dict
-from aiogram import BaseMiddleware
-from aiogram.types import TelegramObject
-
-# Suppress aiogram's default event log which prints full messages
-logging.getLogger("aiogram.event").setLevel(logging.WARNING)
-
-class SafeLoggingMiddleware(BaseMiddleware):
-    async def __call__(
-        self,
-        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
-        event: TelegramObject,
-        data: Dict[str, Any]
-    ) -> Any:
-        try:
-            if event.message:
-                user_id = event.message.from_user.id if event.message.from_user else "Unknown"
-                text = event.message.text
-                if text:
-                    if text.startswith('/'):
-                        logging.info(f"User {user_id} triggered command: {text.split()[0]}")
-                    else:
-                        logging.info(f"User {user_id} sent text message (length: {len(text)})")
-            elif event.callback_query:
-                user_id = event.callback_query.from_user.id
-                data_cb = event.callback_query.data
-                logging.info(f"User {user_id} tapped inline button: {data_cb}")
-        except Exception:
-            pass
+        except Exception as e:
+            logging.error(f"Error in SafeLoggingMiddleware: {e}")
         return await handler(event, data)
 
 async def main():
@@ -149,7 +83,7 @@ async def main():
     from src.db.repo import init_db
     init_db()
     
-    # Drop any pending updates before starting (so it doesn't process old missed messages)
+    # Drop any pending updates before starting
     await bot.delete_webhook(drop_pending_updates=True)
     
     if WEBHOOK_DOMAIN:
