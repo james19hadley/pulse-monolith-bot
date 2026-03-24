@@ -14,7 +14,7 @@ from src.core.security import encrypt_key, decrypt_key
 from src.ai.providers import GoogleProvider
 from src.bot.handlers.utils import get_or_create_user
 from src.bot.keyboards import get_providers_keyboard, get_settings_keyboard, get_persona_keyboard, get_reports_keyboard, get_timezone_keyboard, get_back_settings_keyboard, get_api_keys_manage_keyboard, get_catalyst_keyboard, get_interval_keyboard, get_channel_keyboard, get_pulse_menu_keyboard, get_cutoff_keyboard
-from src.bot.states import AddKeyState, SettingsState, SettingsState
+from src.bot.states import AddKeyState, SettingsState
 
 router = Router()
 
