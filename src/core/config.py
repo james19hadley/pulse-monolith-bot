@@ -83,3 +83,6 @@ USER_SETTINGS_REGISTRY = {
         "default": "google"
     }
 }
+
+ADMIN_LOGIN = os.getenv("ADMIN_LOGIN", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "changeme")

@@ -42,3 +42,22 @@ def init_db():
 
 if __name__ == "__main__":
     init_db()
+
+def get_admin_metrics():
+    from src.db.models import User, Session, TimeLog, TokenUsage
+    from sqlalchemy import func
+    import datetime
+    with SessionLocal() as db:
+        users_count = db.query(User).count()
+        total_tokens = db.query(func.sum(TokenUsage.total_tokens)).scalar() or 0
+        active_sessions = db.query(Session).filter(Session.end_time == None).count()
+        today = datetime.datetime.now().date()
+        total_time_today = db.query(func.sum(TimeLog.duration_minutes)).filter(
+            func.date(TimeLog.created_at) == today
+        ).scalar() or 0
+        return {
+            "Total Users": users_count,
+            "Total Tokens Used": total_tokens,
+            "Active Focus Sessions": active_sessions,
+            "Total Focused Minutes Today": total_time_today
+        }

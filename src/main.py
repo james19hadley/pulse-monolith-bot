@@ -9,6 +9,7 @@ from aiogram.types import TelegramObject
 
 from src.core.config import TELEGRAM_BOT_TOKEN, WEBHOOK_DOMAIN, WEBHOOK_PATH, WEBAPP_HOST, WEBAPP_PORT
 from src.bot import routers
+from src.admin_dashboard import dashboard_handler
 
 # Setup logging to both console and a persistent file (bot.log)
 log_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
@@ -94,7 +95,8 @@ async def main():
         )
         webhook_requests_handler.register(app, path=WEBHOOK_PATH)
         setup_application(app, dp, bot=bot)
-        
+
+        app.router.add_get('/admin/dashboard', dashboard_handler)        
         webhook_url = f"https://{WEBHOOK_DOMAIN}{WEBHOOK_PATH}"
         print(f"⬛ Setting webhook to {webhook_url}...")
         
