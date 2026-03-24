@@ -50,6 +50,9 @@ async def main():
     ]
     await bot.set_my_commands(commands)
     
+    from src.db.repo import init_db
+    init_db()
+    
     print("⬛ Pulse Monolith bot is starting (Long Polling)...")
     
     
