@@ -97,7 +97,7 @@ async def cmd_general_settings(message: Message):
 
         await message.answer(text, parse_mode="HTML", reply_markup=get_settings_keyboard())
 
-@router.callback_query(F.data.startswith("settings_"))
+@router.callback_query(F.data.in_({"settings_keys", "settings_add_key", "settings_persona", "settings_timezone", "settings_reports", "settings_back", "settings_main"}))
 async def cq_settings_stubs(callback: CallbackQuery, state: FSMContext):
     try:
         if callback.data == "settings_keys":
@@ -133,7 +133,7 @@ async def cq_settings_stubs(callback: CallbackQuery, state: FSMContext):
         elif callback.data == "settings_reports":
             await callback.message.edit_text("<b>Report Destination:</b>\n\nWhere should I send your daily Evening Report?", parse_mode="HTML", reply_markup=get_reports_keyboard())
             await callback.answer()
-        elif callback.data == "settings_back":
+        elif callback.data in ["settings_back", "settings_main"]:
             await state.clear()
             with SessionLocal() as db:
                 user = get_or_create_user(db, callback.from_user.id)
@@ -141,7 +141,8 @@ async def cq_settings_stubs(callback: CallbackQuery, state: FSMContext):
                 await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_settings_keyboard())
             await callback.answer()
         else:
-            await callback.answer("Not implemented", show_alert=True)
+            # Let it fall through to the other handlers at the bottom!
+            return
     except Exception as e:
         import traceback
         import logging
