@@ -241,18 +241,44 @@ async def cmd_my_key(message: Message):
 @router.message(Command("tokens"))
 async def cmd_tokens(message: Message):
     """Shows AI Token Usage"""
+    from datetime import datetime, timezone, timedelta
+    
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
         
+        # Total
         prompt_total = db.query(func.sum(TokenUsage.prompt_tokens)).filter(TokenUsage.user_id == user.id).scalar() or 0
         comp_total = db.query(func.sum(TokenUsage.completion_tokens)).filter(TokenUsage.user_id == user.id).scalar() or 0
-        
         cost = (prompt_total / 1000000.0) * 0.075 + (comp_total / 1000000.0) * 0.30
+
+        # Today
+        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        prompt_today = db.query(func.sum(TokenUsage.prompt_tokens)).filter(TokenUsage.user_id == user.id, TokenUsage.created_at >= today_start).scalar() or 0
+        comp_today = db.query(func.sum(TokenUsage.completion_tokens)).filter(TokenUsage.user_id == user.id, TokenUsage.created_at >= today_start).scalar() or 0
+        cost_today = (prompt_today / 1000000.0) * 0.075 + (comp_today / 1000000.0) * 0.30
         
-        await message.answer(
-            stats_message(prompt_total, comp_total, cost),
-            parse_mode="HTML"
-        )
+        msg = f"📊 <b>Token Usage Statistics</b>
+
+"
+        msg += f"<b>Today (UTC):</b>
+"
+        msg += f"• Prompts: <code>{prompt_today}</code>
+"
+        msg += f"• Completions: <code>{comp_today}</code>
+"
+        msg += f"• Est. Cost: <b>${cost_today:.4f}</b>
+
+"
+        
+        msg += f"<b>All-Time:</b>
+"
+        msg += f"• Prompts: <code>{prompt_total}</code>
+"
+        msg += f"• Completions: <code>{comp_total}</code>
+"
+        msg += f"• Est. Cost: <b>${cost:.4f}</b>"
+
+        await message.answer(msg, parse_mode="HTML")
 
 @router.message(Command("settings"))
 async def cmd_settings(message: Message, command: CommandObject):
