@@ -26,7 +26,7 @@ async def cmd_general_settings(message: Message):
         user = get_or_create_user(db, message.from_user.id)
         
         provider = user.llm_provider or "None"
-        persona = user.persona or "monolith"
+        persona = user.persona_type or "monolith"
         tz = user.timezone or "UTC"
         report_time = getattr(user, 'report_time', '20:00 (default)')
 
