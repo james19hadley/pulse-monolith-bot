@@ -2,17 +2,26 @@
 # Strictly factual and objective responses.
 
 def welcome_message(has_key: bool = False) -> str:
-    msg = "Identity verified. I am the Pulse Monolith. Strict monitoring protocol activated.\n\n"
-    msg += "<b>⚙️ Select your AI Persona:</b>\n"
-    msg += "Use <code>/settings persona &lt;name&gt;</code> to change my personality.\n"
-    msg += "<i>Available: <code>monolith</code>, <code>butler</code>, <code>coach</code>, <code>sarcastic</code>, <code>tars</code>, <code>friday</code></i>\n\n"
+    msg = "👋 <b>Welcome to Pulse Monolith</b>\n"
+    msg += "I am your personal AI accountability partner, designed to track time, build habits, and destroy procrastination.\n\n"
+    
+    msg += "🌍 <b>I speak all languages.</b>\n"
+    msg += "<i>Feel free to message me in English, Russian, Spanish, or any other natural language. You don't need to memorize strict commands!</i>\n\n"
+    
+    msg += "<b>Examples of what you can say:</b>\n"
+    msg += "• <i>\"Create a new project for learning Python\"</i>\n"
+    msg += "• <i>\"I just worked out for 45 minutes\"</i>\n"
+    msg += "• <i>\"Set my timezone like in Houston and post my daily report exactly at midnight\"</i>\n\n"
+
+    msg += "<b>⚙️ Customize My Personality:</b>\n"
+    msg += "You can change how I talk to you in the settings.\n"
+    msg += "<i>Available: <code>monolith</code> (strict), <code>coach</code> (aggressive), <code>butler</code> (polite), <code>sarcastic</code>, <code>tars</code>, <code>friday</code></i>\n\n"
     
     if not has_key:
-        msg += "⚠️ Warning: No AI provider key detected. Please set your API key using:\n<code>/add_key &lt;provider&gt; &lt;your_api_key&gt;</code>\n"
-        msg += "<i>Available providers: <code>google</code>, <code>openai</code>, <code>anthropic</code></i>\n"
-        msg += "<i>Example:</i> <code>/add_key google AIzaSy...</code>\n\n"
-    msg += "Use /start_session to begin a work block."
-    return msg
+        msg += "⚠️ <b>Action Required:</b>\n"
+        msg += "To start understanding your messages, I need a brain. Please click the <b>⚙️ Settings</b> button below and add your AI Provider key.\n"
+    else:
+        msg += "✅ <i>AI Engine Connected. Start typing to begin!</i>\n"
 
 def session_started_message() -> str:
     return "Session initiated. Monitoring active."

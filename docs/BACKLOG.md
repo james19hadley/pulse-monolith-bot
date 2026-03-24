@@ -30,3 +30,7 @@ This document stores brilliant ideas, architectural improvements, and "nice-to-h
 - Generate graphs using matplotlib/plotly showing "The Void" vs. "Focused Time" over weeks or months.
 - Goal: Visually map a user's life hours, showing exactly where time was lost and where progress was made. Currently low priority.
 - Monetization & AI Proxy (SaaS Subscriptions/Telegram Payments)
+
+### 5. Seamless Session Task-Binding (UX Improvement)
+**Issue:** Currently, users must start a session (`/start_session`), and then manually log time via `/log` to avoid that time becoming "The Void". This creates friction.
+**Solution:** Allow starting a session implicitly bound to a project/task. For example, `I am going to code for project 4 now` or `/start_session project_id`. When the session ends, automatically calculate the elapsed duration and insert a `TimeLog` for that project. Zero "Void" is generated if the session was bound from the start.

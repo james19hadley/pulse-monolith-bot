@@ -15,7 +15,7 @@ To avoid cluttering the existing `handlers.py` logic, we will introduce two new 
 ### 1. The Warm Onboarding & Views Refactor
 - [ ] Rewrite `welcome_message` in `src/bot/views.py` to be informative and approachable.
 - [ ] Add the hardcoded language disclaimer: *"Message me in any natural language, I understand all languages."*
-- [ ] Provide clear, hardcoded examples of natural language interaction to save AI tokens (e.g., *"Set time like in Yaroslavl and post to channel exactly at midnight"*).
+- [ ] Provide clear, hardcoded examples of natural language interaction to save AI tokens (e.g., *"Set time like in Huston and post to channel exactly at midnight"*).
 
 ### 2. Main Menu GUI
 - [ ] Create `src/bot/keyboards.py`.

@@ -5,6 +5,7 @@ from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, IS_MEMB
 
 from src.db.repo import SessionLocal
 from src.bot.views import welcome_message
+from src.bot.keyboards import get_main_menu
 from src.bot.handlers.utils import get_or_create_user
 
 router = Router()
@@ -15,7 +16,7 @@ async def cmd_start(message: Message):
         user = get_or_create_user(db, message.from_user.id)
         has_key = bool(user.api_keys)
         
-    await message.answer(welcome_message(has_key), parse_mode="HTML")
+    await message.answer(welcome_message(has_key), parse_mode="HTML", reply_markup=get_main_menu())
 
 @router.message(Command("help"))
 async def cmd_help(message: Message):

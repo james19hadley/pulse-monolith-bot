@@ -1,5 +1,5 @@
 import datetime
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.filters import Command, CommandObject
 from aiogram.types import Message
 
@@ -10,7 +10,8 @@ from src.bot.handlers.utils import get_or_create_user
 router = Router()
 
 @router.message(Command("start_session"))
-async def cmd_start_session(message: Message, command: CommandObject):
+@router.message(F.text == "🟢 Start Session")
+async def cmd_start_session(message: Message, command: CommandObject = None):
     """Start a new focus session."""
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
@@ -32,6 +33,7 @@ async def cmd_start_session(message: Message, command: CommandObject):
     await message.answer("🍅 Focus session started! Get working!")
 
 @router.message(Command("end_session"))
+@router.message(F.text == "🛑 End Session")
 async def cmd_end_session(message: Message):
     """Stop the current focus session."""
     with SessionLocal() as db:

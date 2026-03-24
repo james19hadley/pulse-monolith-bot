@@ -1,8 +1,9 @@
 import datetime
 import html
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.filters import Command, CommandObject
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
+from aiogram.fsm.context import FSMContext
 from sqlalchemy import func
 
 from src.db.repo import SessionLocal
@@ -12,75 +13,77 @@ from src.bot.views import stats_message, build_daily_report
 from src.core.security import encrypt_key, decrypt_key
 from src.ai.providers import GoogleProvider
 from src.bot.handlers.utils import get_or_create_user
+from src.bot.keyboards import get_providers_keyboard
+from src.bot.states import AddKeyState
 
 router = Router()
-
 @router.message(Command("add_key"))
-async def cmd_add_key(message: Message, command: CommandObject):
-    """
-    Saves the user's personal API key securely.
-    Usage: /add_key <provider> <your_api_key> [alias_name]
-    """
-    if not command.args:
-        await message.answer("Usage: <code>/add_key &lt;provider&gt; &lt;your_api_key&gt; [alias]</code>\nAvailable providers: <code>google</code>, <code>openai</code>, <code>anthropic</code>\nExample: <code>/add_key google AIzaSy... my_google_2</code>", parse_mode="HTML")
-        return
-        
-    parts = command.args.strip().split()
-    if len(parts) < 2:
-        await message.answer("Error: You must specify both the provider and the key.\nExample: <code>/add_key google AIzaSy...</code>", parse_mode="HTML")
-        return
-        
-    provider, api_key = parts[0].lower(), parts[1]
-    # Use the alias if provided, otherwise the provider name
-    alias = parts[2].lower() if len(parts) > 2 else provider
-    
-    if provider not in ["google", "openai", "anthropic"]:
-        await message.answer("Error: Unsupported provider. Choose from: <code>google</code>, <code>openai</code>, <code>anthropic</code>", parse_mode="HTML")
-        return
-    
-    with SessionLocal() as db:
-        user = get_or_create_user(db, message.from_user.id)
-        keys = user.api_keys
-        keys[alias] = {
-            "provider": provider,
-            "key": encrypt_key(api_key)
-        }
-        user.set_api_keys(keys)
-        user.llm_provider = alias # Set this alias as the active one
-        db.commit()
-        
-    await message.answer(f"API Key for provider '{provider}' successfully saved under alias '{alias}'. It is now active.")
+@router.message(F.text == "⚙️ Settings")
+async def cmd_settings_menu(message: Message, state: FSMContext):
+    await message.answer(
+        "Select your AI Provider to securely configure your API key:",
+        reply_markup=get_providers_keyboard()
+    )
+    await state.set_state(AddKeyState.waiting_for_provider)
 
-@router.message(Command("delete_key"))
-async def cmd_delete_key(message: Message, command: CommandObject):
-    """Deletes a saved API key (by alias)."""
-    alias_to_delete = command.args.strip().lower() if command.args else None
+@router.callback_query(AddKeyState.waiting_for_provider, F.data.startswith("provider_"))
+async def process_provider_selection(callback: CallbackQuery, state: FSMContext):
+    provider_name = callback.data.replace("provider_", "")
+    await state.update_data(provider_name=provider_name)
     
+    await callback.message.edit_text(
+        f"You selected <b>{provider_name.capitalize()}</b>.\n\nPlease paste your API Key below.\n<i>(It will be safely encrypted in the database)</i>", 
+        parse_mode="HTML"
+    )
+    await state.set_state(AddKeyState.waiting_for_key)
+    await callback.answer()
+
+@router.callback_query(F.data == "cancel_fsm")
+async def process_fsm_cancel(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text("❌ Operation cancelled.")
+    await callback.answer()
+
+@router.message(AddKeyState.waiting_for_key)
+async def process_key_input(message: Message, state: FSMContext):
+    data = await state.get_data()
+    provider_name = data.get("provider_name")
+    raw_key = message.text.strip()
+    alias = provider_name  # default alias
+    
+    encrypted = encrypt_key(raw_key)
+
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
-        keys = user.api_keys
         
-        if not keys:
-            await message.answer("You do not have any saved API keys.")
-            return
-            
-        if not alias_to_delete:
-            await message.answer("Usage: <code>/delete_key &lt;alias&gt;</code>\nSaved aliases: " + ", ".join(keys.keys()), parse_mode="HTML")
-            return
-            
-        if alias_to_delete not in keys:
-            await message.answer(f"No key saved for alias '{alias_to_delete}'.")
-            return
-            
-        del keys[alias_to_delete]
-        user.set_api_keys(keys)
-        # If we deleted the active provider, fallback to one of the others or google
-        if user.llm_provider == alias_to_delete:
-            user.llm_provider = list(keys.keys())[0] if keys else "google"
-            
+        keys_dict = dict(user.api_keys) if user.api_keys else {}
+        keys_dict[alias] = {
+            "provider": provider_name,
+            "key": encrypted
+        }
+        user.api_keys = keys_dict
+        user.llm_provider = alias
         db.commit()
+
+    # Fast test ping for Google
+    test_msg = ""
+    if provider_name == "google":
+        try:
+            temp_prov = GoogleProvider(api_key=raw_key)
+            resp, tok = temp_prov.generate_content("Say exactly: OK")
+            test_msg = f"\n\n📡 Automatic Test Ping successful! Tokens used: {tok}"
+        except Exception as e:
+            test_msg = f"\n\n⚠️ Automatic Test Ping failed: {str(e)}"
+    
+    await message.answer(f"✅ Setup Complete: <b>{provider_name.capitalize()}</b> key is securely saved and set as active.{test_msg}", parse_mode="HTML")
+    
+    try:
+        await message.delete()
+        await message.answer("<i>(Your API key message was actively deleted from the screen for security)</i>", parse_mode="HTML")
+    except Exception:
+        pass
         
-    await message.answer(f"Your API key '{alias_to_delete}' has been deleted.")
+    await state.clear()
 
 @router.message(Command("my_key"))
 async def cmd_my_key(message: Message):

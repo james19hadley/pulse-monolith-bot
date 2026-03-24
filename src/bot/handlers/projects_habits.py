@@ -1,4 +1,4 @@
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.filters import Command, CommandObject
 from aiogram.types import Message
 from sqlalchemy import func
@@ -119,11 +119,12 @@ async def cmd_habit(message: Message, command: CommandObject):
             await message.answer("Habit not found.")
 
 @router.message(Command("inbox"))
-async def cmd_inbox(message: Message, command: CommandObject):
+@router.message(F.text == "📥 Inbox")
+async def cmd_inbox(message: Message, command: CommandObject = None):
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
         
-        if not command.args:
+        if not command or not command.args:
             items = db.query(Inbox).filter(Inbox.user_id == user.id, Inbox.status == "pending").all()
             if not items:
                 await message.answer("Your inbox is empty. To add a thought, use <code>/inbox &lt;text&gt;</code>", parse_mode="HTML")
