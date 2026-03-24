@@ -9,3 +9,4 @@ class SettingsState(StatesGroup):
     waiting_for_catalyst = State()
     waiting_for_interval = State()
     waiting_for_channel = State()
+    waiting_for_cutoff = State()

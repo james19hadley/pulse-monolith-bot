@@ -13,7 +13,7 @@ from src.bot.views import stats_message, build_daily_report
 from src.core.security import encrypt_key, decrypt_key
 from src.ai.providers import GoogleProvider
 from src.bot.handlers.utils import get_or_create_user
-from src.bot.keyboards import get_providers_keyboard, get_settings_keyboard, get_persona_keyboard, get_reports_keyboard, get_timezone_keyboard, get_back_settings_keyboard, get_api_keys_manage_keyboard
+from src.bot.keyboards import get_providers_keyboard, get_settings_keyboard, get_persona_keyboard, get_reports_keyboard, get_timezone_keyboard, get_back_settings_keyboard, get_api_keys_manage_keyboard, get_catalyst_keyboard, get_interval_keyboard, get_channel_keyboard, get_pulse_menu_keyboard, get_cutoff_keyboard
 from src.bot.states import AddKeyState, SettingsState, SettingsState
 
 router = Router()
@@ -97,7 +97,7 @@ async def cmd_general_settings(message: Message):
 
         await message.answer(text, parse_mode="HTML", reply_markup=get_settings_keyboard())
 
-@router.callback_query(F.data.in_({"settings_keys", "settings_add_key", "settings_persona", "settings_timezone", "settings_reports", "settings_back", "settings_main"}))
+@router.callback_query(F.data.in_({"settings_keys", "settings_add_key", "settings_persona", "settings_timezone", "settings_reports", "settings_back", "settings_main", "settings_pulse", "settings_cutoff"}))
 async def cq_settings_stubs(callback: CallbackQuery, state: FSMContext):
     try:
         if callback.data == "settings_keys":
@@ -624,4 +624,65 @@ async def process_channel_text(message: Message, state: FSMContext):
         await message.answer(f"✅ Channel updated.\n\n{text}", reply_markup=markup, parse_mode="HTML")
     except ValueError:
         await message.answer("Please send a valid ID.")
+
+
+# --- Pulse Intervals Menu ---
+@router.callback_query(F.data == "settings_pulse")
+async def cq_settings_pulse(callback: CallbackQuery):
+    await callback.message.edit_text(
+        "💓 <b>Pulse Intervals</b>\n\nConfigure the catalyst threshold and ping frequency for your overdue habits.",
+        reply_markup=get_pulse_menu_keyboard(),
+        parse_mode="HTML"
+    )
+
+# --- Cutoff Time ---
+@router.callback_query(F.data == "settings_cutoff")
+async def cq_settings_cutoff(callback: CallbackQuery):
+    await callback.message.edit_text(
+        "⏰ <b>Report Time (Day Cutoff)</b>\n\nWhen does your day end? I will send your Daily Accountability Report and wipe habits at this time.",
+        reply_markup=get_cutoff_keyboard(),
+        parse_mode="HTML"
+    )
+
+@router.callback_query(F.data.startswith("set_cutoff_"))
+async def cq_set_cutoff_action(callback: CallbackQuery, state: FSMContext):
+    val = callback.data.replace("set_cutoff_", "")
+    if val == "custom":
+        await callback.message.edit_text(
+            "Send me the time for your day cutoff in HH:MM format (e.g., 23:30):",
+            reply_markup=get_back_settings_keyboard()
+        )
+        await state.set_state(SettingsState.waiting_for_cutoff)
+        return
+    
+    try:
+        from datetime import time
+        h, m = map(int, val.split(':'))
+        with SessionLocal() as db:
+            user = get_or_create_user(db, callback.from_user.id)
+            user.day_cutoff_time = time(h, m)
+            db.commit()
+    except Exception as e:
+        await callback.answer(f"Error: {e}", show_alert=True)
+        return
+
+    text, markup = get_control_panel_text(callback.from_user.id)
+    await callback.message.edit_text(text, reply_markup=markup, parse_mode="HTML")
+
+@router.message(SettingsState.waiting_for_cutoff)
+async def process_cutoff_text(message: Message, state: FSMContext):
+    try:
+        from datetime import time
+        val = message.text.strip().replace('.', ':')
+        h, m = map(int, val.split(':'))
+        with SessionLocal() as db:
+            user = get_or_create_user(db, message.from_user.id)
+            user.day_cutoff_time = time(h, m)
+            db.commit()
+        await state.clear()
+        
+        text, markup = get_control_panel_text(message.from_user.id)
+        await message.answer(f"✅ Cutoff time updated.\n\n{text}", reply_markup=markup, parse_mode="HTML")
+    except ValueError:
+        await message.answer("Please send a valid time like '23:00'.")
 

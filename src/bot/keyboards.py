@@ -37,17 +37,36 @@ def get_settings_keyboard() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(text="🌍 Timezone", callback_data="settings_timezone"),
-            InlineKeyboardButton(text="📊 Reports", callback_data="settings_reports")
+            InlineKeyboardButton(text="⏰ Report Time", callback_data="settings_cutoff")
         ],
         [
-            InlineKeyboardButton(text="⏱️ Catalyst", callback_data="settings_catalyst"),
-            InlineKeyboardButton(text="🔁 Interval", callback_data="settings_interval")
+            InlineKeyboardButton(text="📊 Report Dest", callback_data="settings_reports"),
+            InlineKeyboardButton(text="📢 Target Channel", callback_data="settings_channel")
         ],
         [
-            InlineKeyboardButton(text="📢 Channel", callback_data="settings_channel")
+            InlineKeyboardButton(text="💓 Pulse Intervals", callback_data="settings_pulse")
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_pulse_menu_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="⏱️ Catalyst Limit", callback_data="settings_catalyst")
+    builder.button(text="🔁 Repeat Interval", callback_data="settings_interval")
+    builder.button(text="🔙 Back", callback_data="settings_main")
+    builder.adjust(1, 1, 1)
+    return builder.as_markup()
+
+def get_cutoff_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="21:00", callback_data="set_cutoff_21:00")
+    builder.button(text="22:00", callback_data="set_cutoff_22:00")
+    builder.button(text="23:00", callback_data="set_cutoff_23:00")
+    builder.button(text="00:00", callback_data="set_cutoff_00:00")
+    builder.button(text="Custom Time", callback_data="set_cutoff_custom")
+    builder.button(text="🔙 Back", callback_data="settings_main")
+    builder.adjust(2, 2, 1, 1)
+    return builder.as_markup()
 
 def get_back_settings_keyboard() -> InlineKeyboardMarkup:
     """Keyboard to return to the main settings control panel."""
@@ -174,7 +193,7 @@ def get_catalyst_keyboard() -> InlineKeyboardMarkup:
     builder.button(text="60 Min", callback_data="set_catalyst_60")
     builder.button(text="120 Min", callback_data="set_catalyst_120")
     builder.button(text="Custom", callback_data="set_catalyst_custom")
-    builder.button(text="🔙 Back", callback_data="settings_main")
+    builder.button(text="🔙 Back", callback_data="settings_pulse")
     builder.adjust(2, 2, 1, 1)
     return builder.as_markup()
 
@@ -184,7 +203,7 @@ def get_interval_keyboard() -> InlineKeyboardMarkup:
     builder.button(text="30 Min", callback_data="set_interval_30")
     builder.button(text="60 Min", callback_data="set_interval_60")
     builder.button(text="Custom", callback_data="set_interval_custom")
-    builder.button(text="🔙 Back", callback_data="settings_main")
+    builder.button(text="🔙 Back", callback_data="settings_pulse")
     builder.adjust(2, 2, 1)
     return builder.as_markup()
 
