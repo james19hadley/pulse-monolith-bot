@@ -26,7 +26,7 @@ async def handle_freeform_text(message: Message):
         
             keys = user.api_keys
             if not keys or user.llm_provider not in keys:
-                await message.answer("Please configure an API key using `/add_key google <your_key>`", parse_mode="HTML")
+                await message.answer("Please configure an API key using `/add_key google await message.answer("Please configure an API key using `/add_key google <your_key>`", parse_mode="HTML")lt;your_keyawait message.answer("Please configure an API key using `/add_key google <your_key>`", parse_mode="HTML")gt;`", parse_mode="HTML")
                 return
 
             active_key_data = keys[user.llm_provider]
