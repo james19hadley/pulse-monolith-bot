@@ -146,11 +146,11 @@ Here is your report anyway:
 
 {report_text}""", parse_mode="HTML")
         else:
-            await message.answer(f"🌙 <b>End of Day</b>
+            await message.answer(f"""🌙 <b>End of Day</b>
 
 {report_text}
 
-<i>Tip: Bind a channel to post this automatically by forwarding a message from it!</i>", parse_mode="HTML")
+<i>Tip: Bind a channel to post this automatically by forwarding a message from it!</i>""", parse_mode="HTML")
 
 
 @router.message(F.text == "🌙 End Day")
@@ -205,8 +205,8 @@ Here is your report anyway:
 
 {report_text}""", parse_mode="HTML")
         else:
-            await message.answer(f"🌙 <b>End of Day</b>
+            await message.answer(f"""🌙 <b>End of Day</b>
 
 {report_text}
 
-<i>Tip: Bind a channel to post this automatically by forwarding a message from it!</i>", parse_mode="HTML")
+<i>Tip: Bind a channel to post this automatically by forwarding a message from it!</i>""", parse_mode="HTML")
