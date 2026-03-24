@@ -10,7 +10,8 @@ git pull
 # 2. Rebuild and restart the containers
 echo "🏗️ Building and restarting Docker containers..."
 docker compose down || true
-docker rm -f pulse_postgres pulse_redis || true
+docker container rm -f pulse_postgres || true
+docker container rm -f pulse_redis || true
 docker network rm pulse-monolith-bot_default || true
 docker builder prune -af
   docker compose build --no-cache
