@@ -140,11 +140,11 @@ async def cmd_end_day(message: Message):
                 await message.answer(f"✅ Your End-of-Day report has been posted to your accountability channel!", parse_mode="HTML")
             except Exception as e:
                 print(f"Failed to send to channel {target_channel}: {e}")
-                await message.answer(f"❌ Could not post to channel (ID: {target_channel}). Make sure I am an admin.
+                await message.answer(f"""❌ Could not post to channel (ID: {target_channel}). Make sure I am an admin.
 
 Here is your report anyway:
 
-{report_text}", parse_mode="HTML")
+{report_text}""", parse_mode="HTML")
         else:
             await message.answer(f"🌙 <b>End of Day</b>
 
@@ -199,11 +199,11 @@ async def cmd_end_day(message: Message):
                 await message.answer(f"✅ Your End-of-Day report has been posted to your accountability channel!", parse_mode="HTML")
             except Exception as e:
                 print(f"Failed to send to channel {target_channel}: {e}")
-                await message.answer(f"❌ Could not post to channel (ID: {target_channel}). Make sure I am an admin.
+                await message.answer(f"""❌ Could not post to channel (ID: {target_channel}). Make sure I am an admin.
 
 Here is your report anyway:
 
-{report_text}", parse_mode="HTML")
+{report_text}""", parse_mode="HTML")
         else:
             await message.answer(f"🌙 <b>End of Day</b>
 
