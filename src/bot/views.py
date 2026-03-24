@@ -23,6 +23,8 @@ def welcome_message(has_key: bool = False) -> str:
     else:
         msg += "✅ <i>AI Engine Connected. Start typing to begin!</i>\n"
 
+    return msg
+
 def session_started_message() -> str:
     return "Session initiated. Monitoring active."
 
