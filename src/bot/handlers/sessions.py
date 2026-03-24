@@ -92,3 +92,121 @@ async def cmd_log(message: Message, command: CommandObject):
         db.commit()
         
     await message.answer(f"Logged {minutes}m: {desc}", parse_mode="HTML")
+
+
+@router.message(F.text == "🌙 End Day")
+@router.message(Command("end_day"))
+async def cmd_end_day(message: Message):
+    """End the day, generate a report, and optionally send it to the accountability channel."""
+    await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
+    
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        
+        # 1. Close active session if any
+        if user.active_session_id:
+            session = db.query(Session).filter(Session.id == user.active_session_id).first()
+            if session:
+                session.end_time = datetime.datetime.utcnow()
+                actual_duration_minutes = int((session.end_time - session.start_time).total_seconds() / 60)
+                session.status = "closed"
+                
+                log = TimeLog(
+                    user_id=user.id,
+                    session_id=session.id,
+                    duration_minutes=actual_duration_minutes,
+                    project_id=None,
+                    description="Completed Focus Session (End of Day)"
+                )
+                db.add(log)
+            user.active_session_id = None
+            db.commit()
+            await message.answer(f"🍅 Active session closed automatically ({actual_duration_minutes}m).")
+
+        # 2. Generate Report
+        from src.bot.handlers.utils import generate_daily_report_text
+        report_text = generate_daily_report_text(db, user)
+        
+        # 3. Deliver Report
+        target_channel = getattr(user, 'target_channel_id', None)
+        
+        if target_channel and target_channel != "None":
+            try:
+                await message.bot.send_message(
+                    chat_id=target_channel,
+                    text=report_text,
+                    parse_mode="HTML"
+                )
+                await message.answer(f"✅ Your End-of-Day report has been posted to your accountability channel!", parse_mode="HTML")
+            except Exception as e:
+                print(f"Failed to send to channel {target_channel}: {e}")
+                await message.answer(f"❌ Could not post to channel (ID: {target_channel}). Make sure I am an admin.
+
+Here is your report anyway:
+
+{report_text}", parse_mode="HTML")
+        else:
+            await message.answer(f"🌙 <b>End of Day</b>
+
+{report_text}
+
+<i>Tip: Bind a channel to post this automatically by forwarding a message from it!</i>", parse_mode="HTML")
+
+
+@router.message(F.text == "🌙 End Day")
+@router.message(Command("end_day"))
+async def cmd_end_day(message: Message):
+    """End the day, generate a report, and optionally send it to the accountability channel."""
+    await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
+    
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        
+        # 1. Close active session if any
+        if user.active_session_id:
+            session = db.query(Session).filter(Session.id == user.active_session_id).first()
+            if session:
+                session.end_time = datetime.datetime.utcnow()
+                actual_duration_minutes = int((session.end_time - session.start_time).total_seconds() / 60)
+                session.status = "closed"
+                
+                log = TimeLog(
+                    user_id=user.id,
+                    session_id=session.id,
+                    duration_minutes=actual_duration_minutes,
+                    project_id=None,
+                    description="Completed Focus Session (End of Day)"
+                )
+                db.add(log)
+            user.active_session_id = None
+            db.commit()
+            await message.answer(f"🍅 Active session closed automatically ({actual_duration_minutes}m).")
+
+        # 2. Generate Report
+        from src.bot.handlers.utils import generate_daily_report_text
+        report_text = generate_daily_report_text(db, user)
+        
+        # 3. Deliver Report
+        target_channel = getattr(user, 'target_channel_id', None)
+        
+        if target_channel and target_channel != "None":
+            try:
+                await message.bot.send_message(
+                    chat_id=target_channel,
+                    text=report_text,
+                    parse_mode="HTML"
+                )
+                await message.answer(f"✅ Your End-of-Day report has been posted to your accountability channel!", parse_mode="HTML")
+            except Exception as e:
+                print(f"Failed to send to channel {target_channel}: {e}")
+                await message.answer(f"❌ Could not post to channel (ID: {target_channel}). Make sure I am an admin.
+
+Here is your report anyway:
+
+{report_text}", parse_mode="HTML")
+        else:
+            await message.answer(f"🌙 <b>End of Day</b>
+
+{report_text}
+
+<i>Tip: Bind a channel to post this automatically by forwarding a message from it!</i>", parse_mode="HTML")

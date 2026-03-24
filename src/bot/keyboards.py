@@ -6,7 +6,8 @@ def get_main_menu() -> ReplyKeyboardMarkup:
     kb = [
         [
             KeyboardButton(text="🟢 Start Session"),
-            KeyboardButton(text="🛑 End Session")
+            KeyboardButton(text="🛑 End Session"),
+            KeyboardButton(text="🌙 End Day")
         ],
         [
             KeyboardButton(text="📥 Inbox"),
@@ -178,20 +179,40 @@ def get_reports_keyboard() -> InlineKeyboardMarkup:
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
-def get_api_keys_manage_keyboard() -> InlineKeyboardMarkup:
-    """Manage API Keys Main Menu."""
-    kb = [
-        [InlineKeyboardButton(text="➕ Add New Key", callback_data="settings_add_key")],
-        [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
-    ]
+def get_api_keys_manage_keyboard(keys: dict = None, active_key: str = None) -> InlineKeyboardMarkup:
+    """Manage API Keys Main Menu, allowing switching active keys."""
+    kb = []
+    
+    if keys:
+        for k in keys.keys():
+            if k == active_key:
+                text = f"✅ {k} (Active)"
+                cb_data = "ignore_active"
+            else:
+                text = f"🔄 Switch to {k}"
+                cb_data = f"switch_key_{k}"
+            kb.append([InlineKeyboardButton(text=text, callback_data=cb_data)])
+            
+    kb.append([InlineKeyboardButton(text="➕ Add New Key", callback_data="settings_add_key")])
+    kb.append([InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")])
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
-def get_api_keys_manage_keyboard() -> InlineKeyboardMarkup:
-    """Manage API Keys Main Menu."""
-    kb = [
-        [InlineKeyboardButton(text="➕ Add New Key", callback_data="settings_add_key")],
-        [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
-    ]
+def get_api_keys_manage_keyboard(keys: dict = None, active_key: str = None) -> InlineKeyboardMarkup:
+    """Manage API Keys Main Menu, allowing switching active keys."""
+    kb = []
+    
+    if keys:
+        for k in keys.keys():
+            if k == active_key:
+                text = f"✅ {k} (Active)"
+                cb_data = "ignore_active"
+            else:
+                text = f"🔄 Switch to {k}"
+                cb_data = f"switch_key_{k}"
+            kb.append([InlineKeyboardButton(text=text, callback_data=cb_data)])
+            
+    kb.append([InlineKeyboardButton(text="➕ Add New Key", callback_data="settings_add_key")])
+    kb.append([InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")])
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
 def get_catalyst_keyboard() -> InlineKeyboardMarkup:

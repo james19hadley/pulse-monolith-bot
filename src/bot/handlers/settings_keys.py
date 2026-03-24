@@ -119,7 +119,7 @@ async def cq_settings_stubs(callback: CallbackQuery, state: FSMContext):
                         msg += f"✅ <code>{k}</code>\n"
             await callback.message.edit_text(
                 msg,
-                reply_markup=get_api_keys_manage_keyboard(),
+                reply_markup=get_api_keys_manage_keyboard(keys, user.llm_provider),
                 parse_mode="HTML"
             )
             await callback.answer()
@@ -327,63 +327,11 @@ async def cmd_settings(message: Message, command: CommandObject):
 
 @router.message(Command("test_report"))
 async def cmd_test_report(message: Message):
-    """Developer command to instantly generate an accountability report."""
     await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
-    
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
-        now = datetime.datetime.utcnow()
-        last_24h = now - datetime.timedelta(hours=24)
-        
-        config = user.report_config
-        if isinstance(config, str):
-            import json
-            try:
-                config = json.loads(config)
-            except Exception:
-                config = None
-        if not config:
-            config = {"blocks": ["focus", "habits", "inbox", "void"], "style": "emoji"}
-        
-        user_logs = db.query(TimeLog).filter(TimeLog.user_id == user.id, TimeLog.created_at >= last_24h).all()
-        focus_time = sum(l.duration_minutes for l in user_logs if l.project_id is not None)
-        void_time = sum(l.duration_minutes for l in user_logs if l.project_id is None)
-        
-        proj_stats = {}
-        for log in user_logs:
-            if log.project_id:
-                proj = db.query(Project).filter(Project.id == log.project_id).first()
-                if proj:
-                    proj_stats[proj.title] = proj_stats.get(proj.title, 0) + log.duration_minutes
-                
-        user_habits = db.query(Habit).filter(Habit.user_id == user.id).all()
-        habits_data = [{"title": h.title, "current": h.current_value, "target": h.target_value} for h in user_habits]
-        
-        inbox_items = db.query(Inbox).filter(Inbox.user_id == user.id, Inbox.status == "pending").count()
-        
-        stats = {
-            "date": now.strftime("%Y-%m-%d (Test)"),
-            "focus_minutes": focus_time,
-            "void_minutes": void_time,
-            "projects": proj_stats,
-            "habits": habits_data,
-            "inbox_count": inbox_items
-        }
-        
-        ai_comment = None
-        keys = user.api_keys
-        if keys and user.llm_provider in keys:
-            active_key_data = keys[user.llm_provider]
-            if active_key_data["provider"] == "google":
-                try:
-                    provider = GoogleProvider(api_key=decrypt_key(active_key_data["key"]))
-                    prompt = f"Write a 1-sentence {user.persona_type} style comment for this end-of-day report. Just output the sentence."
-                    response = provider.client.models.generate_content(model=provider.model_id, contents=prompt)
-                    ai_comment = response.text
-                except Exception as e:
-                    print(f"Failed to generate AI comment: {e}")
-                
-        report_text = build_daily_report(stats, config, ai_comment)
+        from src.bot.handlers.utils import generate_daily_report_text
+        report_text = generate_daily_report_text(db, user)
         await message.answer(report_text, parse_mode="HTML")
 
 @router.message(Command("use_key"))
@@ -757,3 +705,29 @@ async def cq_test_report(callback: CallbackQuery):
         
         await callback.message.answer(report_text, parse_mode="HTML")
         await callback.answer()
+
+@router.callback_query(F.data.startswith("switch_key_"))
+async def cq_switch_key(callback: CallbackQuery):
+    alias = callback.data.replace("switch_key_", "")
+    with SessionLocal() as db:
+        user = get_or_create_user(db, callback.from_user.id)
+        keys = user.api_keys
+        
+        if not keys or alias not in keys:
+            await callback.answer(f"Error: Key {alias} not found.", show_alert=True)
+            return
+            
+        user.llm_provider = alias
+        db.commit()
+        
+        # Re-render the keys menu
+        msg = "<b>API Keys</b>\n\nYou have configured:\n"
+        for k in keys.keys():
+            msg += f" ✅ <code>{k}</code>\n"
+            
+        await callback.message.edit_text(
+            msg,
+            reply_markup=get_api_keys_manage_keyboard(keys, user.llm_provider),
+            parse_mode="HTML"
+        )
+        await callback.answer(f"Switched to {alias}!")

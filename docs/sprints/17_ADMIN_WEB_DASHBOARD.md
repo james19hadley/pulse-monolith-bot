@@ -16,6 +16,8 @@ Build an embedded web dashboard to monitor the bot's health, user metrics, and e
 - Integrated Telegram ChatActionSender (`typing...`) to show smooth ongoing feedback without frustrating pauses.
 - Implemented `_handle_log_work` to process natural language inputs like (8 hours bot dev) and guide developers cleanly through Project creation -> Work logging mapping using LLMs.
 - Fixed 429 quota exceptions and provided user-friendly buttons to replace/refresh API keys dynamically.
+- Finalized "End Day" functionality, adding a button to the main menu that triggers the generation of an accountability report, which is then sent to the configured target channel.
+- Added a seamless API key switching UI in the settings menu, allowing users to view and toggle between available aliases dynamically.
 - Removed dead developer scripts and cleared pipeline blockages.
 
 ## Tasks
