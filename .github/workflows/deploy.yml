@@ -16,5 +16,5 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /root/pulse-monolith-bot || exit 1
+            cd pulse-monolith-bot || exit 1
             bash scripts/deploy.sh
