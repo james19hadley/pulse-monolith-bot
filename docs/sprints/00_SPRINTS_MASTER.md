@@ -43,3 +43,11 @@ Every new Sprint Markdown file must follow this strict structure to maintain con
 | [Sprint 12](12_CONVERSATIONAL_PERSONA.md) | Conversational MVP & Persona | 🟢 Completed |
 | [Sprint 13](13_SAAS_INFRASTRUCTURE.md) | Phase 2: SaaS Infrastructure | 🟢 Completed |
 | [Sprint 14](14_PRODUCTION_DEPLOYMENT.md) | Deployment to VPS | 🟢 Completed |\n| [Sprint 15](15_PRODUCTION_RESILIENCE.md) | Production Resilience (Webhooks & Backups) | 🟢 Completed |\n| [Sprint 16](16_UX_ONBOARDING_KEYBOARDS.md) | UX Overhaul, Onboarding & Keyboards | 🟡 Active |\n| [Sprint 17](17_ADMIN_WEB_DASHBOARD.md) | Admin Web Dashboard & Telemetry | ⚪ Draft |
+
+## Sprint 16: AI & Natural Language Edge Cases
+- [ ] Migrate "Repeat interval" to "Ping Interval"
+- [ ] Personas: Instruct AI not to wrap slash commands in backticks so they are clickable
+- [ ] Intent: `LOG_HABIT` - Parse natural language, match to existing habit, or offer creation via inline keyboard.
+- [ ] Report Styles: Add `/settings -> Reports -> Style` selector (Emoji vs Core vs Business etc)
+- [ ] Token Stats: Add daily token usage in addition to total in `/tokens`
+- [ ] Undo Support: Provide Inline [Undo] buttons on logged actions

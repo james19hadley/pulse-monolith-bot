@@ -1,10 +1,11 @@
+import aiogram
 from aiogram import Router, F
 from aiogram.types import Message
 from src.db.repo import SessionLocal
 from src.bot.handlers.utils import get_or_create_user, log_tokens
 from src.core.security import decrypt_key
 from src.core.constants import IntentType
-from src.ai.router import get_intent, extract_system_config, extract_entities, generate_chat
+from src.ai.router import get_intent, extract_system_config, extract_entities, generate_chat, extract_log_habit
 from src.core.config import USER_SETTINGS_REGISTRY
 from src.core.personas import get_persona_prompt
 from src.bot.handlers.settings_keys import cmd_test_report
@@ -39,6 +40,8 @@ async def handle_freeform_text(message: Message):
             return await _handle_config_update(message, db, user, provider_name, real_api_key)
         elif intent == IntentType.CREATE_ENTITIES:
             return await _handle_create_entities(message, db, user, provider_name, real_api_key)
+        elif intent == IntentType.LOG_HABIT:
+            return await _handle_log_habit(message, db, user, provider_name, real_api_key)
         elif intent == IntentType.LOG_WORK:
             await message.answer("Please use <code>/log &lt;minutes&gt; [description]</code> to log time.", parse_mode="HTML")
         elif intent == IntentType.GENERATE_REPORT:
@@ -146,3 +149,90 @@ async def _handle_create_entities(message: Message, db, user, provider_name, api
         
     db.commit()
     await message.answer("\n".join(responses), parse_mode="HTML")
+
+async def _handle_log_habit(message: Message, db, user, provider_name, api_key):
+    from src.db.models import Habit
+    from datetime import datetime, timezone
+
+    # 1. Fetch active habits formatting for AI prompt
+    habits = db.query(Habit).filter(Habit.user_id == user.id, Habit.status == 'active').all()
+    if not habits:
+        active_habits_text = "User has no active habits yet."
+    else:
+        active_habits_text = "User's active habits:\n" + "\n".join([f"ID: {h.id}, Title: {h.title}" for h in habits])
+
+    # 2. Call AI extraction
+    extraction, tokens = extract_log_habit(message.text, provider_name, api_key, active_habits_text)
+    
+    if tokens:
+        log_tokens(db, message.from_user.id, tokens)
+        
+    if not extraction:
+        await message.answer("I could not verify the exact habit to log.")
+        return
+
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+    if extraction.habit_id is None:
+        title = extraction.unmatched_habit_name or "New Habit"
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="✅ Click to Create", callback_data=f"create_habit_{title[:32]}")
+        ]])
+        await message.answer(f"🧩 I couldn't find a matching habit. Do you want to create <b>{title}</b>?", parse_mode="HTML", reply_markup=keyboard)
+        return
+        
+    habit = db.query(Habit).filter_by(id=extraction.habit_id, user_id=user.id).first()
+    if not habit:
+        await message.answer("Error: AI returned an invalid Habit ID.")
+        return
+
+    # Log it
+    habit.completions += extraction.amount_completed
+    habit.last_completed_at = datetime.now(timezone.utc)
+    db.commit()
+
+    import html
+    desc = html.escape(extraction.description) if extraction.description else ""
+    append_desc = f"\n💬 <i>{desc}</i>" if desc else ""
+    
+    # We could add an UNDO button here! User asked for it.
+    # For undo, we would ideally track history, but for habits we can just allow them to undo the completion
+    
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="↩️ Undo", callback_data=f"undo_habit_{habit.id}_{extraction.amount_completed}")
+    ]])
+    
+    await message.answer(
+        f"✅ <b>{habit.title}</b> logged! (+{extraction.amount_completed} completion)\n" \
+        f"🏃 Total: {habit.completions}{append_desc}",
+        parse_mode="HTML",
+        reply_markup=keyboard
+    )
+
+@router.callback_query(F.data.startswith("create_habit_"))
+async def cq_create_habit(callback: aiogram.types.CallbackQuery):
+    title = callback.data.replace("create_habit_", "")
+    with SessionLocal() as db:
+        user = get_or_create_user(db, callback.from_user.id)
+        from src.db.models import Habit
+        habit = Habit(user_id=user.id, title=title)
+        db.add(habit)
+        db.commit()
+        db.refresh(habit)
+        await callback.message.edit_text(f"✅ Habit created: <b>{habit.title}</b>! Try logging it again.", parse_mode="HTML")
+
+@router.callback_query(F.data.startswith("undo_habit_"))
+async def cq_undo_habit(callback: aiogram.types.CallbackQuery):
+    _, _, hid_str, count_str = callback.data.split("_")
+    hid = int(hid_str)
+    count = int(count_str)
+    
+    with SessionLocal() as db:
+        from src.db.models import Habit
+        habit = db.query(Habit).filter_by(id=hid, user_id=callback.from_user.id).first()
+        if habit and habit.completions >= count:
+            habit.completions -= count
+            db.commit()
+            await callback.message.edit_text(f"↩️ Undid {count} completions for <b>{habit.title}</b>. Total is now {habit.completions}.", parse_mode="HTML")
+        else:
+            await callback.message.edit_text("❌ Could not undo (habit might not exist or count is too low).", parse_mode="HTML")

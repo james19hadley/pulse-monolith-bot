@@ -17,6 +17,8 @@ class LogWorkParams(BaseModel):
 class LogHabitParams(BaseModel):
     habit_id: Optional[int] = Field(description="The integer ID of the matching habit. Null if no habit matches.", default=None)
     amount_completed: int = Field(description="The numeric amount completed. If user just says 'did pushups', default to 1 unless specified.", default=1)
+    unmatched_habit_name: Optional[str] = Field(description="If no habit matches, provide the inferred name of the new habit here (e.g. 'Drink water').", default=None)
+    unmatched_habit_name: Optional[str] = Field(description="If no habit matches, provide the inferred name of the new habit here (e.g. 'Drink water').", default=None)
 
 class AddInboxParams(BaseModel):
     raw_content: str = Field(description="The actual idea, note, or thought, omitting conversational filler like 'save this idea' or 'remind me to'")

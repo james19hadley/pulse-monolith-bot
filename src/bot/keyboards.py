@@ -53,7 +53,7 @@ def get_settings_keyboard() -> InlineKeyboardMarkup:
 def get_pulse_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="⏱️ Catalyst Limit", callback_data="settings_catalyst")
-    builder.button(text="🔁 Repeat Interval", callback_data="settings_interval")
+    builder.button(text="🔁 Ping Interval", callback_data="settings_interval")
     builder.button(text="🔙 Back", callback_data="settings_main")
     builder.adjust(1, 1, 1)
     return builder.as_markup()
