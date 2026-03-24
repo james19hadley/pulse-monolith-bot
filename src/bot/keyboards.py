@@ -41,7 +41,7 @@ def get_settings_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="⏰ Report Time", callback_data="settings_cutoff")
         ],
         [
-            InlineKeyboardButton(text="📊 Report Dest", callback_data="settings_reports"),
+            InlineKeyboardButton(text="📊 Report", callback_data="settings_reports"),
             InlineKeyboardButton(text="📢 Target Channel", callback_data="settings_channel")
         ],
         [
@@ -109,13 +109,16 @@ def get_timezone_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
 def get_reports_keyboard() -> InlineKeyboardMarkup:
-    """Keyboard to select report destination."""
+    """Keyboard to select report destination and format."""
     kb = [
         [
             InlineKeyboardButton(text="📩 Send to DM", callback_data="set_report_dm"),
             InlineKeyboardButton(text="📢 Send to Channel", callback_data="set_report_channel")
         ],
-        [InlineKeyboardButton(text="❌ Disable Reports", callback_data="set_report_none")],
+        [
+            InlineKeyboardButton(text="❌ Disable Reports", callback_data="set_report_none"),
+            InlineKeyboardButton(text="🧪 Test Report", callback_data="settings_test_report")
+        ],
         [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
@@ -160,13 +163,16 @@ def get_timezone_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
 def get_reports_keyboard() -> InlineKeyboardMarkup:
-    """Keyboard to select report destination."""
+    """Keyboard to select report destination and format."""
     kb = [
         [
             InlineKeyboardButton(text="📩 Send to DM", callback_data="set_report_dm"),
             InlineKeyboardButton(text="📢 Send to Channel", callback_data="set_report_channel")
         ],
-        [InlineKeyboardButton(text="❌ Disable Reports", callback_data="set_report_none")],
+        [
+            InlineKeyboardButton(text="❌ Disable Reports", callback_data="set_report_none"),
+            InlineKeyboardButton(text="🧪 Test Report", callback_data="settings_test_report")
+        ],
         [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)

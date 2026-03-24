@@ -723,3 +723,18 @@ async def process_cutoff_text(message: Message, state: FSMContext):
     except ValueError:
         await message.answer("Please send a valid time like '23:00'.")
 
+
+
+@router.callback_query(F.data == "settings_test_report")
+async def cq_test_report(callback: CallbackQuery):
+    from src.db.repo import SessionLocal
+    from src.bot.handlers.utils import get_or_create_user
+    from src.bot.views import generate_evening_report
+    
+    with SessionLocal() as db:
+        user = get_or_create_user(db, callback.from_user.id)
+        bot_msg = await callback.message.answer("<i>Generating test report...</i>", parse_mode="HTML")
+        report_text = await generate_evening_report(db, user)
+        await callback.message.answer(report_text, parse_mode="HTML")
+        await callback.message.delete()
+        await callback.answer()

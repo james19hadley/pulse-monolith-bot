@@ -25,26 +25,26 @@ async def cmd_help(message: Message):
 Talk to me naturally, but if the AI is slow or offline, use these slash commands:
 
 <b>Tracking (Zero-AI)</b>
-<code>/start_session</code> - Begin a new tracking session
-<code>/end_session</code> - End current session and summarize
-<code>/log &lt;min&gt; [desc]</code> - Quick log (e.g. <code>/log 30 reading</code>)
-<code>/habit &lt;id/name&gt; [val]</code> - Mark habit (e.g. <code>/habit workout 1</code>)
-<code>/inbox &lt;text&gt;</code> - Fast idea dump
+/start_session - Begin a new tracking session
+/end_session - End current session and summarize
+/log &lt;min&gt; [desc] - Quick log (e.g. /log 30 reading)
+/habit &lt;id/name&gt; [val] - Mark habit (e.g. <code>/habit workout 1)
+/inbox &lt;text&gt; - Fast idea dump
 
 <b>Data & Config</b>
-<code>/projects</code> - List active projects and IDs
-<code>/habits</code> - List active habits and IDs
-<code>/new_project &lt;name&gt; | [target_hours]</code> - Create a new project
-<code>/new_habit &lt;name&gt;</code> - Create a new habit
-<code>/settings</code> - View or change your configurations
-<code>/persona</code> - View or change your AI Persona
-<code>/tokens</code> - View AI Token usage & API costs
-<code>/test_report</code> - Force generate your daily report
+/projects - List active projects and IDs
+/habits - List active habits and IDs
+/new_project &lt;name&gt; | [target_hours] - Create a new project
+/new_habit &lt;name&gt; - Create a new habit
+/settings - View or change your configurations
+/persona - View or change your AI Persona
+/tokens - View AI Token usage & API costs
+/test_report - Force generate your daily report
 
 <b>API Keys</b>
-<code>/add_key &lt;provider&gt; &lt;key&gt; [name]</code> - Set your API key
-<code>/my_key</code> - Check your current aliases
-<code>/delete_key &lt;name&gt;</code> - Remove an alias
+/add_key &lt;provider&gt; &lt;key&gt; [name] - Set your API key
+/my_key - Check your current aliases
+/delete_key &lt;name&gt; - Remove an alias
 """
     await message.answer(help_text, parse_mode="HTML")
 
