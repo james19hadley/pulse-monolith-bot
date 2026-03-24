@@ -497,11 +497,7 @@ async def cq_settings_catalyst(callback: CallbackQuery):
         from src.bot.handlers.utils import get_or_create_user
         user = get_or_create_user(db, callback.from_user.id)
         current = getattr(user, 'catalyst_limit', 60)
-    text = f"⏱️ <b>Catalyst Limit</b> (Minutes)
-
-<i>How much time should pass after the deadline before I notify you?</i>
-
-<b>Current:</b> <code>{current}</code>"
+    text = f"⏱️ <b>Catalyst Limit</b> (Minutes)\n\n<i>How much time should pass after the deadline before I notify you?</i>\n\n<b>Current:</b> <code>{current}</code>"
     await callback.message.edit_text(text, reply_markup=get_catalyst_keyboard(), parse_mode="HTML")
 
 @router.callback_query(F.data.startswith("set_catalyst_"))
@@ -551,11 +547,7 @@ async def cq_settings_interval(callback: CallbackQuery):
         from src.bot.handlers.utils import get_or_create_user
         user = get_or_create_user(db, callback.from_user.id)
         current = getattr(user, 'interval_limit', 20)
-    text = f"⏱️ <b>Ping Interval</b> (Minutes)
-
-<i>How often should I ping you to remind you about the overdue habit?</i>
-
-<b>Current:</b> <code>{current}</code>"
+    text = f"⏱️ <b>Ping Interval</b> (Minutes)\n\n<i>How often should I ping you to remind you about the overdue habit?</i>\n\n<b>Current:</b> <code>{current}</code>"
     await callback.message.edit_text(text, reply_markup=get_interval_keyboard(), parse_mode="HTML")
 
 @router.callback_query(F.data.startswith("set_interval_"))
@@ -605,11 +597,7 @@ async def cq_settings_channel(callback: CallbackQuery):
         from src.bot.handlers.utils import get_or_create_user
         user = get_or_create_user(db, callback.from_user.id)
         current = getattr(user, 'target_channel_id', 'None')
-    text = f"📣 <b>Target Channel</b>
-
-Where should I post reports?
-
-<b>Current:</b> <code>{current}</code>"
+    text = f"📣 <b>Target Channel</b>\n\nWhere should I post reports?\n\n<b>Current:</b> <code>{current}</code>"
     await callback.message.edit_text(text, reply_markup=get_channel_keyboard(), parse_mode="HTML")
 
 @router.callback_query(F.data.startswith("set_channel_"))
@@ -658,18 +646,11 @@ async def cq_settings_pulse(callback: CallbackQuery):
         interval = getattr(user, 'interval_limit', 20)
     
     text = (
-        "💓 <b>Pulse Intervals</b>
-
-"
-        "• <b>Catalyst Limit</b>: How long (in minutes) to wait after a deadline before pushing the first notification.
-"
-        "• <b>Ping Interval</b>: How frequently (in minutes) to repeat the notification if the habit remains overdue.
-
-"
-        f"<b>Current Settings:</b>
-"
-        f"Catalyst: <code>{catalyst}</code> min
-"
+        "💓 <b>Pulse Intervals</b>\n\n"
+        "• <b>Catalyst Limit</b>: How long (in minutes) to wait after a deadline before pushing the first notification.\n"
+        "• <b>Ping Interval</b>: How frequently (in minutes) to repeat the notification if the habit remains overdue.\n\n"
+        f"<b>Current Settings:</b>\n"
+        f"Catalyst: <code>{catalyst}</code> min\n"
         f"Ping: <code>{interval}</code> min"
     )
     await callback.message.edit_text(text, reply_markup=get_pulse_menu_keyboard(), parse_mode="HTML")
@@ -681,11 +662,7 @@ async def cq_settings_cutoff(callback: CallbackQuery):
         from src.bot.handlers.utils import get_or_create_user
         user = get_or_create_user(db, callback.from_user.id)
         current = getattr(user, 'day_cutoff_time', '23:00')
-    text = f"⏰ <b>Day Cutoff Time</b>
-
-At what time should the day end for reporting purposes? (Format: HH:MM)
-
-<b>Current:</b> <code>{current}</code>"
+    text = f"⏰ <b>Day Cutoff Time</b>\n\nAt what time should the day end for reporting purposes? (Format: HH:MM)\n\n<b>Current:</b> <code>{current}</code>"
     await callback.message.edit_text(text, reply_markup=get_cutoff_keyboard(), parse_mode="HTML")
 
 @router.callback_query(F.data.startswith("set_cutoff_"))
