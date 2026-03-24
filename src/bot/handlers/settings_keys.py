@@ -257,25 +257,15 @@ async def cmd_tokens(message: Message):
         comp_today = db.query(func.sum(TokenUsage.completion_tokens)).filter(TokenUsage.user_id == user.id, TokenUsage.created_at >= today_start).scalar() or 0
         cost_today = (prompt_today / 1000000.0) * 0.075 + (comp_today / 1000000.0) * 0.30
         
-        msg = f"📊 <b>Token Usage Statistics</b>
-
-"
-        msg += f"<b>Today (UTC):</b>
-"
-        msg += f"• Prompts: <code>{prompt_today}</code>
-"
-        msg += f"• Completions: <code>{comp_today}</code>
-"
-        msg += f"• Est. Cost: <b>${cost_today:.4f}</b>
-
-"
+        msg = f"📊 <b>Token Usage Statistics</b>\n\n"
+        msg += f"<b>Today (UTC):</b>\n"
+        msg += f"• Prompts: <code>{prompt_today}</code>\n"
+        msg += f"• Completions: <code>{comp_today}</code>\n"
+        msg += f"• Est. Cost: <b>${cost_today:.4f}</b>\n\n"
         
-        msg += f"<b>All-Time:</b>
-"
-        msg += f"• Prompts: <code>{prompt_total}</code>
-"
-        msg += f"• Completions: <code>{comp_total}</code>
-"
+        msg += f"<b>All-Time:</b>\n"
+        msg += f"• Prompts: <code>{prompt_total}</code>\n"
+        msg += f"• Completions: <code>{comp_total}</code>\n"
         msg += f"• Est. Cost: <b>${cost:.4f}</b>"
 
         await message.answer(msg, parse_mode="HTML")
