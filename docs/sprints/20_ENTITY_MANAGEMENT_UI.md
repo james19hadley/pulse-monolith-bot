@@ -1,6 +1,6 @@
 # Sprint 20: Entity Management UI (Interactive Inline Panels)
 
-**Status:** `Draft`
+**Status:** `Active`
 **Date Proposed:** March 26, 2026
 **Objective:** Replace text-only dumps for `/projects` and `/habits` with interactive inline keyboards, allowing the user to view, edit, and archive entities effortlessly via Telegram UI.
 
