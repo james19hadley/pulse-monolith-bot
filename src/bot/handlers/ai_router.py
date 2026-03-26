@@ -80,7 +80,7 @@ async def ai_message_router(message: Message):
             # --- NEW DISPATCH ROUTER ---
             handler = INTENT_HANDLERS.get(intent)
             if handler:
-                if intent == IntentType.UNDO_LAST_ACTION:
+                if intent == IntentType.UNDO:
                     pass # Handled via callbacks usually, but if typed it would go to a special function
                 else:
                     await handler(message, db, user, provider_name, api_key)
