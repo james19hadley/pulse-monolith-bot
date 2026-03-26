@@ -9,13 +9,14 @@ git pull
 
 # 2. Rebuild and restart the containers
 echo "🏗️ Building and restarting Docker containers..."
-docker compose down || true
-docker container rm -f pulse_postgres || true
-docker container rm -f pulse_redis || true
-docker network rm pulse-monolith-bot_default || true
-docker builder prune -af
-  docker compose build --no-cache
-  docker compose up -d
+# We rely on docker compose caching to only rebuild what changed (e.g. your Python code).
+# It will only recreate containers whose image or configuration has changed, meaning
+# PostgreSQL and Redis won't experience downtime during simple code updates.
+docker compose build
+docker compose up -d
+
+# Clean up dangling images to save space without destroying build caches
+docker image prune -f
 
 # 3. Ensure backup cron job is registered
 echo "⏰ Configuring auto-backups (cron)..."
