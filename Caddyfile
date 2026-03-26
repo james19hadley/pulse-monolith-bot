@@ -1,7 +1,7 @@
 {$WEBHOOK_DOMAIN:localhost} {
     @adminAuth {
         path /admin/*
-        not remote_ip {$ADMIN_IP:127.0.0.1}
+        not remote_ip {$ADMIN_IP_1:127.0.0.1} {$ADMIN_IP_2:127.0.0.1} {$ADMIN_IP_3:127.0.0.1}
     }
     respond @adminAuth "Access Denied" 403
 
