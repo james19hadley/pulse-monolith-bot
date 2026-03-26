@@ -10,3 +10,16 @@ class SettingsState(StatesGroup):
     waiting_for_interval = State()
     waiting_for_channel = State()
     waiting_for_cutoff = State()
+
+class EntityState(StatesGroup):
+    waiting_for_project_name = State()
+    waiting_for_project_target = State()
+    
+    waiting_for_habit_name = State()
+    waiting_for_habit_target = State()
+    
+    waiting_for_edit_project_target = State()
+    waiting_for_add_project_time = State()
+    
+    waiting_for_edit_habit_target = State()
+    waiting_for_add_habit_progress = State()

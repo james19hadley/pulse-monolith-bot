@@ -7,6 +7,7 @@ class Buttons:
     END_DAY = "🌙 End Day"
     INBOX = "📥 Inbox"
     SETTINGS = "⚙️ Settings"
+    PROJECTS = "🗂 Projects"
     HELP = "❓ Help"
     UNDO = "↩️ Undo"
 
@@ -22,6 +23,7 @@ class Commands:
     END_DAY = "end_day"
     INBOX = "inbox"
     SETTINGS = "settings"
+    PROJECTS = "projects"
     HELP = "help"
     UNDO = "undo"
     CLEAR_INBOX = "clear_inbox"

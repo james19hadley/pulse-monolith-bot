@@ -12,10 +12,11 @@ def get_main_menu() -> ReplyKeyboardMarkup:
         ],
         [
             KeyboardButton(text=Buttons.INBOX),
-            KeyboardButton(text=Buttons.SETTINGS),
-            KeyboardButton(text=Buttons.HELP)
+            KeyboardButton(text=Buttons.PROJECTS),
+            KeyboardButton(text=Buttons.SETTINGS)
         ],
         [
+            KeyboardButton(text=Buttons.HELP),
             KeyboardButton(text=Buttons.UNDO)
         ]
     ]
@@ -247,3 +248,60 @@ def get_channel_keyboard() -> InlineKeyboardMarkup:
     builder.button(text="🔙 Back", callback_data="settings_main")
     builder.adjust(1, 1, 1)
     return builder.as_markup()
+
+def get_entities_main_keyboard() -> InlineKeyboardMarkup:
+    kb = [
+        [
+            InlineKeyboardButton(text="📁 Manage Projects", callback_data="ui_projects_list")
+        ],
+        [
+            InlineKeyboardButton(text="🎯 Manage Habits", callback_data="ui_habits_list")
+        ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_projects_list_keyboard(projects) -> InlineKeyboardMarkup:
+    kb = []
+    for p in projects:
+        kb.append([InlineKeyboardButton(text=f"📁 {p.title}", callback_data=f"ui_proj_{p.id}")])
+    kb.append([InlineKeyboardButton(text="➕ New Project", callback_data="ui_proj_new")])
+    kb.append([InlineKeyboardButton(text="🔙 Back", callback_data="ui_entities_menu")])
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_habits_list_keyboard(habits) -> InlineKeyboardMarkup:
+    kb = []
+    for h in habits:
+        kb.append([InlineKeyboardButton(text=f"🎯 {h.title}", callback_data=f"ui_hab_{h.id}")])
+    kb.append([InlineKeyboardButton(text="➕ New Habit", callback_data="ui_hab_new")])
+    kb.append([InlineKeyboardButton(text="🔙 Back", callback_data="ui_entities_menu")])
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_project_view_keyboard(proj_id) -> InlineKeyboardMarkup:
+    kb = [
+        [
+            InlineKeyboardButton(text="✏️ Edit Target", callback_data=f"ui_proj_edit_{proj_id}"),
+            InlineKeyboardButton(text="⏱ Add Time", callback_data=f"ui_proj_add_{proj_id}")
+        ],
+        [
+            InlineKeyboardButton(text="📦 Archive", callback_data=f"ui_proj_arch_{proj_id}")
+        ],
+        [
+            InlineKeyboardButton(text="🔙 Back", callback_data="ui_projects_list")
+        ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_habit_view_keyboard(hab_id) -> InlineKeyboardMarkup:
+    kb = [
+        [
+            InlineKeyboardButton(text="✏️ Edit Target", callback_data=f"ui_hab_edit_{hab_id}"),
+            InlineKeyboardButton(text="➕ Add Progress", callback_data=f"ui_hab_add_{hab_id}")
+        ],
+        [
+            InlineKeyboardButton(text="🗑 Delete/Archive", callback_data=f"ui_hab_arch_{hab_id}")
+        ],
+        [
+            InlineKeyboardButton(text="🔙 Back", callback_data="ui_habits_list")
+        ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)

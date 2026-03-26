@@ -1,6 +1,6 @@
 # Sprint 20: Entity Management UI (Interactive Inline Panels)
 
-**Status:** `Active`
+**Status:** `Completed`
 **Date Proposed:** March 26, 2026
 **Objective:** Replace text-only dumps for `/projects` and `/habits` with interactive inline keyboards, allowing the user to view, edit, and archive entities effortlessly via Telegram UI.
 
@@ -10,10 +10,10 @@
 3. **Habit Management:** Apply the exact same pattern for `/habits`, allowing users to adjust targets or toggle the tracking type.
 
 ## 📋 Tasks
-- [ ] Update `cmd_projects` to generate `InlineKeyboardMarkup` mapped to `project_view_<id>`.
-- [ ] Create callback handlers (`@router.callback_query()`) for Project detail, Edit Goal, Edit Unit, and Archive.
-- [ ] Update `cmd_habits` (if exists) to output a similar inline UI layout.
-- [ ] Safely handle "Archive" actions so we don't delete `TimeLog` records tied to dead projects, but just flip `status='archived'`.
+[x] Update `cmd_projects` to generate `InlineKeyboardMarkup` mapped to `project_view_<id>`.
+[x] Create callback handlers (`@router.callback_query()`) for Project detail, Edit Goal, Edit Unit, and Archive.
+[x] Update `cmd_habits` (if exists) to output a similar inline UI layout.
+[x] Safely handle "Archive" actions so we don't delete `TimeLog` records tied to dead projects, but just flip `status='archived'`.
 
 ## 🔒 Security & Architecture Notes
 - All interactive UI flows must check `user_id == message.from_user.id` to prevent modifying someone else's project via stale inline buttons.
