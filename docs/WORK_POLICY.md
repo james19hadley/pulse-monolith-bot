@@ -7,7 +7,7 @@ This document outlines the agreements between the User and the AI Developer (Mon
 *   We commit **frequently** and **atomically**. 
 *   A commit like `Initial database schema setup` or `Setup environment` is perfectly valid and desired. If we break the bot logic later, we can roll back to the clean database state without losing everything.
 *   **Rule of thumb:** If a Sprint task or sub-task is completed and works independently (even if it's just infrastructure), it gets committed.
-*   **STRICT POLICY:** The AI Assistant must **NEVER** push (`git push`) to the remote repository without getting explicit prior approval from the User. Doing so violates the collaborative trust model.
+*   **STRICT POLICY:** The AI Assistant must **NEVER** push (`git push`) to the remote repository or trigger CI/CD pipelines without explicitly declaring its intentions in the chat and receiving prior approval from the User. Since `main` is connected to production CI/CD, pushing silently causes unmonitored deployments and violates the collaborative trust model.
 
 ## 2. Testing Philosophy (Avoiding "Garbage" AI Tests)
 AI-generated Unit Tests often become a mock-heavy mess that tests the framework, not the logic. 

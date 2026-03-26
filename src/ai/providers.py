@@ -43,7 +43,8 @@ class CreateProjectParams(BaseModel):
     target_minutes: int = Field(description="The target estimated effort in minutes. If they specify hours, multiply by 60. Default is 0.", default=0)
 
 class CreateHabitParams(BaseModel):
-    title: str = Field(description="The name of the new habit.")
+    title: str = Field(description="The short concise name of the new habit. e.g. instead of 'делать для фулл планша уражнения' use 'фулл планш'")
+    target_value: int = Field(description="The target numeric value for the habit per cycle, e.g. minutes, reps. Default is 1.", default=1)
 
 class CreateEntitiesParams(BaseModel):
     projects: List[CreateProjectParams] = Field(description="List of new projects to create.")
@@ -54,7 +55,8 @@ class CreateProjectParams(BaseModel):
     target_minutes: int = Field(description="The target estimated effort in minutes. If they specify hours, multiply by 60. Default is 0.", default=0)
 
 class CreateHabitParams(BaseModel):
-    title: str = Field(description="The name of the new habit.")
+    title: str = Field(description="The short concise name of the new habit. e.g. instead of 'делать для фулл планша уражнения' use 'фулл планш'")
+    target_value: int = Field(description="The target numeric value for the habit per cycle, e.g. minutes, reps. Default is 1.", default=1)
 
 class CreateEntitiesParams(BaseModel):
     projects: List[CreateProjectParams] = Field(description="List of new projects to create.")
@@ -65,7 +67,8 @@ class CreateProjectParams(BaseModel):
     target_minutes: int = Field(description="The target estimated effort in minutes. If they specify hours, multiply by 60. Default is 0.", default=0)
 
 class CreateHabitParams(BaseModel):
-    title: str = Field(description="The name of the new habit.")
+    title: str = Field(description="The short concise name of the new habit. e.g. instead of 'делать для фулл планша уражнения' use 'фулл планш'")
+    target_value: int = Field(description="The target numeric value for the habit per cycle, e.g. minutes, reps. Default is 1.", default=1)
 
 class CreateEntitiesParams(BaseModel):
     projects: List[CreateProjectParams] = Field(description="List of new projects to create.")

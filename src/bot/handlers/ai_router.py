@@ -5,7 +5,7 @@ from src.db.repo import SessionLocal
 from src.bot.handlers.utils import get_or_create_user, log_tokens
 from src.core.security import decrypt_key
 from src.core.constants import IntentType
-from src.ai.router import get_intent, extract_system_config, extract_entities, generate_chat, extract_log_habit, extract_log_work
+from src.ai.router import get_intent, extract_system_config, extract_entities, generate_chat, extract_log_habit, extract_log_work, extract_inbox
 from src.core.config import USER_SETTINGS_REGISTRY
 from src.core.personas import get_persona_prompt
 from src.bot.handlers.settings_keys import cmd_test_report
@@ -45,8 +45,13 @@ async def handle_freeform_text(message: Message):
                 return await _handle_log_habit(message, db, user, provider_name, real_api_key)
             elif intent == IntentType.LOG_WORK:
                 return await _handle_log_work(message, db, user, provider_name, real_api_key)
+            elif intent == IntentType.ADD_INBOX:
+                return await _handle_add_inbox(message, db, user, provider_name, real_api_key)
             elif intent == IntentType.GENERATE_REPORT:
                 return await cmd_test_report(message)
+            elif intent == IntentType.UNDO:
+                from src.bot.handlers.core import cmd_undo
+                return await cmd_undo(message)
             elif intent == IntentType.ERROR:
                 import html
                 raw_err = str(error_msg) if error_msg else ""
@@ -157,7 +162,7 @@ async def _handle_create_entities(message: Message, db, user, provider_name, api
         responses.append(msg)
         
     for h in extraction.habits:
-        habit = Habit(user_id=user.id, title=h.title)
+        habit = Habit(user_id=user.id, title=h.title, target_value=h.target_value, type="counter")
         db.add(habit)
         db.flush()
         responses.append(f"✅ Habit created: <b>{habit.title}</b>")
@@ -202,7 +207,10 @@ async def _handle_log_habit(message: Message, db, user, provider_name, api_key):
         return
 
     # Log it
-    habit.completions += extraction.amount_completed
+    if extraction.amount_completed == 1 and habit.target_value > 1 and "done" not in message.text.lower() and "выполнил" not in message.text.lower():
+        habit.current_value += extraction.amount_completed
+    else:
+        habit.current_value = habit.target_value if extraction.amount_completed == 1 else habit.current_value + extraction.amount_completed
     habit.last_completed_at = datetime.now(timezone.utc)
     db.commit()
 
@@ -353,3 +361,24 @@ async def cq_undo_work(callback: aiogram.types.CallbackQuery):
             await callback.message.edit_text(f"↩️ Undid {log.duration_minutes}m log.", parse_mode="HTML")
         else:
             await callback.message.edit_text("❌ Could not undo (log might not exist or already undone).", parse_mode="HTML")
+
+async def _handle_add_inbox(message: Message, db, user, provider_name, api_key):
+    from src.db.models import Inbox
+    from src.bot.handlers.utils import log_tokens
+    
+    extraction, tokens = extract_inbox(message.text, provider_name, api_key)
+    
+    if tokens:
+        log_tokens(db, message.from_user.id, tokens)
+        
+    if not extraction or not getattr(extraction, "raw_content", None):
+        await message.answer("I could not determine what to save to your inbox.")
+        return
+        
+    inbox_item = Inbox(user_id=user.id, raw_text=extraction.raw_content, status="pending")
+    db.add(inbox_item)
+    db.commit()
+    
+    import html
+    safe_text = html.escape(extraction.raw_content)
+    await message.answer(f"📥 <b>Saved to Inbox:</b>\n<i>{safe_text}</i>", parse_mode="HTML")

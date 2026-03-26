@@ -31,6 +31,7 @@ Talk to me naturally, but if the AI is slow or offline, use these slash commands
 /log &lt;min&gt; [desc] - Quick log (e.g. /log 30 reading)
 /habit &lt;id/name&gt; [val] - Mark habit (e.g. /habit workout 1)
 /inbox &lt;text&gt; - Fast idea dump
+/undo - Revert the last time log or habit log
 
 <b>Data & Config</b>
 /projects - List active projects and IDs
@@ -88,3 +89,11 @@ async def cmd_faq(message: Message):
 <i>External links will open in Telegraph. Setup guides, command references, and troubleshooting tips are available.</i>
 """
     await message.answer(faq_text, parse_mode="HTML", disable_web_page_preview=True)
+
+@router.message(Command("undo"))
+@router.message(F.text == "↩️ Undo")
+async def cmd_undo(message: Message):
+    await message.answer(
+        "To undo an action, please tap the **↩️ Undo** inline button attached to the exact confirmation message (like when you log a habit or time).\n\n<i>This prevents accidentally deleting the wrong data!</i>", 
+        parse_mode="HTML"
+    )

@@ -13,6 +13,9 @@ def get_main_menu() -> ReplyKeyboardMarkup:
             KeyboardButton(text="📥 Inbox"),
             KeyboardButton(text="⚙️ Settings"),
             KeyboardButton(text="❓ Help")
+        ],
+        [
+            KeyboardButton(text="↩️ Undo")
         ]
     ]
     return ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True, is_persistent=True)

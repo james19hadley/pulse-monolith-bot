@@ -34,6 +34,7 @@ class User(Base):
     # Links to the currently active session (if any)
     active_session_id: Mapped[Optional[int]] = mapped_column(ForeignKey("sessions.id", use_alter=True), nullable=True)
     last_ping_message_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    last_manual_report_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     
     # Catalyst Settings
     catalyst_threshold_minutes: Mapped[int] = mapped_column(Integer, default=60)
@@ -99,6 +100,9 @@ class Habit(Base):
     current_value: Mapped[int] = mapped_column(Integer, default=0)
     type: Mapped[str] = mapped_column(String, default="counter") # 'counter' or 'boolean'
     last_reset_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    total_completions: Mapped[int] = mapped_column(Integer, default=0)
+    current_streak: Mapped[int] = mapped_column(Integer, default=0)
 
 class TimeLog(Base):
     """The Ledger: Tracks actual focused work blocks"""
