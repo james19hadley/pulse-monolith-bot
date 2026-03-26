@@ -316,3 +316,27 @@ async def state_add_project_time(message: Message, state: FSMContext):
             await message.answer(f"✅ Logged {minutes}m to `{proj.title}`.", parse_mode="Markdown")
             
     await state.clear()
+
+@router.callback_query(F.data == "ui_entities_menu")
+async def cb_entities_menu(cb: CallbackQuery, state: FSMContext):
+    await state.clear()
+    from src.bot.keyboards import get_entities_menu_keyboard
+    
+    # Check if the message is the same to avoid aiogram 'Message is not modified' error
+    if cb.message.text.startswith("🗂 Data & Entities Management"):
+        await cb.answer()
+        return
+        
+    try:
+        await cb.message.edit_text(
+            "🗂 <b>Data & Entities Management</b>\nChoose what you want to manage:",
+            parse_mode="HTML",
+            reply_markup=get_entities_menu_keyboard()
+        )
+    except Exception:
+        await cb.message.delete()
+        await cb.message.answer(
+            "🗂 <b>Data & Entities Management</b>\nChoose what you want to manage:",
+            parse_mode="HTML",
+            reply_markup=get_entities_menu_keyboard()
+        )
