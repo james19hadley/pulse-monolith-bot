@@ -44,6 +44,8 @@ Every new Sprint Markdown file must follow this strict structure to maintain con
 | [Sprint 13](13_SAAS_INFRASTRUCTURE.md) | Phase 2: SaaS Infrastructure | 🟢 Completed |
 | [Sprint 14](14_PRODUCTION_DEPLOYMENT.md) | Deployment to VPS | 🟢 Completed |\n| [Sprint 15](15_PRODUCTION_RESILIENCE.md) | Production Resilience (Webhooks & Backups) | 🟢 Completed |\n| [Sprint 16](16_UX_ONBOARDING_KEYBOARDS.md) | UX Overhaul, Onboarding & Keyboards | 🟢 Completed |\n| [Sprint 17](17_ADMIN_WEB_DASHBOARD.md) | Security, Middleware & Core Cleanup | 🟢 Completed |
 | [Sprint 18](18_UI_ARCHITECTURE_AND_PROGRESS.md) | UI Architecture & Project Progress Unification | 🟡 Active |
+| [Sprint 19](19_REPORTING_ENGINE.md) | Reporting Engine & Timezone Accuracy | ⚪ Draft |
+| [Sprint 20](20_ENTITY_MANAGEMENT_UI.md) | Entity Management UI (Inline Panels) | ⚪ Draft |
 
 ## Sprint 16: AI & Natural Language Edge Cases
 - [x] Migrate "Repeat interval" to "Ping Interval"

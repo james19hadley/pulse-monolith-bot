@@ -2,25 +2,27 @@
 
 **Status:** `Draft`
 **Date Proposed:** March 26, 2026
-**Objective:** Completely rebuild the Accountability Daily Report so it feels "fresh", visually appealing, and respects the user's specific timezone and cutoff boundaries instead of a naive UTC 24-hour window.
+**Objective:** Completely rebuild the Accountability Daily Report so it feels "fresh", visually appealing, and respects the user's specific timezone and cutoff boundaries instead of a naive UTC 24-hour window. This also includes fully connecting the natural language `CONFIG_REPORT` intent and making the AI Summary context-aware.
 
 ## 🎯 Goals
-1. **Timezone Perfection:** Replace the buggy `last_24h = utcnow() - 24h` logic with a proper query boundary based on the user's `timezone` and `day_cutoff_time` (e.g., matching the exact logical "day").
+1. **Timezone Perfection:** Replace the buggy `last_24h = utcnow() - 24h` logic with a proper query boundary based on the user's `timezone` and `day_cutoff_time`.
 2. **Visual Progress Integration:** Display the new `unit` based progress metrics developed in Sprint 18 directly in the Evening Report.
-3. **Data Integrity:** Investigate and patch the "lost logs" bug where recent natural language logs don't instantly appear in the generated report.
+3. **Context-Aware AI Summaries:** Fix the "blind LLM" issue. Pass the actual projects, habits, and time stats to the AI prompt in `utils.py`, and include a flag (`is_auto` vs `is_manual`) so the LLM knows if the user clicked "End Day" or if the cronjob auto-fired. 
+4. **Natural Language Config:** Implement the missing `_handle_config_report()` function in `ai_router.py` mapped to `IntentType.CONFIG_REPORT`, allowing users to literally say "Remove emojis from my report".
 
 ## 📋 Tasks
-### Reporting Logic
+### Reporting Logic & NLP Config
 - [ ] Migrate `generate_daily_report_text` to strictly respect timezone bounds.
-- [ ] Refactor the Jinja/HTML string builder in `views.py` so the report doesn't look "silly" (improve spacing, symbols, logic).
-- [ ] Include actual AI summary blocks recursively, avoiding placeholder text.
+- [ ] Refactor `build_daily_report` HTML layout (fix duplicate headers, improve spacing).
+- [ ] Implement `IntentType.CONFIG_REPORT` route and extraction AI tool to properly update the JSON `report_config` field.
 
-### Data Validation
-- [ ] Write a script or command to force-sync today's logs to verify everything tracks correctly.
-- [ ] Ensure that `total_minutes_spent` from Projects matches the summed `TimeLog` daily delta exactly when building the report.
+### AI Persona Integration
+- [ ] Inject the `stats` dictionary into the prompt for the generative AI summary.
+- [ ] Add boolean parameter `is_auto_cron` and instruct the Persona to react appropriately (e.g. roasting the user if they abandoned the session without closing it manually).
 
 ## 🔒 Security & Architecture Notes
-- The report generation function must be perfectly deterministic so it can be called seamlessly by the Cron Scheduler without crashing or duplicating data.
+- The report generation function must remain perfectly deterministic and idempotent.
 
 ## 🏁 Completion Criteria
-- When a user asks for `/test_report` immediately after logging "0.5h", the report generated precisely reflects that recent transaction with a beautiful visual layout.
+- User can say "Make my reports strict without emojis".
+- Pressing `🌙 End Day` generates a gorgeous report where the AI comment specifically references actual completed tasks (e.g. "Good job logging 2h on Pulse Monolith, but you missed your Workout.").
