@@ -24,7 +24,8 @@ async def _handle_create_entities(message: Message, db, user, provider_name, api
         responses.append(msg)
         
     for h in extraction.habits:
-        habit = Habit(user_id=user.id, title=h.title, target_value=h.target_value, type="counter")
+        unit = getattr(h, "unit", "times")
+        habit = Habit(user_id=user.id, title=h.title, target_value=h.target_value, unit=unit, type="counter")
         db.add(habit)
         db.flush()
         responses.append(f"✅ Habit created: <b>{habit.title}</b>")

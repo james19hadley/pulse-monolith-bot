@@ -69,13 +69,17 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
             proj = db.query(Project).filter(Project.id == log.project_id).first()
             if proj:
                 if proj.title not in proj_stats:
+                    # Capture the base values for percentage calculation
+                    start_val = proj.current_value
+                    # We have to subtract the total progress accumulated today to find the start_val of the day, but we don't have that easily here. 
+                    # Actually, we can sum the day's progress to find today's percent increase over total.
                     proj_stats[proj.title] = {"minutes": 0, "progress": 0, "unit": proj.unit or "minutes", "target_value": proj.target_value, "current_value": proj.current_value}
                 proj_stats[proj.title]["minutes"] += log.duration_minutes
                 if log.progress_amount:
                     proj_stats[proj.title]["progress"] += log.progress_amount
     
     user_habits = db.query(Habit).filter(Habit.user_id == user.id).all()
-    habits_data = [{"title": h.title, "current": h.current_value, "target": h.target_value} for h in user_habits]
+    habits_data = [{"title": h.title, "current": h.current_value, "target": h.target_value, "unit": h.unit or ""} for h in user_habits]
     
     inbox_items = db.query(Inbox).filter(Inbox.user_id == user.id, Inbox.status == "pending").count()
     
@@ -103,7 +107,7 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
                 import json
                 stats_json = json.dumps(stats, ensure_ascii=False)
                 context_msg = "The user's day has just automatically ended via chronjob." if is_auto_cron else "The user has manually triggered the end of their day."
-                prompt = f"{context_msg} Look at their logged stats: {stats_json}. Write a short 1-2 sentence closing comment in your persona's tone. Mention specific achievements or failures if notable. Just output the sentence, nothing else."
+                prompt = f"{context_msg} Look at their logged stats: {stats_json}. Write a short 1-2 sentence closing comment in your persona's tone. Mention specific achievements or failures if notable. DO NOT wrap your response in italics. Use bold text to highlight names of specific projects or habits. Just output the sentence, nothing else."
                 
                 response, tokens = provider.generate_chat_response(prompt, persona_sys)
                 if response:

@@ -178,7 +178,7 @@ def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str
                 parts.append(f"\n{e['habits']} <b>Habit Execution:</b>")
                 for h in habits:
                     import html
-                    parts.append(f"  - {html.escape(str(h['title']))}: {h['current']}/{h['target']}")
+                    parts.append(f"  - {html.escape(str(h['title']))}: {h['current']}/{h['target']} {h.get('unit', '')}".strip())
                     
         elif block == "inbox":
             inbox = stats.get('inbox_count', 0)
@@ -194,7 +194,7 @@ def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str
     
     if ai_comment:
         import html
-        report += f"\n\n<i>{html.escape(str(ai_comment))}</i>"
+        report += f"\n\n{html.escape(str(ai_comment))}"
         
     return report
 

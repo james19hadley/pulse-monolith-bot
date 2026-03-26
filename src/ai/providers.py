@@ -47,6 +47,7 @@ class CreateProjectParams(BaseModel):
 class CreateHabitParams(BaseModel):
     title: str = Field(description="The short concise name of the new habit. e.g. instead of 'делать для фулл планша уражнения' use 'фулл планш'")
     target_value: int = Field(description="The target numeric value for the habit per cycle, e.g. minutes, reps. Default is 1.", default=1)
+    unit: str = Field(description="The unit of the habit calculation, e.g. 'minutes', 'pages', 'times'. Default is 'times'", default="times")
 
 class CreateEntitiesParams(BaseModel):
     projects: List[CreateProjectParams] = Field(description="List of new projects to create.")
@@ -59,6 +60,7 @@ class CreateProjectParams(BaseModel):
 class CreateHabitParams(BaseModel):
     title: str = Field(description="The short concise name of the new habit. e.g. instead of 'делать для фулл планша уражнения' use 'фулл планш'")
     target_value: int = Field(description="The target numeric value for the habit per cycle, e.g. minutes, reps. Default is 1.", default=1)
+    unit: str = Field(description="The unit of the habit calculation, e.g. 'minutes', 'pages', 'times'. Default is 'times'", default="times")
 
 class CreateEntitiesParams(BaseModel):
     projects: List[CreateProjectParams] = Field(description="List of new projects to create.")
@@ -71,6 +73,7 @@ class CreateProjectParams(BaseModel):
 class CreateHabitParams(BaseModel):
     title: str = Field(description="The short concise name of the new habit. e.g. instead of 'делать для фулл планша уражнения' use 'фулл планш'")
     target_value: int = Field(description="The target numeric value for the habit per cycle, e.g. minutes, reps. Default is 1.", default=1)
+    unit: str = Field(description="The unit of the habit calculation, e.g. 'minutes', 'pages', 'times'. Default is 'times'", default="times")
 
 class CreateEntitiesParams(BaseModel):
     projects: List[CreateProjectParams] = Field(description="List of new projects to create.")

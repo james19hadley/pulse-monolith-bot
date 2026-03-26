@@ -217,9 +217,12 @@ async def cb_habit_action(cb: CallbackQuery, state: FSMContext):
                 await cb.answer("Habit not found.")
                 return
             
+            unit = f" {hab.unit}" if hab.unit else ""
             text = f"🎯 <b>{hab.title}</b>\n\nProgress: {hab.current_value}"
             if hab.target_value:
-                text += f" / {hab.target_value}"
+                text += f" / {hab.target_value}{unit}"
+            else:
+                text += f"{unit}"
             await cb.message.edit_text(text, parse_mode="HTML", reply_markup=get_habit_view_keyboard(hab.id))
             return
             
@@ -247,9 +250,12 @@ async def cb_habit_action(cb: CallbackQuery, state: FSMContext):
             await cb.answer(f"Added +1 to {hab.title}!")
             
             # Refresh view
+            unit = f" {hab.unit}" if hab.unit else ""
             text = f"🎯 <b>{hab.title}</b>\n\nProgress: {hab.current_value}"
             if hab.target_value:
-                text += f" / {hab.target_value}"
+                text += f" / {hab.target_value}{unit}"
+            else:
+                text += f"{unit}"
             await cb.message.edit_text(text, parse_mode="HTML", reply_markup=get_habit_view_keyboard(hab.id))
 
 
