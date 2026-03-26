@@ -9,7 +9,8 @@ from sqlalchemy import (
     Date, 
     ForeignKey, 
     JSON, 
-    Text
+    Text,
+    func
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
