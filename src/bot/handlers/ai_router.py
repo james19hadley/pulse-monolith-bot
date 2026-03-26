@@ -211,6 +211,32 @@ async def _handle_log_habit(message: Message, db, user, provider_name, api_key):
         habit.current_value += extraction.amount_completed
     else:
         habit.current_value = habit.target_value if extraction.amount_completed == 1 else habit.current_value + extraction.amount_completed
+        from datetime import timedelta
+    
+    # Calculate streak logic if this log finishes the daily target
+    streak_msg = ""
+    # We only increment streaks/completions if the habit hits the target threshold
+    if habit.current_value >= habit.target_value:
+        habit.total_completions += 1
+        
+        # Streak Calculation
+        today = datetime.now(timezone.utc).date()
+        if not habit.last_completed_at:
+            # First time completely finishing
+            habit.current_streak = 1
+        else:
+            last_date = habit.last_completed_at.date()
+            if last_date == today:
+                pass # Already completed today
+            elif last_date == today - timedelta(days=1):
+                # Consecutive day
+                habit.current_streak += 1
+            else:
+                # Streak broken
+                habit.current_streak = 1
+                
+        if habit.current_streak > 1:
+            streak_msg = f"\n🔥 <b>Current Streak:</b> {habit.current_streak} days"
     habit.last_completed_at = datetime.now(timezone.utc)
     db.commit()
 
@@ -227,7 +253,7 @@ async def _handle_log_habit(message: Message, db, user, provider_name, api_key):
     
     await message.answer(
         f"✅ <b>{habit.title}</b> logged! (+{extraction.amount_completed} completion)\n" \
-        f"🏃 Total: {habit.completions}{append_desc}",
+        f"🏃 Progress: {habit.current_value}/{habit.target_value}{streak_msg}{append_desc}",
         parse_mode="HTML",
         reply_markup=keyboard
     )

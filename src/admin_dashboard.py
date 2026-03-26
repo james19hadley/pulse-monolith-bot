@@ -98,3 +98,25 @@ async def dashboard_handler(request: web.Request):
     except Exception as e:
         logging.error(f"Dashboard error: {e}")
         return web.Response(text=f"Error loading dashboard: {str(e)}", status=500)
+
+async def logs_handler(request: web.Request):
+    if not check_auth(request):
+        return web.Response(
+            status=401,
+            headers={"WWW-Authenticate": 'Basic realm="Admin Logs"'},
+            text="Unauthorized"
+        )
+    
+    try:
+        lines_param = request.query.get("lines", "50")
+        try:
+            num_lines = int(lines_param)
+        except ValueError:
+            num_lines = 50
+
+        with open("bot.log", "r") as f:
+            log_lines = f.readlines()
+        
+        return web.Response(text="".join(log_lines[-num_lines:]), content_type="text/plain")
+    except Exception as e:
+        return web.Response(text=f"Error reading logs: {e}", status=500)
