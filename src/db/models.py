@@ -90,8 +90,7 @@ class Project(Base):
     status: Mapped[str] = mapped_column(String, default="active") # 'active', 'paused', 'completed'
     target_value: Mapped[float] = mapped_column(Float, default=0.0)
     current_value: Mapped[float] = mapped_column(Float, default=0.0)
-    unit: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    total_minutes_spent: Mapped[int] = mapped_column(Integer, default=0)
+    unit: Mapped[Optional[str]] = mapped_column(String, default="minutes")
     next_action_text: Mapped[Optional[str]] = mapped_column(String, nullable=True) # E.g., "Read pointers chapter"
 
 class Habit(Base):

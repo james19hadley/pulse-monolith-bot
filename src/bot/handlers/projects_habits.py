@@ -26,8 +26,8 @@ async def cmd_projects(message: Message):
         lines = ["<b>Your Active Projects:</b>"]
         for p in projects:
             info = f"• <code>{p.title}</code> (<i>ID: {p.id}</i>)"
-            if p.target_minutes > 0:
-                info += f" — Target: {p.target_minutes / 60:g}h"
+            if p.target_value > 0:
+                info += f" — Target: {p.target_value / 60:g}h"
             lines.append(info)
             
         await message.answer("\n".join(lines), parse_mode="HTML")
@@ -58,26 +58,26 @@ async def cmd_new_project(message: Message, command: CommandObject):
         return
         
     args_text = command.args
-    target_minutes = 0
+    target_value = 0
     title = args_text
     
     if "|" in args_text:
         parts = args_text.split("|", 1)
         title = parts[0].strip()
         try:
-            target_minutes = int(float(parts[1].strip()) * 60)
+            target_value = int(float(parts[1].strip()) * 60)
         except ValueError:
             pass
 
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
-        proj = Project(user_id=user.id, title=title, status="active", target_minutes=target_minutes)
+        proj = Project(user_id=user.id, title=title, status="active", target_value=target_value)
         db.add(proj)
         db.commit()
         
         msg = f"Project created: {proj.title}"
-        if proj.target_minutes > 0:
-            msg += f" (Target: {proj.target_minutes / 60:g}h)"
+        if proj.target_value > 0:
+            msg += f" (Target: {proj.target_value / 60:g}h)"
         await message.answer(msg)
 
 @router.message(Command("new_habit"))

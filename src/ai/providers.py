@@ -42,7 +42,7 @@ class SystemConfigParams(BaseModel):
 
 class CreateProjectParams(BaseModel):
     title: str = Field(description="The name of the new project.")
-    target_minutes: int = Field(description="The target estimated effort in minutes. If they specify hours, multiply by 60. Default is 0.", default=0)
+    target_value: int = Field(description="The target estimated effort value. If they specify hours, multiply by 60. Default is 0.", default=0)
 
 class CreateHabitParams(BaseModel):
     title: str = Field(description="The short concise name of the new habit. e.g. instead of 'делать для фулл планша уражнения' use 'фулл планш'")
@@ -54,7 +54,7 @@ class CreateEntitiesParams(BaseModel):
 
 class CreateProjectParams(BaseModel):
     title: str = Field(description="The name of the new project.")
-    target_minutes: int = Field(description="The target estimated effort in minutes. If they specify hours, multiply by 60. Default is 0.", default=0)
+    target_value: int = Field(description="The target estimated effort value. If they specify hours, multiply by 60. Default is 0.", default=0)
 
 class CreateHabitParams(BaseModel):
     title: str = Field(description="The short concise name of the new habit. e.g. instead of 'делать для фулл планша уражнения' use 'фулл планш'")
@@ -66,7 +66,7 @@ class CreateEntitiesParams(BaseModel):
 
 class CreateProjectParams(BaseModel):
     title: str = Field(description="The name of the new project.")
-    target_minutes: int = Field(description="The target estimated effort in minutes. If they specify hours, multiply by 60. Default is 0.", default=0)
+    target_value: int = Field(description="The target estimated effort value. If they specify hours, multiply by 60. Default is 0.", default=0)
 
 class CreateHabitParams(BaseModel):
     title: str = Field(description="The short concise name of the new habit. e.g. instead of 'делать для фулл планша уражнения' use 'фулл планш'")

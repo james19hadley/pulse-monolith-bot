@@ -60,7 +60,7 @@ def project_list_message(projects: list) -> str:
         if getattr(p, "unit", None) and p.unit != "minutes":
             val_str = f"{p.current_value or 0:g}/{p.target_value or 0:g} {p.unit}"
         else:
-            val_str = f"{p.total_minutes_spent}m spent"
+            val_str = f"{p.current_value}m spent"
         lines.append(f"<code>[{p.id}]</code> {p.title} - {val_str}")
     return "\n".join(lines)
 

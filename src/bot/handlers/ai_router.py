@@ -159,12 +159,12 @@ async def _handle_create_entities(message: Message, db, user, provider_name, api
     responses = []
     
     for p in extraction.projects:
-        proj = Project(user_id=user.id, title=p.title, status="active", target_minutes=p.target_minutes)
+        proj = Project(user_id=user.id, title=p.title, status="active", target_value=p.target_value)
         db.add(proj)
         db.flush()
         msg = f"✅ Project created: <b>{proj.title}</b>"
-        if proj.target_minutes > 0:
-            msg += f" (Target: {proj.target_minutes / 60:g}h)"
+        if proj.target_value > 0:
+            msg += f" (Target: {proj.target_value / 60:g}h)"
         responses.append(msg)
         
     for h in extraction.habits:
@@ -311,11 +311,13 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
         description=extraction.description
     )
     db.add(log_entry)
-    project.total_minutes_spent += extraction.duration_minutes
     if extraction.progress_amount is not None:
         project.current_value = (project.current_value or 0.0) + extraction.progress_amount
         if not project.unit and extraction.progress_unit:
             project.unit = extraction.progress_unit
+    else:
+        project.current_value = (project.current_value or 0.0) + extraction.duration_minutes
+
             
     db.commit()
     db.refresh(log_entry)
@@ -404,14 +406,16 @@ async def cq_undo_work(callback: aiogram.types.CallbackQuery):
         if log:
             project = db.query(Project).filter_by(id=log.project_id).first()
             if project:
-                project.total_minutes_spent -= log.duration_minutes
-                if project.total_minutes_spent < 0:
-                    project.total_minutes_spent = 0
+                
                 
                 if log.progress_amount is not None:
                     project.current_value = (project.current_value or 0.0) - log.progress_amount
-                    if project.current_value < 0:
-                        project.current_value = 0.0
+                else:
+                    project.current_value = (project.current_value or 0.0) - log.duration_minutes
+                    
+                if project.current_value < 0:
+                    project.current_value = 0.0
+
             
             db.delete(log)
             db.commit()
