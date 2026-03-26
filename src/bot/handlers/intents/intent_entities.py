@@ -1,71 +1,57 @@
-import json
 from aiogram.types import Message
-from sqlalchemy.orm import Session as DBSession
-from sqlalchemy import func
-from src.db.models import User, Session as AppSession, TimeLog, Project, Habit, Inbox
-from src.ai.providers import GoogleProvider
-from src.bot.views import unknown_command_message
-
-async def _handle_create_entities(message: Message, db: DBSession, user: User, provider_name: str, api_key: str):
-    """Handles IntentType.CREATE_PROJECT and IntentType.CREATE_HABIT via multi-tool call"""
-    provider = GoogleProvider(api_key=api_key)
+from src.ai.router import extract_entities, extract_inbox
+from src.bot.handlers.utils import log_tokens
+async def _handle_create_entities(message: Message, db, user, provider_name, api_key):
+    from src.db.models import Project, Habit
+    extraction, tokens = extract_entities(message.text, provider_name, api_key)
     
-    prompt = f"The user wants to create a new project and/or habit. Extract the details from: '{message.text}'"
-    
-    # We use a combined schema that can return lists of projects/habits to create
-    response, tokens = provider.generate_structured_response(prompt, "CreateEntitiesParams")
-    from src.bot.handlers.utils import log_tokens
-    log_tokens(db, user.telegram_id, tokens)
-    
-    if not response:
-        await message.answer(unknown_command_message())
+    if tokens:
+        log_tokens(db, message.from_user.id, tokens)
+        
+    if not extraction or (not extraction.projects and not extraction.habits):
+        await message.answer("I could not determine the exact details for the project or habit to create.")
         return
-
-    created_msgs = []
+        
+    responses = []
     
-    # Create projects
-    if getattr(response, "projects", None):
-        for p in response.projects:
-            # We map target_minutes abstraction to the generic "Sprint 18" fields
-            t_val = getattr(p, "target_value", None) or getattr(p, "target_minutes", 0)
-            proj = Project(
-                user_id=user.id,
-                title=p.title,
-                target_value=t_val,
-                unit=getattr(p, "unit", "minutes")
-            )
-            db.add(proj)
-            db.commit()
-            db.refresh(proj)
-            from src.bot.views import project_created_message
-            created_msgs.append(project_created_message(proj.id, proj.title))
-            
-    # Create habits
-    if getattr(response, "habits", None):
-        for h in response.habits:
-            habit = Habit(
-                user_id=user.id,
-                title=h.title,
-                target_value=getattr(h, "target_value", 1),
-                type=getattr(h, "type", "counter")
-            )
-            db.add(habit)
-            db.commit()
-            db.refresh(habit)
-            from src.bot.views import habit_created_message
-            created_msgs.append(habit_created_message(habit.id, habit.title, habit.target_value))
-
-    if not created_msgs:
-        await message.answer("I couldn't identify any specific projects or habits to create.")
-    else:
-        await message.answer("\n".join(created_msgs))
-
-async def _handle_add_inbox(message: Message, db: DBSession, user: User, provider_name: str, api_key: str):
-    """Handles IntentType.CATCH_TO_INBOX"""
-    # Extremely fast & cheap: we just save the raw text directly. 
-    # No LLM extraction needed unless we want to summarize it.
-    item = Inbox(user_id=user.id, raw_text=message.text)
-    db.add(item)
+    for p in extraction.projects:
+        proj = Project(user_id=user.id, title=p.title, status="active", target_value=p.target_value)
+        db.add(proj)
+        db.flush()
+        msg = f"✅ Project created: <b>{proj.title}</b>"
+        if proj.target_value > 0:
+            msg += f" (Target: {proj.target_value / 60:g}h)"
+        responses.append(msg)
+        
+    for h in extraction.habits:
+        habit = Habit(user_id=user.id, title=h.title, target_value=h.target_value, type="counter")
+        db.add(habit)
+        db.flush()
+        responses.append(f"✅ Habit created: <b>{habit.title}</b>")
+        
     db.commit()
-    from src.bot.views import inbox_saved_message
-    await message.answer(inbox_saved_message(message.text[:50] + "..."))
+    await message.answer("\n".join(responses), parse_mode="HTML")
+
+
+async def _handle_add_inbox(message: Message, db, user, provider_name, api_key):
+    from src.db.models import Inbox
+    from src.bot.handlers.utils import log_tokens
+    
+    extraction, tokens = extract_inbox(message.text, provider_name, api_key)
+    
+    if tokens:
+        log_tokens(db, message.from_user.id, tokens)
+        
+    if not extraction or not getattr(extraction, "raw_content", None):
+        await message.answer("I could not determine what to save to your inbox.")
+        return
+        
+    inbox_item = Inbox(user_id=user.id, raw_text=extraction.raw_content, status="pending")
+    db.add(inbox_item)
+    db.commit()
+    
+    import html
+    safe_text = html.escape(extraction.raw_content)
+    await message.answer(f"📥 <b>Saved to Inbox:</b>\n<i>{safe_text}</i>", parse_mode="HTML")
+
+

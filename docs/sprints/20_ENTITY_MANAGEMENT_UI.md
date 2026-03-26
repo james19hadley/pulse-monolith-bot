@@ -6,7 +6,7 @@
 
 ## 🎯 Goals
 1. **Interactive Lists:** When a user calls `/projects`, return a clean text list paired with inline buttons for each active project.
-2. **Entity Action Panels:** Tapping a project opens a specific detail view (e.g. "Pulse Monolith [3h/50h]") with buttons to [Edit Target], [Archive], [Add Time].
+2. **Entity Action Panels:** Tapping a project opens a specific detail view (e.g. "Pulse Monolith [3h/50h]") with buttons to [Edit Target (Set Final Goal)], [Archive], [Add Time].
 3. **Habit Management:** Apply the exact same pattern for `/habits`, allowing users to adjust targets or toggle the tracking type.
 
 ## 📋 Tasks

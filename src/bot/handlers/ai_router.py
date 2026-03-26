@@ -12,7 +12,7 @@ from src.ai.router import IntentType
 from src.ai.providers import GoogleProvider
 
 # --- NEW DISPATCHER IMPORTS ---
-from src.bot.handlers.intents.intent_core import _handle_chat, _handle_config_update
+from src.bot.handlers.intents.intent_core import _handle_chat, _handle_config_update, _handle_config_report
 from src.bot.handlers.intents.intent_entities import _handle_create_entities, _handle_add_inbox
 from src.bot.handlers.intents.intent_tracker import _handle_log_work, _handle_log_habit
 
@@ -27,6 +27,7 @@ INTENT_HANDLERS = {
     IntentType.CREATE_HABIT: _handle_create_entities,
     IntentType.CATCH_TO_INBOX: _handle_add_inbox,
     IntentType.CONFIG_UPDATE: _handle_config_update,
+    IntentType.CONFIG_REPORT: _handle_config_report,
 }
 
 @router.message()

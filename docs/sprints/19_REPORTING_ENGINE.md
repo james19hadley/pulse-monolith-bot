@@ -19,7 +19,7 @@
 ### Reporting Logic & NLP Config
 - [x] Migrate `generate_daily_report_text` to strictly respect timezone bounds (UTC Cutoffs).
 - [x] Refactor `build_daily_report` HTML layout (progress bars done in Sprint 18, deduplicated logic here).
-- [ ] Implement `IntentType.CONFIG_REPORT` route and extraction AI tool to properly update the JSON `report_config` field.
+- [x] Implement `IntentType.CONFIG_REPORT` route and extraction AI tool to properly update the JSON `report_config` field.
 
 ### AI Persona Integration
 - [x] Inject the `stats` dictionary into the prompt for the generative AI summary.

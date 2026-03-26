@@ -28,13 +28,13 @@ def welcome_message(has_key: bool = False) -> str:
     return msg
 
 def session_started_message() -> str:
-    return "Session initiated. Monitoring active."
+    return "\nSession initiated. Monitoring active."
 
 def session_already_active_message() -> str:
-    return "Error: A session is already active. Close it before initiating a new one."
+    return "\nError: A session is already active. Close it before initiating a new one."
 
 def no_active_session_message() -> str:
-    return "Error: No active session found to close."
+    return "\nError: No active session found to close."
 
 def session_ended_message(total_minutes: int, focus_minutes: int, void_minutes: int) -> str:
     t_h, t_m = divmod(total_minutes, 60)
@@ -49,7 +49,7 @@ def session_ended_message(total_minutes: int, focus_minutes: int, void_minutes: 
 
 def build_progress_bar(current: int, target: int, length: int = 10) -> str:
     if target <= 0:
-        return ""
+        return "\n"
     ratio = min(max(current / target, 0.0), 1.0)
     filled = int(round(ratio * length))
     empty = length - filled
@@ -60,13 +60,23 @@ def project_created_message(project_id: int, title: str) -> str:
 
 def project_list_message(projects: list) -> str:
     if not projects:
-        return "No active projects found. Use <code>/new_project &lt;title&gt;</code> to create one."
-    
+        return "\nNo active projects found. Use <code>/new_project &lt;title&gt;</code> to create one."
     lines = ["📂 <b>Active Projects:</b>"]
     for p in projects:
         if getattr(p, "unit", None) and p.unit != "minutes":
             p_bar = build_progress_bar(p.current_value or 0, p.target_value or 0, length=8)
             val_str = f"{p.current_value or 0}/{p.target_value or 0} {p.unit} {p_bar}"
+        else:
+            cur_h = (p.current_value or 0) / 60
+            if getattr(p, "target_value", 0):
+                tgt_h = p.target_value / 60
+                p_bar = build_progress_bar(p.current_value or 0, p.target_value or 0, length=8)
+                val_str = f"{cur_h:g}/{tgt_h:g} hours {p_bar}"
+            else:
+                val_str = f"{cur_h:g} hours"
+        lines.append(f"🔹 <b>{p.title}</b>: {val_str}")
+    return "\n".join(lines)
+
 def stats_message(prompt_total: int, comp_total: int, cost: float) -> str:
     return (
         f"📊 <b>FinOps / Token Usage</b>\n"
@@ -98,17 +108,17 @@ def undo_success_message(target_type: str) -> str:
     return f"⏪ Undo successful: Removed/Reverted {target_type}."
 
 def undo_fail_message() -> str:
-    return "⚠️ Cannot undo that specific action type yet."
+    return "\n⚠️ Cannot undo that specific action type yet."
 
 def nothing_to_undo_message() -> str:
-    return "⚠️ Nothing to undo."
+    return "\n⚠️ Nothing to undo."
 
 # Scheduler (Jobs)
 def catalyst_ping_message(hours_idle: float) -> str:
     return f"The Void expands. You have not logged focus for {hours_idle} hour(s)."
 
 def stale_session_closed_message() -> str:
-    return "🌙 Active session auto-closed retroactively to avoid tracking empty void."
+    return "\n🌙 Active session auto-closed retroactively to avoid tracking empty void."
 
 # Accountability Reports (Lego Builder)
 def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str:

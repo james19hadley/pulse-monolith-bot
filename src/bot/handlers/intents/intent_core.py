@@ -1,64 +1,99 @@
+from src.core.config import USER_SETTINGS_REGISTRY
+from src.core.personas import get_persona_prompt
 import json
 from aiogram.types import Message
-from sqlalchemy.orm import Session as DBSession
-from src.db.models import User
-from src.ai.providers import GoogleProvider
-from src.bot.views import unknown_command_message
-
-async def _handle_chat(message: Message, db: DBSession, user: User, provider_name: str, api_key: str):
-    """Handles IntentType.CHAT - conversational persona"""
-    provider = GoogleProvider(api_key=api_key)
+from src.ai.router import generate_chat, extract_system_config, extract_report_config
+from src.bot.handlers.utils import log_tokens
+async def _handle_chat(message: Message, db, user, provider_name, api_key):
+    import html
+    persona_prompt = get_persona_prompt(user.persona_type, user.custom_persona_prompt, user.report_config)
     
-    from src.core.personas import get_persona_prompt
-    persona_sys = get_persona_prompt(user.persona_type, user.custom_persona_prompt)
-    
-    response, tokens = provider.generate_chat_response(message.text, persona_sys)
-    from src.bot.handlers.utils import log_tokens
-    log_tokens(db, user.telegram_id, tokens)
-    
-    if response:
-        await message.answer(response)
+    response_text, tokens = generate_chat(message.text, provider_name, api_key, persona_prompt)
+    if tokens:
+        log_tokens(db, message.from_user.id, tokens)
+        
+    if response_text:
+        try:
+            # We instructed the LLM to use strict HTML tags. 
+            # Send raw response first, letting aiogram parse <b>, <i>, <code>.
+            await message.answer(response_text, parse_mode="HTML")
+        except Exception as e:
+            # If the LLM still messed up HTML escaping (e.g. naked < or >), 
+            # fallback to exact escaped text to preserve the message but lose styling.
+            safe_response = html.escape(response_text)
+            err_notice = "\n\n<i>(Formatting fallback engaged)</i>"
+            await message.answer(safe_response + err_notice, parse_mode="HTML")
     else:
-        await message.answer(unknown_command_message())
+        await message.answer("I could not generate a response.")
 
-async def _handle_config_update(message: Message, db: DBSession, user: User, provider_name: str, api_key: str):
-    """Handles IntentType.CONFIG_UPDATE - e.g. 'Set my persona to strict' or 'I live in UTC+2'"""
-    # ...existing implementation will go here...
-    provider = GoogleProvider(api_key=api_key)
+
+async def _handle_config_update(message: Message, db, user, provider_name, api_key):
+    settings_keys = list(USER_SETTINGS_REGISTRY.keys())
+    extraction, tokens = extract_system_config(message.text, provider_name, api_key, settings_keys)
     
-    prompt = f"The user wants to update their bot settings. Extract the configuration from: '{message.text}'"
-    response, tokens = provider.generate_structured_response(prompt, "ConfigUpdateParams")
-    from src.bot.handlers.utils import log_tokens
-    log_tokens(db, user.telegram_id, tokens)
-    
-    if not response:
-        await message.answer("I couldn't understand what setting you want to change.")
+    if tokens:
+        log_tokens(db, message.from_user.id, tokens)
+        
+    if not extraction or not extraction.settings:
+        await message.answer("I could not determine the exact settings to update or the AI provider returned an error.")
         return
         
-    changes = []
-    if getattr(response, "timezone", None):
-        user.timezone = response.timezone
-        changes.append(f"Timezone: {user.timezone}")
-    if getattr(response, "day_cutoff_time", None):
-        from datetime import time
-        try:
-            h, m = map(int, response.day_cutoff_time.split(":"))
-            user.day_cutoff_time = time(h, m)
-            changes.append(f"Day Cutoff: {user.day_cutoff_time.strftime('%H:%M')}")
-        except Exception:
-            pass
-    if getattr(response, "persona_type", None):
-        user.persona_type = response.persona_type
-        changes.append(f"Persona: {user.persona_type}")
+    responses = []
+    import zoneinfo
+    import datetime
+    
+    for update in extraction.settings:
+        key = update.setting_key.lower()
+        val = update.setting_value
         
-    if changes:
-        db.commit()
-        await message.answer("✅ Settings updated:\n- " + "\n- ".join(changes))
-    else:
-        await message.answer("No actionable settings found.")
+        if key not in USER_SETTINGS_REGISTRY:
+            responses.append(f"Ignored unknown setting {key}")
+            continue
+            
+        meta = USER_SETTINGS_REGISTRY[key]
+        try:
+            cast_val = meta["type"](val)
+            if key == "timezone":
+                tz = zoneinfo.ZoneInfo(cast_val)
+                offset = datetime.datetime.now(tz).utcoffset().total_seconds() / 3600
+                sign = "+" if offset >= 0 else ""
+                offset_str = f"UTC{sign}{int(offset)}" if offset.is_integer() else f"UTC{sign}{int(offset)}:{int((abs(offset)*60)%60):02d}"
+                setattr(user, meta["db_column"], cast_val)
+                responses.append(f"✅ Timezone updated to `{cast_val}` ({offset_str})")
+            else:
+                setattr(user, meta["db_column"], cast_val)
+                responses.append(f"✅ `{key}` updated to `{cast_val}`")
+        except Exception:
+            responses.append(f"❌ Failed to parse value {val} for setting {key}")
 
-async def _handle_config_report(message: Message, db: DBSession, user: User, provider_name: str, api_key: str):
-    """Handles IntentType.CONFIG_REPORT"""
-    # Coming soon in Sprint 19!
-    await message.answer("You've hit the report config intent, which is currently being built! Stay tuned.")
+    db.commit()
+    await message.answer("\n".join(responses), parse_mode="HTML")
+
+
+
+async def _handle_config_report(message: Message, db, user, provider_name, api_key):
+    extraction, tokens = extract_report_config(message.text, provider_name, api_key)
+    if tokens:
+        from src.bot.handlers.utils import log_tokens
+        log_tokens(db, message.from_user.id, tokens)
+        
+    if not extraction:
+        await message.answer("I could not determine how to update your report configuration.")
+        return
+        
+    # user.report_config is JSON stored in the db. 
+    current_config = user.report_config or {}
+    
+    if extraction.blocks is not None:
+        current_config["blocks"] = extraction.blocks
+    if extraction.style is not None:
+        current_config["style"] = extraction.style
+        
+    # Assign back to trigger SQLAlchemy mutation tracking
+    # By replacing the dict entirely, it guarantees the update is detected.
+    user.report_config = dict(current_config)
+    db.commit()
+    
+    blocks_str = ", ".join(extraction.blocks)
+    await message.answer(f"✅ Report configuration updated!\n<b>Blocks:</b> {blocks_str}\n<b>Style:</b> {extraction.style}", parse_mode="HTML")
 
