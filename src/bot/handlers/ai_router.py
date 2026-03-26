@@ -1,446 +1,114 @@
-import aiogram
+import json
+import logging
+from datetime import datetime
 from aiogram import Router, F
-from aiogram.types import Message
-from src.db.repo import SessionLocal
-from src.bot.handlers.utils import get_or_create_user, log_tokens
-from src.core.security import decrypt_key
-from src.core.constants import IntentType
-from src.ai.router import get_intent, extract_system_config, extract_entities, generate_chat, extract_log_habit, extract_log_work, extract_inbox
-from src.core.config import USER_SETTINGS_REGISTRY
-from src.core.personas import get_persona_prompt
-from src.bot.handlers.settings_keys import cmd_test_report
+from aiogram.types import Message, CallbackQuery
+
+from src.db.session import SessionLocal
+from src.db.repo import get_or_create_user, get_project_by_name, get_habit_by_name, delete_entity, create_action, update_project_progress, log_tokens
+from src.db.models import ActionType
+from src.core.prompts import system_prompt, unknown_command_message, error_message, generate_intent_prompt
+from src.ai.router import IntentType
+from src.ai.providers import GoogleProvider
+
+# --- NEW DISPATCHER IMPORTS ---
+from src.bot.handlers.intents.intent_core import _handle_chat, _handle_config_update
+from src.bot.handlers.intents.intent_entities import _handle_create_entities, _handle_add_inbox
+from src.bot.handlers.intents.intent_tracker import _handle_log_work, _handle_log_habit
 
 router = Router()
+logger = logging.getLogger(__name__)
 
-@router.message(F.text.startswith('/'))
-async def handle_unknown_command(message: Message):
-    await message.answer(f"Unknown command: <code>{message.text}</code>\n\nUse /help to see available commands.", parse_mode="HTML")
+INTENT_HANDLERS = {
+    IntentType.CHAT: _handle_chat,
+    IntentType.LOG_WORK: _handle_log_work,
+    IntentType.LOG_HABIT: _handle_log_habit,
+    IntentType.CREATE_PROJECT: _handle_create_entities,
+    IntentType.CREATE_HABIT: _handle_create_entities,
+    IntentType.CATCH_TO_INBOX: _handle_add_inbox,
+    IntentType.CONFIG_UPDATE: _handle_config_update,
+}
 
 @router.message()
-async def handle_freeform_text(message: Message):
-    # Quick typing status manually
-    try:
-        await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
-    except Exception:
-        pass
+async def ai_message_router(message: Message):
+    """
+    The central intelligence router.
+    Every raw message comes here first. We ask the LLM 'What does the user want to do?'
+    and then route it to the appropriate specialized function.
+    """
+    if message.text.startswith('/'):
+        return
+
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
         
-    from aiogram.utils.chat_action import ChatActionSender
-    async with ChatActionSender.typing(bot=message.bot, chat_id=message.chat.id):
-    
-        with SessionLocal() as db:
-            user = get_or_create_user(db, message.from_user.id)
+        provider_name = user.llm_provider
+        api_key = None
         
-            keys = user.api_keys
-            if not keys or user.llm_provider not in keys:
-                await message.answer("Please configure an API key using `/add_key google &lt;your_key&gt;`", parse_mode="HTML")
+        # We handle api keys securely
+        keys = getattr(user, "api_keys", None)
+        if keys and provider_name in keys:
+            from src.core.security import decrypt_key
+            try:
+                api_key = decrypt_key(keys[provider_name]["key"])
+            except Exception:
+                pass
+                
+        if not api_key:
+            await message.answer("⚠️ You haven't configured an API key for your chosen AI provider yet.\nPlease use the web dashboard or /settings.")
+            return
+
+        try:
+            # We must parse intent using the provider
+            provider = GoogleProvider(api_key=api_key)
+            prompt = generate_intent_prompt(message.text)
+            response, tokens = provider.generate_structured_response(prompt, "IntentRouterSchema")
+            log_tokens(db, user.telegram_id, tokens)
+            
+            if not response or not response.intent:
+                await message.answer(unknown_command_message())
                 return
-
-            active_key_data = keys[user.llm_provider]
-            provider_name = active_key_data["provider"]
-            real_api_key = decrypt_key(active_key_data["key"])
-
-            intent, tokens, error_msg = get_intent(message.text, provider_name, real_api_key)
-            if tokens:
-                log_tokens(db, message.from_user.id, tokens)
-
-            if intent == IntentType.SYSTEM_CONFIG:
-                return await _handle_config_update(message, db, user, provider_name, real_api_key)
-            elif intent == IntentType.CREATE_ENTITIES:
-                return await _handle_create_entities(message, db, user, provider_name, real_api_key)
-            elif intent == IntentType.LOG_HABIT:
-                return await _handle_log_habit(message, db, user, provider_name, real_api_key)
-            elif intent == IntentType.LOG_WORK:
-                return await _handle_log_work(message, db, user, provider_name, real_api_key)
-            elif intent == IntentType.ADD_INBOX:
-                return await _handle_add_inbox(message, db, user, provider_name, real_api_key)
-            elif intent == IntentType.GENERATE_REPORT:
-                return await cmd_test_report(message)
-            elif intent == IntentType.UNDO:
-                from src.bot.handlers.core import cmd_undo
-                return await cmd_undo(message)
-            elif intent == IntentType.ERROR:
-                import html
-                raw_err = str(error_msg) if error_msg else ""
-                safe_err = html.escape(raw_err) if raw_err else "Unknown API error"
             
-                if "429" in raw_err or "quota" in raw_err.lower():
-                    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-                    keyboard = InlineKeyboardMarkup(inline_keyboard=[[
-                        InlineKeyboardButton(text="🔑 Add / Change API Key", callback_data="settings_keys")
-                    ]])
-                    msg = (
-                        "⚠️ <b>AI Provider Quota Exceeded</b>\n\n"
-                        "It looks like you've hit the limit for the current API key. "
-                        "Please add a new key or switch AI providers to continue."
-                    )
-                    await message.answer(msg, parse_mode="HTML", reply_markup=keyboard)
+            intent = response.intent
+            logger.info(f"User {user.telegram_id} intent localized: {intent}")
+            
+            # --- NEW DISPATCH ROUTER ---
+            handler = INTENT_HANDLERS.get(intent)
+            if handler:
+                if intent == IntentType.UNDO_LAST_ACTION:
+                    pass # Handled via callbacks usually, but if typed it would go to a special function
                 else:
-                    await message.answer(f"I encountered an error connecting to the AI provider.\n\nError details:\n<code>{safe_err}</code>", parse_mode="HTML")
-            elif intent == IntentType.CHAT_OR_UNKNOWN:
-                return await _handle_chat(message, db, user, provider_name, real_api_key)
+                    await handler(message, db, user, provider_name, api_key)
             else:
-                await message.answer(f"Intent detected: {intent.value}, but native implementation is missing currently.")
-
-async def _handle_chat(message: Message, db, user, provider_name, api_key):
-    import html
-    persona_prompt = get_persona_prompt(user.persona_type, user.custom_persona_prompt, user.report_config)
-    
-    response_text, tokens = generate_chat(message.text, provider_name, api_key, persona_prompt)
-    if tokens:
-        log_tokens(db, message.from_user.id, tokens)
-        
-    if response_text:
-        try:
-            # We instructed the LLM to use strict HTML tags. 
-            # Send raw response first, letting aiogram parse <b>, <i>, <code>.
-            await message.answer(response_text, parse_mode="HTML")
+                await message.answer(unknown_command_message())
+                
         except Exception as e:
-            # If the LLM still messed up HTML escaping (e.g. naked < or >), 
-            # fallback to exact escaped text to preserve the message but lose styling.
-            safe_response = html.escape(response_text)
-            err_notice = "\n\n<i>(Formatting fallback engaged)</i>"
-            await message.answer(safe_response + err_notice, parse_mode="HTML")
-    else:
-        await message.answer("I could not generate a response.")
+            logger.error(f"Routing Error: {e}", exc_info=True)
+            await message.answer(error_message())
 
-async def _handle_config_update(message: Message, db, user, provider_name, api_key):
-    settings_keys = list(USER_SETTINGS_REGISTRY.keys())
-    extraction, tokens = extract_system_config(message.text, provider_name, api_key, settings_keys)
-    
-    if tokens:
-        log_tokens(db, message.from_user.id, tokens)
-        
-    if not extraction or not extraction.settings:
-        await message.answer("I could not determine the exact settings to update or the AI provider returned an error.")
-        return
-        
-    responses = []
-    import zoneinfo
-    import datetime
-    
-    for update in extraction.settings:
-        key = update.setting_key.lower()
-        val = update.setting_value
-        
-        if key not in USER_SETTINGS_REGISTRY:
-            responses.append(f"Ignored unknown setting {key}")
-            continue
+
+@router.callback_query(F.data.startswith("undo_"))
+async def cq_undo_work(callback: CallbackQuery):
+    action_id = int(callback.data.split("_")[1])
+    with SessionLocal() as db:
+        user = get_or_create_user(db, callback.from_user.id)
+        # Fetch the action to see what it was
+        action = db.query(Action).filter(Action.id == action_id, Action.user_id == user.id).first()
+        if not action:
+            await callback.answer("Action not found or already undone.")
+            return
             
-        meta = USER_SETTINGS_REGISTRY[key]
-        try:
-            cast_val = meta["type"](val)
-            if key == "timezone":
-                tz = zoneinfo.ZoneInfo(cast_val)
-                offset = datetime.datetime.now(tz).utcoffset().total_seconds() / 3600
-                sign = "+" if offset >= 0 else ""
-                offset_str = f"UTC{sign}{int(offset)}" if offset.is_integer() else f"UTC{sign}{int(offset)}:{int((abs(offset)*60)%60):02d}"
-                setattr(user, meta["db_column"], cast_val)
-                responses.append(f"✅ Timezone updated to `{cast_val}` ({offset_str})")
-            else:
-                setattr(user, meta["db_column"], cast_val)
-                responses.append(f"✅ `{key}` updated to `{cast_val}`")
-        except Exception:
-            responses.append(f"❌ Failed to parse value {val} for setting {key}")
-
-    db.commit()
-    await message.answer("\n".join(responses), parse_mode="HTML")
-
-async def _handle_create_entities(message: Message, db, user, provider_name, api_key):
-    from src.db.models import Project, Habit
-    extraction, tokens = extract_entities(message.text, provider_name, api_key)
-    
-    if tokens:
-        log_tokens(db, message.from_user.id, tokens)
-        
-    if not extraction or (not extraction.projects and not extraction.habits):
-        await message.answer("I could not determine the exact details for the project or habit to create.")
-        return
-        
-    responses = []
-    
-    for p in extraction.projects:
-        proj = Project(user_id=user.id, title=p.title, status="active", target_value=p.target_value)
-        db.add(proj)
-        db.flush()
-        msg = f"✅ Project created: <b>{proj.title}</b>"
-        if proj.target_value > 0:
-            msg += f" (Target: {proj.target_value / 60:g}h)"
-        responses.append(msg)
-        
-    for h in extraction.habits:
-        habit = Habit(user_id=user.id, title=h.title, target_value=h.target_value, type="counter")
-        db.add(habit)
-        db.flush()
-        responses.append(f"✅ Habit created: <b>{habit.title}</b>")
-        
-    db.commit()
-    await message.answer("\n".join(responses), parse_mode="HTML")
-
-async def _handle_log_habit(message: Message, db, user, provider_name, api_key):
-    from src.db.models import Habit
-    from datetime import datetime, timezone
-
-    # 1. Fetch active habits formatting for AI prompt
-    habits = db.query(Habit).filter(Habit.user_id == user.id, Habit.status == 'active').all()
-    if not habits:
-        active_habits_text = "User has no active habits yet."
-    else:
-        active_habits_text = "User's active habits:\n" + "\n".join([f"ID: {h.id}, Title: {h.title}" for h in habits])
-
-    # 2. Call AI extraction
-    extraction, tokens = extract_log_habit(message.text, provider_name, api_key, active_habits_text)
-    
-    if tokens:
-        log_tokens(db, message.from_user.id, tokens)
-        
-    if not extraction:
-        await message.answer("I could not verify the exact habit to log.")
-        return
-
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-
-    if extraction.habit_id is None:
-        title = extraction.unmatched_habit_name or "New Habit"
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="✅ Click to Create", callback_data=f"create_habit_{title[:32]}")
-        ]])
-        await message.answer(f"🧩 I couldn't find a matching habit. Do you want to create <b>{title}</b>?", parse_mode="HTML", reply_markup=keyboard)
-        return
-        
-    habit = db.query(Habit).filter_by(id=extraction.habit_id, user_id=user.id).first()
-    if not habit:
-        await message.answer("Error: AI returned an invalid Habit ID.")
-        return
-
-    # Log it
-    if extraction.amount_completed == 1 and habit.target_value > 1 and "done" not in message.text.lower() and "выполнил" not in message.text.lower():
-        habit.current_value += extraction.amount_completed
-    else:
-        habit.current_value = habit.target_value if extraction.amount_completed == 1 else habit.current_value + extraction.amount_completed
-        from datetime import timedelta
-    
-    # Calculate streak logic if this log finishes the daily target
-    streak_msg = ""
-    # We only increment streaks/completions if the habit hits the target threshold
-    if habit.current_value >= habit.target_value:
-        habit.total_completions += 1
-        
-        # Streak Calculation
-        today = datetime.now(timezone.utc).date()
-        if not habit.last_completed_at:
-            # First time completely finishing
-            habit.current_streak = 1
-        else:
-            last_date = habit.last_completed_at.date()
-            if last_date == today:
-                pass # Already completed today
-            elif last_date == today - timedelta(days=1):
-                # Consecutive day
-                habit.current_streak += 1
-            else:
-                # Streak broken
-                habit.current_streak = 1
-                
-        if habit.current_streak > 1:
-            streak_msg = f"\n🔥 <b>Current Streak:</b> {habit.current_streak} days"
-    habit.last_completed_at = datetime.now(timezone.utc)
-    db.commit()
-
-    import html
-    desc = html.escape(extraction.description) if extraction.description else ""
-    append_desc = f"\n💬 <i>{desc}</i>" if desc else ""
-    
-    # We could add an UNDO button here! User asked for it.
-    # For undo, we would ideally track history, but for habits we can just allow them to undo the completion
-    
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="↩️ Undo", callback_data=f"undo_habit_{habit.id}_{extraction.amount_completed}")
-    ]])
-    
-    await message.answer(
-        f"✅ <b>{habit.title}</b> logged! (+{extraction.amount_completed} completion)\n" \
-        f"🏃 Progress: {habit.current_value}/{habit.target_value}{streak_msg}{append_desc}",
-        parse_mode="HTML",
-        reply_markup=keyboard
-    )
-
-
-async def _handle_log_work(message: Message, db, user, provider_name, api_key):
-    from src.db.models import Project, TimeLog
-    from datetime import datetime, timezone
-
-    # 1. Fetch active projects formatting for AI prompt
-    projects = db.query(Project).filter(Project.user_id == user.id, Project.status == 'active').all()
-    if not projects:
-        active_projects_text = "User has no active projects yet."
-    else:
-        active_projects_text = "User's active projects:\n" + "\n".join([f"ID: {p.id}, Title: {p.title}" for p in projects])
-
-    # 2. Call AI extraction
-    extraction, tokens = extract_log_work(message.text, provider_name, api_key, active_projects_text)
-    
-    if tokens:
-        log_tokens(db, message.from_user.id, tokens)
-        
-    if not extraction:
-        await message.answer("I could not verify the exact work/project to log.")
-        return
-
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-
-    if extraction.project_id is None:
-        title = extraction.unmatched_project_name or "New Project"
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="✅ Click to Create", callback_data=f"create_project_{title[:32]}")
-        ]])
-        await message.answer(f"🧩 I couldn't find a matching project. Do you want to create <b>{title}</b> first?", parse_mode="HTML", reply_markup=keyboard)
-        return
-        
-    project = db.query(Project).filter_by(id=extraction.project_id, user_id=user.id).first()
-    if not project:
-        await message.answer("Error: AI returned an invalid Project ID.")
-        return
-
-    # Log it
-    log_entry = TimeLog(
-        user_id=user.id,
-        project_id=project.id,
-        duration_minutes=extraction.duration_minutes,
-        progress_amount=extraction.progress_amount,
-        progress_unit=extraction.progress_unit,
-        description=extraction.description
-    )
-    db.add(log_entry)
-    if extraction.progress_amount is not None:
-        project.current_value = (project.current_value or 0.0) + extraction.progress_amount
-        if not project.unit and extraction.progress_unit:
-            project.unit = extraction.progress_unit
-    else:
-        project.current_value = (project.current_value or 0.0) + extraction.duration_minutes
-
-            
-    db.commit()
-    db.refresh(log_entry)
-
-    import html
-    desc = html.escape(extraction.description) if extraction.description else ""
-    append_desc = f"\n💬 <i>{desc}</i>" if desc else ""
-    
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="↩️ Undo", callback_data=f"undo_work_{log_entry.id}")
-    ]])
-    
-    msg_lines = []
-    
-    if extraction.duration_minutes > 0:
-        hours = extraction.duration_minutes / 60
-        msg_lines.append(f"✅ Logged <b>{hours:g}h</b> to <b>{project.title}</b>!")
-        # Optional: total time
-    else:
-        msg_lines.append(f"✅ Updated <b>{project.title}</b>!")
-
-    if extraction.progress_amount is not None:
-        unit_str = f" {extraction.progress_unit}" if extraction.progress_unit else " units"
-        msg_lines.append(f"📈 Progress: +{extraction.progress_amount}{unit_str}")
-        
-    msg_lines.append(f"📉 Total Progress: {project.current_value or 0:g} / {project.target_value or 0:g} {project.unit or 'minutes'}")
-    
-    if append_desc:
-        msg_lines.append(append_desc)
-
-    await message.answer(
-        "\n".join(msg_lines),
-        parse_mode="HTML",
-        reply_markup=keyboard
-    )
-
-@router.callback_query(F.data.startswith("create_habit_"))
-async def cq_create_habit(callback: aiogram.types.CallbackQuery):
-    title = callback.data.replace("create_habit_", "")
-    with SessionLocal() as db:
-        user = get_or_create_user(db, callback.from_user.id)
-        from src.db.models import Habit
-        habit = Habit(user_id=user.id, title=title)
-        db.add(habit)
-        db.commit()
-        db.refresh(habit)
-        await callback.message.edit_text(f"✅ Habit created: <b>{habit.title}</b>! Try logging it again.", parse_mode="HTML")
-
-@router.callback_query(F.data.startswith("undo_habit_"))
-async def cq_undo_habit(callback: aiogram.types.CallbackQuery):
-    _, _, hid_str, count_str = callback.data.split("_")
-    hid = int(hid_str)
-    count = int(count_str)
-    
-    with SessionLocal() as db:
-        from src.db.models import Habit
-        habit = db.query(Habit).filter_by(id=hid, user_id=callback.from_user.id).first()
-        if habit and habit.completions >= count:
-            habit.completions -= count
-            db.commit()
-            await callback.message.edit_text(f"↩️ Undid {count} completions for <b>{habit.title}</b>. Total is now {habit.completions}.", parse_mode="HTML")
-        else:
-            await callback.message.edit_text("❌ Could not undo (habit might not exist or count is too low).", parse_mode="HTML")
-
-@router.callback_query(F.data.startswith("create_project_"))
-async def cq_create_project(callback: aiogram.types.CallbackQuery):
-    title = callback.data.replace("create_project_", "")
-    with SessionLocal() as db:
-        user = get_or_create_user(db, callback.from_user.id)
-        from src.db.models import Project
-        project = Project(user_id=user.id, title=title)
-        db.add(project)
-        db.commit()
-        db.refresh(project)
-        await callback.message.edit_text(f"✅ Project created: <b>{project.title}</b>! Try logging time to it again.", parse_mode="HTML")
-
-@router.callback_query(F.data.startswith("undo_work_"))
-async def cq_undo_work(callback: aiogram.types.CallbackQuery):
-    log_id_str = callback.data.replace("undo_work_", "")
-    log_id = int(log_id_str)
-    
-    with SessionLocal() as db:
-        from src.db.models import TimeLog, Project
-        user = get_or_create_user(db, callback.from_user.id)
-        log = db.query(TimeLog).filter_by(id=log_id, user_id=user.id).first()
-        if log:
-            project = db.query(Project).filter_by(id=log.project_id).first()
+        # Revert logic based on type
+        if action.action_type == ActionType.LOG_WORK and action.project_id:
+            project = db.query(Project).filter(Project.id == action.project_id).first()
             if project:
+                project.current_hours -= action.value
                 
-                
-                if log.progress_amount is not None:
-                    project.current_value = (project.current_value or 0.0) - log.progress_amount
-                else:
-                    project.current_value = (project.current_value or 0.0) - log.duration_minutes
-                    
-                if project.current_value < 0:
-                    project.current_value = 0.0
-
+        elif action.action_type == ActionType.LOG_HABIT and action.habit_id:
+            pass # Usually habits are just logs, nothing to decrement unless tracking streaks
             
-            db.delete(log)
-            db.commit()
-            extra_msg = f" and {log.progress_amount} {log.progress_unit or 'units'}" if getattr(log, 'progress_amount', None) else ""
-            await callback.message.edit_text(f"↩️ Undid log: {log.duration_minutes}m{extra_msg}.", parse_mode="HTML")
-        else:
-            await callback.message.edit_text("❌ Could not undo (log might not exist or already undone).", parse_mode="HTML")
-
-async def _handle_add_inbox(message: Message, db, user, provider_name, api_key):
-    from src.db.models import Inbox
-    from src.bot.handlers.utils import log_tokens
-    
-    extraction, tokens = extract_inbox(message.text, provider_name, api_key)
-    
-    if tokens:
-        log_tokens(db, message.from_user.id, tokens)
+        db.delete(action)
+        db.commit()
         
-    if not extraction or not getattr(extraction, "raw_content", None):
-        await message.answer("I could not determine what to save to your inbox.")
-        return
-        
-    inbox_item = Inbox(user_id=user.id, raw_text=extraction.raw_content, status="pending")
-    db.add(inbox_item)
-    db.commit()
-    
-    import html
-    safe_text = html.escape(extraction.raw_content)
-    await message.answer(f"📥 <b>Saved to Inbox:</b>\n<i>{safe_text}</i>", parse_mode="HTML")
+    await callback.message.edit_text(f"✅ Action undone successfully.")
+    await callback.answer()

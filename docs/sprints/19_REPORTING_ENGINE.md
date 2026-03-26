@@ -1,24 +1,29 @@
 # Sprint 19: Reporting Engine & Time Accuracy
 
-**Status:** `Draft`
+**Status:** `Active`
 **Date Proposed:** March 26, 2026
 **Objective:** Completely rebuild the Accountability Daily Report so it feels "fresh", visually appealing, and respects the user's specific timezone and cutoff boundaries instead of a naive UTC 24-hour window. This also includes fully connecting the natural language `CONFIG_REPORT` intent and making the AI Summary context-aware.
 
 ## 🎯 Goals
-1. **Timezone Perfection:** Replace the buggy `last_24h = utcnow() - 24h` logic with a proper query boundary based on the user's `timezone` and `day_cutoff_time`.
-2. **Visual Progress Integration:** Display the new `unit` based progress metrics developed in Sprint 18 directly in the Evening Report.
-3. **Context-Aware AI Summaries:** Fix the "blind LLM" issue. Pass the actual projects, habits, and time stats to the AI prompt in `utils.py`, and include a flag (`is_auto` vs `is_manual`) so the LLM knows if the user clicked "End Day" or if the cronjob auto-fired. 
-4. **Natural Language Config:** Implement the missing `_handle_config_report()` function in `ai_router.py` mapped to `IntentType.CONFIG_REPORT`, allowing users to literally say "Remove emojis from my report".
+1. **AI Router Refactor:** Split the monolithic `ai_router.py` into dedicated intent modules (tracker, core) to manage complexity before adding new NLP routes.
+2. **Timezone Perfection:** Replace the buggy `last_24h = utcnow() - 24h` logic with a proper query boundary based on the user's `timezone` and `day_cutoff_time`.
+3. **Visual Progress Integration:** Display the new `unit` based progress metrics developed in Sprint 18 directly in the Evening Report.
+4. **Context-Aware AI Summaries:** Fix the "blind LLM" issue. Pass the actual projects, habits, and time stats to the AI prompt in `utils.py`, and include a flag (`is_auto` vs `is_manual`) so the LLM knows if the user clicked "End Day" or if the cronjob auto-fired. 
+5. **Natural Language Config:** Implement the missing `_handle_config_report()` function in `ai_router.py` mapped to `IntentType.CONFIG_REPORT`, allowing users to literally say "Remove emojis from my report".
 
 ## 📋 Tasks
+### Tech Debt: AI Router Splitting
+- [x] Split `ai_router.py` into `intent_tracker.py`, `intent_core.py`, and `intent_entities.py` inside a new `intents` module.
+- [x] Keep `ai_router.py` strictly as a dispatcher.
+
 ### Reporting Logic & NLP Config
-- [ ] Migrate `generate_daily_report_text` to strictly respect timezone bounds.
-- [ ] Refactor `build_daily_report` HTML layout (fix duplicate headers, improve spacing).
+- [x] Migrate `generate_daily_report_text` to strictly respect timezone bounds (UTC Cutoffs).
+- [x] Refactor `build_daily_report` HTML layout (progress bars done in Sprint 18, deduplicated logic here).
 - [ ] Implement `IntentType.CONFIG_REPORT` route and extraction AI tool to properly update the JSON `report_config` field.
 
 ### AI Persona Integration
-- [ ] Inject the `stats` dictionary into the prompt for the generative AI summary.
-- [ ] Add boolean parameter `is_auto_cron` and instruct the Persona to react appropriately (e.g. roasting the user if they abandoned the session without closing it manually).
+- [x] Inject the `stats` dictionary into the prompt for the generative AI summary.
+- [x] Add boolean parameter `is_auto_cron` and instruct the Persona to react appropriately (e.g. roasting the user if they abandoned the session without closing it manually).
 
 ## 🔒 Security & Architecture Notes
 - The report generation function must remain perfectly deterministic and idempotent.
