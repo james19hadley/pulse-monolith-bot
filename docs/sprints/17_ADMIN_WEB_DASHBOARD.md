@@ -1,28 +1,14 @@
-# Sprint 17: Admin Web Dashboard & Telemetry
+# Sprint 17: Security, Middleware & Core Cleanup
+
+**Status:** `Completed`
 
 ## Goal
-Build an embedded web dashboard to monitor the bot's health, user metrics, and errors without connecting to the server logs directly. The dashboard must be secure and fast, reusing the existing `aiohttp` web server created for the webhook.
+Originally planned as an embedded web dashboard, this sprint was reprioritized to implement Caddy IP-based security for admin endpoints, introduce a global crash handler, and clean up temporary dev scripts to stabilize the foundation.
 
-## Technical Requirements
-1. **Routing:** Add a new GET route `/admin/dashboard` in `src/main.py`.
-2. **Security:** Implement `Basic Auth` middleware/check on the admin route using `ADMIN_LOGIN` and `ADMIN_PASSWORD`.
-3. **Data Source:**
-   - DB Queries for simple aggregates: total users, active focus sessions, total tokens used, total time logged today.
-   - In-memory `aiogram` status if possible (uptime).
-4. **Presentation:** Return a lightweight, responsive HTML template.
-   - No external frontend dependencies needed, just simple CSS.
-
-## Bonus Items Completed (Hotfixes)
-- Integrated Telegram ChatActionSender (`typing...`) to show smooth ongoing feedback without frustrating pauses.
-- Implemented `_handle_log_work` to process natural language inputs like (8 hours bot dev) and guide developers cleanly through Project creation -> Work logging mapping using LLMs.
-- Fixed 429 quota exceptions and provided user-friendly buttons to replace/refresh API keys dynamically.
-- Finalized "End Day" functionality, adding a button to the main menu that triggers the generation of an accountability report, which is then sent to the configured target channel.
-- Added a seamless API key switching UI in the settings menu, allowing users to view and toggle between available aliases dynamically.
-- Removed dead developer scripts and cleared pipeline blockages.
-
-## Tasks
-- [x] Parse new ENV variables for HTTP basic auth.
-- [x] Create simple metrics queries in `repo.py`.
-- [x] Create HTML string template for the dashboard.
-- [x] Attach `aiohttp` handler to display the template.
-- [x] Test via browser with the given domain and route.
+## Tasks Completed
+- [x] Configure Caddyfile with `remote_ip` restrictions for `/admin/*`.
+- [x] Create `SafeLoggingMiddleware` to catch global exceptions and notify users gracefully.
+- [x] Fix database import issues (SQLAlchemy `func` import).
+- [x] Resolve file bloat by cleaning up loose `fix_*.py` and legacy scripts from the project root.
+- [x] Fix container startup crash loop by restoring missing definitions in `keyboards.py`.
+- [x] Document infrastructure topology in `05_INFRASTRUCTURE_ROADMAP.md`.
