@@ -61,8 +61,7 @@ def get_control_panel_text(user) -> str:
         f"<i>Select an option below for quick actions:</i>"
     )
 
-@router.message(F.text == "⚙️ Settings")
-
+@router.message(Command("settings"))
 async def cmd_general_settings(message: Message):
     if not message.from_user:
         return

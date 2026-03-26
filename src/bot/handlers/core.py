@@ -19,7 +19,6 @@ async def cmd_start(message: Message):
     await message.answer(welcome_message(has_key), parse_mode="HTML", reply_markup=get_main_menu())
 
 @router.message(Command("help"))
-@router.message(F.text == "❓ Help")
 async def cmd_help(message: Message):
     help_text = """
 <b>Pulse Monolith - Manual Overrides</b>
@@ -91,7 +90,6 @@ async def cmd_faq(message: Message):
     await message.answer(faq_text, parse_mode="HTML", disable_web_page_preview=True)
 
 @router.message(Command("undo"))
-@router.message(F.text == "↩️ Undo")
 async def cmd_undo(message: Message):
     await message.answer(
         "To undo an action, please tap the **↩️ Undo** inline button attached to the exact confirmation message (like when you log a habit or time).\n\n<i>This prevents accidentally deleting the wrong data!</i>", 

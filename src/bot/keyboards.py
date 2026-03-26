@@ -5,17 +5,17 @@ def get_main_menu() -> ReplyKeyboardMarkup:
     """Returns the persistent bottom keyboard menu."""
     kb = [
         [
-            KeyboardButton(text="🟢 Start Session"),
-            KeyboardButton(text="🛑 End Session"),
-            KeyboardButton(text="🌙 End Day")
+            KeyboardButton(text="/start_session"),
+            KeyboardButton(text="/end_session"),
+            KeyboardButton(text="/end_day")
         ],
         [
             KeyboardButton(text="/inbox"),
-            KeyboardButton(text="⚙️ Settings"),
-            KeyboardButton(text="❓ Help")
+            KeyboardButton(text="/settings"),
+            KeyboardButton(text="/help")
         ],
         [
-            KeyboardButton(text="↩️ Undo")
+            KeyboardButton(text="/undo")
         ]
     ]
     return ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True, is_persistent=True)

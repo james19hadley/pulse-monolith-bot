@@ -10,7 +10,6 @@ from src.bot.handlers.utils import get_or_create_user
 router = Router()
 
 @router.message(Command("start_session"))
-@router.message(F.text == "🟢 Start Session")
 async def cmd_start_session(message: Message, command: CommandObject = None):
     """Start a new focus session."""
     with SessionLocal() as db:
@@ -33,7 +32,6 @@ async def cmd_start_session(message: Message, command: CommandObject = None):
     await message.answer("🍅 Focus session started! Get working!")
 
 @router.message(Command("end_session"))
-@router.message(F.text == "🛑 End Session")
 async def cmd_end_session(message: Message):
     """Stop the current focus session."""
     with SessionLocal() as db:
@@ -94,7 +92,6 @@ async def cmd_log(message: Message, command: CommandObject):
     await message.answer(f"Logged {minutes}m: {desc}", parse_mode="HTML")
 
 
-@router.message(F.text == "🌙 End Day")
 @router.message(Command("end_day"))
 async def cmd_end_day(message: Message):
     """End the day, generate a report, and optionally send it to the accountability channel."""
@@ -157,7 +154,6 @@ Here is your report anyway:
 <i>Tip: Bind a channel to post this automatically by forwarding a message from it!</i>""", parse_mode="HTML")
 
 
-@router.message(F.text == "🌙 End Day")
 @router.message(Command("end_day"))
 async def cmd_end_day(message: Message):
     """End the day, generate a report, and optionally send it to the accountability channel."""
