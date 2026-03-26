@@ -17,8 +17,7 @@ def get_main_menu() -> ReplyKeyboardMarkup:
             KeyboardButton(text=Buttons.SETTINGS)
         ],
         [
-            KeyboardButton(text=Buttons.HELP),
-            KeyboardButton(text=Buttons.UNDO)
+            KeyboardButton(text=Buttons.HELP)
         ]
     ]
     return ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True, is_persistent=True)
