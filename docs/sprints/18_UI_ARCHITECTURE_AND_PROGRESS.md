@@ -16,9 +16,9 @@
 - [ ] Resolve Aiogram text matching overlapping with AI freeform router.
 
 ### Database Schema Evolution
-- [ ] Alter `Project` table: replace minute fields with `target_value`, `current_value`, and `unit`.
-- [ ] Alter `TimeLog` table: add `progress_amount` and `progress_unit`.
-- [ ] Implement DB schema changes and ensure backwards compatibility with old records if any.
+- [x] Alter `Project` table: replace minute fields with `target_value`, `current_value`, and `unit`.
+- [x] Alter `TimeLog` table: add `progress_amount` and `progress_unit`.
+- [x] Implement DB schema changes and ensure backwards compatibility with old records if any.
 
 ### Logic & Prompts
 - [ ] Update AI functions/Tools to extract both time spent AND progress magnitude from natural language ("I read 50 pages taking 1 hour").
