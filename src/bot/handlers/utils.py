@@ -34,8 +34,9 @@ from src.db.models import Project, TimeLog, Habit, Inbox
 from src.bot.views import build_daily_report
 from src.core.security import decrypt_key
 from src.ai.providers import GoogleProvider
+from src.core.personas import get_persona_prompt
 
-def generate_daily_report_text(db, user, force_date: str = None) -> str:
+def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: bool = False) -> str:
     now = datetime.datetime.utcnow()
     # Calculate logical day boundaries based on server UTC cutoff
     cutoff_time = getattr(user, 'day_cutoff_time', datetime.time(23, 0))
@@ -96,10 +97,17 @@ def generate_daily_report_text(db, user, force_date: str = None) -> str:
         if active_key_data["provider"] == "google":
             try:
                 provider = GoogleProvider(api_key=decrypt_key(active_key_data["key"]))
-                persona = getattr(user, "persona_type", "monolith")
-                prompt = f"Write a 1-sentence {persona} style comment for this end-of-day report. Just output the sentence."
-                response = provider.client.models.generate_content(model=provider.model_id, contents=prompt)
-                ai_comment = response.text
+                persona_sys = get_persona_prompt(user.persona_type, getattr(user, "custom_persona_prompt", None), config)
+                
+                # Context injection
+                import json
+                stats_json = json.dumps(stats, ensure_ascii=False)
+                context_msg = "The user's day has just automatically ended via chronjob." if is_auto_cron else "The user has manually triggered the end of their day."
+                prompt = f"{context_msg} Look at their logged stats: {stats_json}. Write a short 1-2 sentence closing comment in your persona's tone. Mention specific achievements or failures if notable. Just output the sentence, nothing else."
+                
+                response, tokens = provider.generate_chat_response(prompt, persona_sys)
+                if response:
+                    ai_comment = response
             except Exception as e:
                 print(f"Failed to generate AI comment: {e}")
                 

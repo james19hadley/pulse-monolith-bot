@@ -7,7 +7,8 @@ from src.db.repo import SessionLocal
 from src.db.models import User, Session as AppSession, TimeLog, Habit, Inbox, Project
 from aiogram import Bot
 
-from src.bot.views import catalyst_ping_message, stale_session_closed_message, build_daily_report
+from src.bot.views import catalyst_ping_message, stale_session_closed_message
+from src.bot.handlers.utils import generate_daily_report_text
 from src.ai.providers import GoogleProvider
 from src.core.security import decrypt_key
 
@@ -130,62 +131,13 @@ def daily_accountability_job():
                 
             if now.hour == user.day_cutoff_time.hour and 0 <= now.minute < 60 and not already_done: # Runs once an hour roughly
                 
-                # Default config fallback
-                config = user.report_config if user.report_config else {"blocks": ["focus", "habits", "inbox", "void"], "style": "emoji"}
                 target_chat_id = user.target_channel_id or user.telegram_id
                 
-                # Gather stats for the last 24 hours
-                last_24h = now - timedelta(hours=24)
-                
-                # Get logs
-                user_logs = db.query(TimeLog).filter(TimeLog.user_id == user.id, TimeLog.created_at >= last_24h).all()
-                focus_time = sum(l.duration_minutes for l in user_logs if l.project_id is not None)
-                void_time = sum(l.duration_minutes for l in user_logs if l.project_id is None)
-                
-                proj_stats = {}
-                for log in user_logs:
-                    if log.project_id:
-                        proj = db.query(Project).filter(Project.id == log.project_id).first()
-                        p_title = proj.title if proj else "Unknown Project"
-                        proj_stats[p_title] = proj_stats.get(p_title, 0) + log.duration_minutes
-                
-                # Get habits
-                user_habits = db.query(Habit).filter(Habit.user_id == user.id).all()
-                habits_data = [{"title": h.title, "current": h.current_value, "target": h.target_value} for h in user_habits]
-                
-                # Get inbox
-                inbox_items = db.query(Inbox).filter(Inbox.user_id == user.id, Inbox.status == "pending").count()
-                
-                stats = {
-                    "date": now.strftime("%Y-%m-%d"),
-                    "focus_minutes": focus_time,
-                    "void_minutes": void_time,
-                    "projects": proj_stats,
-                    "habits": habits_data,
-                    "inbox_count": inbox_items
-                }
-                
-                # AI Chef's Kiss Generation
-                ai_comment = None
-                keys = user.api_keys
-                if keys and user.llm_provider in keys and user.llm_provider == "google":
-                    try:
-                        from src.core.personas import get_persona_prompt
-                        provider = GoogleProvider(api_key=decrypt_key(keys[user.llm_provider]))
-                        
-                        # Use the new persona engine for consistency
-                        persona_sys = get_persona_prompt(user.persona_type, user.custom_persona_prompt, config)
-                        prompt = "The user's day has ended. Look at their logged stats (if any) and write a short 1-2 sentence closing comment in your persona's tone. It will be appended to the bottom of their daily markdown report. Just output the sentence, nothing else."
-                        
-                        response, _tokens = provider.generate_chat_response(prompt, persona_sys)
-                        if response:
-                            ai_comment = response
-                    except Exception as e:
-                        print(f"Failed to generate AI comment: {e}")
-                
-                # Build report via views
-                report_text = build_daily_report(stats, config, ai_comment)
-                
+                try:
+                    report_text = generate_daily_report_text(db, user, is_auto_cron=True)
+                except Exception as e:
+                    print(f"Failed to build auto-report for {user.telegram_id}: {e}")
+                    continue
                 if bot:
                     try:
                         run_async(bot.send_message(
