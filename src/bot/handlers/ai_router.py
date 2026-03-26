@@ -65,7 +65,10 @@ async def ai_message_router(message: Message):
                 
             if err or intent == IntentType.ERROR:
                 logger.error(f"Routing Error: {err}")
-                await message.answer(Prompts.ERROR_GLOBAL)
+                if err and ("API key" in str(err) or "API_KEY" in str(err) or "api_key" in str(err).lower() or "400" in str(err)):
+                    await message.answer("⚠️ Неверный API ключ для выбранного провайдера. Пожалуйста, проверьте его в настройках.\n\nОтладка: " + str(err))
+                else:
+                    await message.answer(Prompts.ERROR_GLOBAL + f"\n\nОтладка LLM: {err}")
                 return
             
             if intent == IntentType.UNKNOWN_PROVIDER:
@@ -86,4 +89,4 @@ async def ai_message_router(message: Message):
                 
         except Exception as e:
             logger.error(f"Routing Error: {e}", exc_info=True)
-            await message.answer(Prompts.ERROR_GLOBAL)
+            await message.answer(Prompts.ERROR_GLOBAL + f"\n\nОтладка Системы: {str(e)}")
