@@ -37,7 +37,16 @@ from src.ai.providers import GoogleProvider
 
 def generate_daily_report_text(db, user, force_date: str = None) -> str:
     now = datetime.datetime.utcnow()
-    last_24h = now - datetime.timedelta(hours=24)
+    # Calculate logical day boundaries based on server UTC cutoff
+    cutoff_time = getattr(user, 'day_cutoff_time', datetime.time(23, 0))
+    today_cutoff = datetime.datetime.combine(now.date(), cutoff_time)
+    
+    if now < today_cutoff:
+        start_bound = today_cutoff - datetime.timedelta(days=1)
+        end_bound = today_cutoff
+    else:
+        start_bound = today_cutoff
+        end_bound = today_cutoff + datetime.timedelta(days=1)
     
     config = user.report_config
     if isinstance(config, str):
@@ -49,7 +58,7 @@ def generate_daily_report_text(db, user, force_date: str = None) -> str:
     if not config:
         config = {"blocks": ["focus", "habits", "inbox", "void"], "style": "emoji"}
         
-    user_logs = db.query(TimeLog).filter(TimeLog.user_id == user.id, TimeLog.created_at >= last_24h).all()
+    user_logs = db.query(TimeLog).filter(TimeLog.user_id == user.id, TimeLog.created_at >= start_bound, TimeLog.created_at < end_bound).all()
     focus_time = sum(l.duration_minutes for l in user_logs if l.project_id is not None)
     void_time = sum(l.duration_minutes for l in user_logs if l.project_id is None)
     
@@ -69,7 +78,8 @@ def generate_daily_report_text(db, user, force_date: str = None) -> str:
     
     inbox_items = db.query(Inbox).filter(Inbox.user_id == user.id, Inbox.status == "pending").count()
     
-    date_str = force_date if force_date else now.strftime("%Y-%m-%d")
+    logical_date = start_bound.date()
+    date_str = force_date if force_date else logical_date.strftime("%Y-%m-%d")
     stats = {
         "date": date_str,
         "focus_minutes": focus_time,
