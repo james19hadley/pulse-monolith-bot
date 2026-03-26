@@ -1,3 +1,9 @@
 {$WEBHOOK_DOMAIN:localhost} {
+    @adminAuth {
+        path /admin/*
+        not remote_ip {$ADMIN_IP:127.0.0.1}
+    }
+    respond @adminAuth "Access Denied" 403
+
     reverse_proxy bot:8080
 }
