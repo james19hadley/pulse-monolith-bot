@@ -103,3 +103,64 @@ async def cmd_undo(message: Message):
 async def cmd_cancel(message: Message, state: FSMContext):
     await state.clear()
     await message.answer("Action canceled.", reply_markup=get_main_menu())
+
+from aiogram.types import CallbackQuery
+
+@router.callback_query(F.data.startswith("undo_"))
+async def handle_undo_callbacks(callback: CallbackQuery):
+    data = callback.data
+    
+    with SessionLocal() as db:
+        user = get_or_create_user(db, callback.from_user.id)
+        
+        # Format: undo_c_proj_{id}
+        if data.startswith("undo_c_proj_"):
+            proj_id = int(data.split("_")[3])
+            from src.db.models import Project
+            proj = db.query(Project).filter(Project.id == proj_id, Project.user_id == user.id).first()
+            if proj:
+                db.delete(proj)
+                db.commit()
+                await callback.message.edit_text(f"↩️ Project creation undone: <b>{proj.title}</b>", parse_mode="HTML")
+            else:
+                await callback.answer("Project not found or already deleted.")
+                
+        # Format: undo_c_hab_{id}
+        elif data.startswith("undo_c_hab_"):
+            hab_id = int(data.split("_")[3])
+            from src.db.models import Habit
+            hab = db.query(Habit).filter(Habit.id == hab_id, Habit.user_id == user.id).first()
+            if hab:
+                db.delete(hab)
+                db.commit()
+                await callback.message.edit_text(f"↩️ Habit creation undone: <b>{hab.title}</b>", parse_mode="HTML")
+            else:
+                await callback.answer("Habit not found or already deleted.")
+                
+        # Format: undo_work_{log_id}
+        elif data.startswith("undo_work_"):
+            log_id = int(data.split("_")[2])
+            from src.db.models import TimeLog
+            log_entry = db.query(TimeLog).filter(TimeLog.id == log_id, TimeLog.user_id == user.id).first()
+            if log_entry:
+                db.delete(log_entry)
+                db.commit()
+                await callback.message.edit_text("↩️ Time log successfully undone.", parse_mode="HTML")
+            else:
+                await callback.answer("Log not found or already undone.")
+                
+        # Format: undo_habit_{habit_id}_{amount}
+        elif data.startswith("undo_habit_"):
+            parts = data.split("_")
+            hab_id = int(parts[2])
+            amount = int(parts[3])
+            from src.db.models import Habit
+            hab = db.query(Habit).filter(Habit.id == hab_id, Habit.user_id == user.id).first()
+            if hab:
+                hab.current_value = max(0, hab.current_value - amount)
+                db.commit()
+                await callback.message.edit_text(f"↩️ Habit log undone. Value reverted for <b>{hab.title}</b>.", parse_mode="HTML")
+            else:
+                await callback.answer("Habit not found or already deleted.")
+        
+    await callback.answer()

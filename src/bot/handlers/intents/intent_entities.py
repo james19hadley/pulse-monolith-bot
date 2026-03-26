@@ -14,24 +14,40 @@ async def _handle_create_entities(message: Message, db, user, provider_name, api
         
     responses = []
     
+    from sqlalchemy import func
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
     for p in extraction.projects:
+        existing = db.query(Project).filter(Project.user_id == user.id, func.lower(Project.title) == p.title.lower()).first()
+        if existing:
+            await message.answer(f"⚠️ Project already exists: <b>{existing.title}</b>", parse_mode="HTML")
+            continue
+            
         proj = Project(user_id=user.id, title=p.title, status="active", target_value=p.target_value)
         db.add(proj)
         db.flush()
         msg = f"✅ Project created: <b>{proj.title}</b>"
         if proj.target_value > 0:
             msg += f" (Target: {proj.target_value / 60:g}h)"
-        responses.append(msg)
+        
+        kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="↩️ Undo", callback_data=f"undo_c_proj_{proj.id}")]])
+        await message.answer(msg, parse_mode="HTML", reply_markup=kb)
         
     for h in extraction.habits:
+        existing = db.query(Habit).filter(Habit.user_id == user.id, func.lower(Habit.title) == h.title.lower()).first()
+        if existing:
+            await message.answer(f"⚠️ Habit already exists: <b>{existing.title}</b>", parse_mode="HTML")
+            continue
+
         unit = getattr(h, "unit", "times")
         habit = Habit(user_id=user.id, title=h.title, target_value=h.target_value, unit=unit, type="counter")
         db.add(habit)
         db.flush()
-        responses.append(f"✅ Habit created: <b>{habit.title}</b>")
+        
+        kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="↩️ Undo", callback_data=f"undo_c_hab_{habit.id}")]])
+        await message.answer(f"✅ Habit created: <b>{habit.title}</b>", parse_mode="HTML", reply_markup=kb)
         
     db.commit()
-    await message.answer("\n".join(responses), parse_mode="HTML")
 
 
 async def _handle_add_inbox(message: Message, db, user, provider_name, api_key):
