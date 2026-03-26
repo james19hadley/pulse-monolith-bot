@@ -39,6 +39,8 @@ async def ai_message_router(message: Message):
     if message.text.startswith('/'):
         return
 
+    await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
+
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
         

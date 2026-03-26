@@ -94,13 +94,66 @@ async def cmd_faq(message: Message):
 @router.message(Command("undo"))
 @router.message(lambda msg: msg.text == "↩️ Undo")
 async def cmd_undo(message: Message):
-    await message.answer(
-        "To undo an action, please tap the **↩️ Undo** inline button attached to the exact confirmation message (like when you log a habit or time).\n\n<i>This prevents accidentally deleting the wrong data!</i>", 
-        parse_mode="HTML"
-    )
-
-@router.message(Command("cancel"))
-async def cmd_cancel(message: Message, state: FSMContext):
+    from src.db.models import ActionLog, Habit, Project, TimeLog
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        
+        # Get the most recent action
+        action = db.query(ActionLog).filter(ActionLog.user_id == user.id).order_by(ActionLog.created_at.desc()).first()
+        
+        if not action:
+            await message.answer("Nothing to undo.")
+            return
+            
+        tool = action.tool_name
+        try:
+            if tool == "create_project":
+                pid = action.new_state_json.get("project_id")
+                p = db.query(Project).filter(Project.id == pid).first()
+                if p:
+                    title = p.title
+                    db.delete(p)
+                    await message.answer(f"↩️ Project creation undone: <b>{title}</b>", parse_mode="HTML")
+                    
+            elif tool == "create_habit":
+                hid = action.new_state_json.get("habit_id")
+                h = db.query(Habit).filter(Habit.id == hid).first()
+                if h:
+                    title = h.title
+                    db.delete(h)
+                    await message.answer(f"↩️ Habit creation undone: <b>{title}</b>", parse_mode="HTML")
+                    
+            elif tool == "log_work":
+                lid = action.new_state_json.get("log_id")
+                pid = action.new_state_json.get("project_id")
+                mins = action.previous_state_json.get("amount", 0)
+                prog = action.previous_state_json.get("progress_amount", 0)
+                
+                log_entry = db.query(TimeLog).filter(TimeLog.id == lid).first()
+                if log_entry:
+                    db.delete(log_entry)
+                    p = db.query(Project).filter(Project.id == pid).first()
+                    if p:
+                        if prog:
+                            p.current_value = max(0, (p.current_value or 0) - prog)
+                        else:
+                            p.current_value = max(0, (p.current_value or 0) - mins)
+                    await message.answer("↩️ Time log successfully undone.", parse_mode="HTML")
+                    
+            elif tool == "log_habit":
+                hid = action.new_state_json.get("habit_id")
+                amt = action.previous_state_json.get("amount", 0)
+                h = db.query(Habit).filter(Habit.id == hid).first()
+                if h:
+                    h.current_value = max(0, h.current_value - amt)
+                    await message.answer(f"↩️ Habit log undone. (Reverted {amt} for <b>{h.title}</b>)", parse_mode="HTML")
+            
+            # Clean up the log so we don't undo it twice
+            db.delete(action)
+            db.commit()
+            
+        except Exception as e:
+            await message.answer(f"Failed to undo: {e}")
     await state.clear()
     await message.answer("Action canceled.", reply_markup=get_main_menu())
 
