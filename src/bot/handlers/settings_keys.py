@@ -62,6 +62,7 @@ def get_control_panel_text(user) -> str:
     )
 
 @router.message(Command("settings"))
+@router.message(lambda msg: msg.text == "⚙️ Settings")
 async def cmd_general_settings(message: Message):
     if not message.from_user:
         return
@@ -270,6 +271,7 @@ async def cmd_tokens(message: Message):
         await message.answer(msg, parse_mode="HTML")
 
 @router.message(Command("settings"))
+@router.message(lambda msg: msg.text == "⚙️ Settings")
 async def cmd_settings(message: Message, command: CommandObject):
     """Update user preferences via config registry."""
     if not command.args:

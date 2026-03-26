@@ -10,6 +10,7 @@ from src.bot.handlers.utils import get_or_create_user
 router = Router()
 
 @router.message(Command("start_session"))
+@router.message(lambda msg: msg.text == "🟢 Start Session")
 async def cmd_start_session(message: Message, command: CommandObject = None):
     """Start a new focus session."""
     with SessionLocal() as db:
@@ -32,6 +33,7 @@ async def cmd_start_session(message: Message, command: CommandObject = None):
     await message.answer("🍅 Focus session started! Get working!")
 
 @router.message(Command("end_session"))
+@router.message(lambda msg: msg.text == "🛑 End Session")
 async def cmd_end_session(message: Message):
     """Stop the current focus session."""
     with SessionLocal() as db:
@@ -93,6 +95,7 @@ async def cmd_log(message: Message, command: CommandObject):
 
 
 @router.message(Command("end_day"))
+@router.message(lambda msg: msg.text in ("🌙 End Day", " 🌙 End Day"))
 async def cmd_end_day(message: Message):
     """End the day, generate a report, and optionally send it to the accountability channel."""
     await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
@@ -155,6 +158,7 @@ Here is your report anyway:
 
 
 @router.message(Command("end_day"))
+@router.message(lambda msg: msg.text in ("🌙 End Day", " 🌙 End Day"))
 async def cmd_end_day(message: Message):
     """End the day, generate a report, and optionally send it to the accountability channel."""
     await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")

@@ -119,6 +119,7 @@ async def cmd_habit(message: Message, command: CommandObject):
             await message.answer("Habit not found.")
 
 @router.message(Command("inbox"))
+@router.message(lambda msg: msg.text == "📥 Inbox")
 
 async def cmd_inbox(message: Message, command: CommandObject = None):
     with SessionLocal() as db:

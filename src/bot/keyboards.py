@@ -1,26 +1,26 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from src.bot.texts import Buttons
 
 def get_main_menu() -> ReplyKeyboardMarkup:
-    """Returns the persistent bottom keyboard menu."""
+    # Uses true persistent text matching properly routed via decorators
     kb = [
         [
-            KeyboardButton(text="/start_session"),
-            KeyboardButton(text="/end_session"),
-            KeyboardButton(text="/end_day")
+            KeyboardButton(text=Buttons.START_SESSION),
+            KeyboardButton(text=Buttons.END_SESSION),
+            KeyboardButton(text=Buttons.END_DAY)
         ],
         [
-            KeyboardButton(text="/inbox"),
-            KeyboardButton(text="/settings"),
-            KeyboardButton(text="/help")
+            KeyboardButton(text=Buttons.INBOX),
+            KeyboardButton(text=Buttons.SETTINGS),
+            KeyboardButton(text=Buttons.HELP)
         ],
         [
-            KeyboardButton(text="/undo")
+            KeyboardButton(text=Buttons.UNDO)
         ]
     ]
     return ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True, is_persistent=True)
 
-def get_providers_keyboard() -> InlineKeyboardMarkup:
     """Returns an inline keyboard with AI providers for the Add Key flow."""
     kb = [
         [
