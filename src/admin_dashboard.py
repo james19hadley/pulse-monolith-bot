@@ -110,7 +110,7 @@ async def logs_handler(request: web.Request):
     try:
         lines_param = request.query.get("lines", "50")
         try:
-            num_lines = int(lines_param)
+            num_lines = max(1, min(int(lines_param), 1000))
         except ValueError:
             num_lines = 50
 

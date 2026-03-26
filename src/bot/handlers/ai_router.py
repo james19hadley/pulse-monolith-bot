@@ -300,10 +300,7 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
         user_id=user.id,
         project_id=project.id,
         duration_minutes=extraction.duration_minutes,
-        description=extraction.description,
-        is_manual=True,
-        started_at=datetime.now(timezone.utc),
-        ended_at=datetime.now(timezone.utc)
+        description=extraction.description
     )
     db.add(log_entry)
     project.total_minutes_spent += extraction.duration_minutes
