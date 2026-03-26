@@ -124,6 +124,10 @@ async def cmd_end_day(message: Message):
             await message.answer(f"🍅 Active session closed automatically ({actual_duration_minutes}m).")
 
         # 2. Generate Report
+        import datetime
+        user.last_manual_report_date = datetime.datetime.utcnow().date()
+        db.commit()
+        
         from src.bot.handlers.utils import generate_daily_report_text
         report_text = generate_daily_report_text(db, user)
         
@@ -183,6 +187,10 @@ async def cmd_end_day(message: Message):
             await message.answer(f"🍅 Active session closed automatically ({actual_duration_minutes}m).")
 
         # 2. Generate Report
+        import datetime
+        user.last_manual_report_date = datetime.datetime.utcnow().date()
+        db.commit()
+        
         from src.bot.handlers.utils import generate_daily_report_text
         report_text = generate_daily_report_text(db, user)
         

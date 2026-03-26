@@ -123,7 +123,12 @@ def daily_accountability_job():
             # We assume bot runs in UTC and user day_cutoff_time is also assumed to be matched against UTC for simplicity in this MVP.
             # In a real app we'd convert `now` to user.timezone and compare against user.day_cutoff_time.
             # Let's say we check if current hour/minute matches cutoff time
-            if now.hour == user.day_cutoff_time.hour and 0 <= now.minute < 60: # Runs once an hour roughly
+            # Check if auto-report was already pre-empted manually today
+            already_done = False
+            if user.last_manual_report_date and user.last_manual_report_date == now.date():
+                already_done = True
+                
+            if now.hour == user.day_cutoff_time.hour and 0 <= now.minute < 60 and not already_done: # Runs once an hour roughly
                 
                 # Default config fallback
                 config = user.report_config if user.report_config else {"blocks": ["focus", "habits", "inbox", "void"], "style": "emoji"}
