@@ -21,6 +21,7 @@ def get_main_menu() -> ReplyKeyboardMarkup:
     ]
     return ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True, is_persistent=True)
 
+def get_providers_keyboard() -> InlineKeyboardMarkup:
     """Returns an inline keyboard with AI providers for the Add Key flow."""
     kb = [
         [
