@@ -36,8 +36,50 @@ def init_db():
     """
     Creates all tables in the database based on the models defined in metadata.
     """
+
     print(f"Initializing database at {DATABASE_URL}...")
     Base.metadata.create_all(bind=engine)
+    
+    # --- AUTO MIGRATION: ADD MISSING COLUMNS ---
+    from sqlalchemy import text as sql_text
+    try:
+        with engine.begin() as conn:
+            # Check for PostgreSQL or SQLite
+            if "sqlite" in DATABASE_URL:
+                try:
+                    conn.execute(sql_text("ALTER TABLE habits ADD COLUMN type VARCHAR DEFAULT 'counter'"))
+                except Exception:
+                    pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE habits ADD COLUMN unit VARCHAR"))
+                except Exception:
+                    pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE habits ADD COLUMN last_reset_date DATE"))
+                except Exception:
+                    pass
+            else:
+                # PostgreSQL
+                columns_to_add = [
+                    ("habits", "type", "VARCHAR DEFAULT 'counter'"),
+                    ("habits", "unit", "VARCHAR"),
+                    ("habits", "last_reset_date", "DATE"),
+                    ("users", "report_config", "JSON"),
+                    ("projects", "unit", "VARCHAR"),
+                    ("projects", "next_action_text", "VARCHAR"),
+                    ("time_logs", "progress_amount", "FLOAT"),
+                    ("time_logs", "progress_unit", "VARCHAR"),
+                ]
+                for table, col, col_type in columns_to_add:
+                    try:
+                        conn.execute(sql_text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {col} {col_type}"))
+                    except Exception as e:
+                        print(f"Migrate {{table}}.{{col}} skipped: {{e}}")
+
+    except Exception as e:
+        print(f"Migration error: {e}")
+    # ---------------------------------------------
+
     print("✅ Database tables created successfully.")
 
 if __name__ == "__main__":

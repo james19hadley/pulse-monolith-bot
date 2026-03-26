@@ -112,7 +112,7 @@ async def _handle_log_habit(message: Message, db, user, provider_name, api_key):
     from datetime import datetime, timezone
 
     # 1. Fetch active habits formatting for AI prompt
-    habits = db.query(Habit).filter(Habit.user_id == user.id, Habit.status == 'active').all()
+    habits = db.query(Habit).filter(Habit.user_id == user.id).all()
     if not habits:
         active_habits_text = "User has no active habits yet."
     else:

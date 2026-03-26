@@ -682,28 +682,8 @@ async def cq_test_report(callback: CallbackQuery):
     
     with SessionLocal() as db:
         user = get_or_create_user(db, callback.from_user.id)
-        
-        # Build mock data for the test report
-        stats = {
-            "focus_minutes": 150,
-            "void_minutes": 30,
-            "projects": {"Deep Work": 120, "Admin": 30},
-            "habits": [
-                {"title": "Workout", "current": 1, "target": 1},
-                {"title": "Reading", "current": 0, "target": 1}
-            ],
-            "inbox_count": 3
-        }
-        
-        config = {
-            "persona": user.persona_type,
-            "report_style": "standard"
-        }
-        
-        # Test AI Comment
-        ai_comment = "(AI Summary would appear here based on your actual daily logs and stats)"
-        report_text = build_daily_report(stats, config, ai_comment)
-        
+        from src.bot.handlers.utils import generate_daily_report_text
+        report_text = generate_daily_report_text(db, user, force_date="[TEST REPORT]", is_auto_cron=False)
         await callback.message.answer(report_text, parse_mode="HTML")
         await callback.answer()
 
