@@ -4,11 +4,10 @@ from datetime import datetime
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 
-from src.db.session import SessionLocal
-from src.db.repo import get_or_create_user, get_project_by_name, get_habit_by_name, delete_entity, create_action, update_project_progress, log_tokens
-from src.db.models import ActionType
-from src.core.prompts import system_prompt, unknown_command_message, error_message, generate_intent_prompt
-from src.ai.router import IntentType
+from src.db.repo import SessionLocal
+from src.bot.texts import Prompts
+from src.bot.handlers.utils import get_or_create_user, log_tokens
+from src.ai.router import IntentType, get_intent
 from src.ai.providers import GoogleProvider
 
 # --- NEW DISPATCHER IMPORTS ---
@@ -20,13 +19,13 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 INTENT_HANDLERS = {
-    IntentType.CHAT: _handle_chat,
+    IntentType.CHAT_OR_UNKNOWN: _handle_chat,
     IntentType.LOG_WORK: _handle_log_work,
     IntentType.LOG_HABIT: _handle_log_habit,
-    IntentType.CREATE_PROJECT: _handle_create_entities,
-    IntentType.CREATE_HABIT: _handle_create_entities,
-    IntentType.CATCH_TO_INBOX: _handle_add_inbox,
-    IntentType.CONFIG_UPDATE: _handle_config_update,
+    
+    IntentType.CREATE_ENTITIES: _handle_create_entities,
+    IntentType.ADD_INBOX: _handle_add_inbox,
+    IntentType.SYSTEM_CONFIG: _handle_config_update,
     IntentType.CONFIG_REPORT: _handle_config_report,
 }
 
@@ -60,17 +59,19 @@ async def ai_message_router(message: Message):
             return
 
         try:
-            # We must parse intent using the provider
-            provider = GoogleProvider(api_key=api_key)
-            prompt = generate_intent_prompt(message.text)
-            response, tokens = provider.generate_structured_response(prompt, "IntentRouterSchema")
-            log_tokens(db, user.telegram_id, tokens)
-            
-            if not response or not response.intent:
-                await message.answer(unknown_command_message())
+            intent, tokens, err = get_intent(message.text, provider_name, api_key)
+            if tokens:
+                log_tokens(db, user.telegram_id, tokens)
+                
+            if err or intent == IntentType.ERROR:
+                logger.error(f"Routing Error: {err}")
+                await message.answer(Prompts.ERROR_GLOBAL)
                 return
             
-            intent = response.intent
+            if intent == IntentType.UNKNOWN_PROVIDER:
+                await message.answer(Prompts.UNKNOWN_COMMAND.format(text=message.text))
+                return
+                
             logger.info(f"User {user.telegram_id} intent localized: {intent}")
             
             # --- NEW DISPATCH ROUTER ---
@@ -81,35 +82,8 @@ async def ai_message_router(message: Message):
                 else:
                     await handler(message, db, user, provider_name, api_key)
             else:
-                await message.answer(unknown_command_message())
+                await message.answer(Prompts.UNKNOWN_COMMAND.format(text=message.text))
                 
         except Exception as e:
             logger.error(f"Routing Error: {e}", exc_info=True)
-            await message.answer(error_message())
-
-
-@router.callback_query(F.data.startswith("undo_"))
-async def cq_undo_work(callback: CallbackQuery):
-    action_id = int(callback.data.split("_")[1])
-    with SessionLocal() as db:
-        user = get_or_create_user(db, callback.from_user.id)
-        # Fetch the action to see what it was
-        action = db.query(Action).filter(Action.id == action_id, Action.user_id == user.id).first()
-        if not action:
-            await callback.answer("Action not found or already undone.")
-            return
-            
-        # Revert logic based on type
-        if action.action_type == ActionType.LOG_WORK and action.project_id:
-            project = db.query(Project).filter(Project.id == action.project_id).first()
-            if project:
-                project.current_hours -= action.value
-                
-        elif action.action_type == ActionType.LOG_HABIT and action.habit_id:
-            pass # Usually habits are just logs, nothing to decrement unless tracking streaks
-            
-        db.delete(action)
-        db.commit()
-        
-    await callback.message.edit_text(f"✅ Action undone successfully.")
-    await callback.answer()
+            await message.answer(Prompts.ERROR_GLOBAL)
