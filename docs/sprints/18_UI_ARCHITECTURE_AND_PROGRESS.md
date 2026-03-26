@@ -1,6 +1,6 @@
 # Sprint 18: UI Architecture & Project Progress Unification
 
-**Status:** `Active`
+**Status:** `Completed`
 **Date Proposed:** March 26, 2026
 **Objective:** Complete the UI refactoring by standardizing all magic strings via a Central Registry (`texts.py`), and redesign the database models for Projects to accurately track generic units (e.g., hours, pages) alongside elapsed session time (for the Void engine).
 
@@ -12,8 +12,8 @@
 
 ## 📋 Tasks
 ### Base & UI Refactor
-- [ ] Apply `texts.py` cleanly to `keyboards.py` and `handlers/`.
-- [ ] Resolve Aiogram text matching overlapping with AI freeform router.
+- [x] Apply `texts.py` cleanly to `keyboards.py` and `handlers/`.
+- [x] Resolve Aiogram text matching overlapping with AI freeform router.
 
 ### Database Schema Evolution
 - [x] Alter `Project` table: replace minute fields with `target_value`, `current_value`, and `unit`.
@@ -21,9 +21,9 @@
 - [x] Implement DB schema changes and ensure backwards compatibility with old records if any.
 
 ### Logic & Prompts
-- [ ] Update AI functions/Tools to extract both time spent AND progress magnitude from natural language ("I read 50 pages taking 1 hour").
-- [ ] Adjust `/projects` list view to render hours if `unit == "minutes"`, otherwise display raw units (e.g., "50/300 pages").
-- [ ] Update Evening Report compiler to tally new progress attributes and draw progress bars.
+- [x] Update AI functions/Tools to extract both time spent AND progress magnitude from natural language ("I read 50 pages taking 1 hour").
+- [x] Adjust `/projects` list view to render hours if `unit == "minutes"`, otherwise display raw units (e.g., "50/300 pages").
+- [x] Update Evening Report compiler to tally new progress attributes and draw progress bars.
 
 ## 🔒 Security & Architecture Notes
 - Maintain absolute protection of the Session `duration_minutes`. Changing a project's "pages" should not corrupt the total time tracked for the day's calculation of "The Void". The "Void" math relies ONLY on time.

@@ -56,7 +56,12 @@ def project_list_message(projects: list) -> str:
     
     lines = ["📂 <b>Active Projects:</b>"]
     for p in projects:
-        lines.append(f"<code>[{p.id}]</code> {p.title} - {p.total_minutes_spent}m spent")
+        val_str = ""
+        if getattr(p, "unit", None) and p.unit != "minutes":
+            val_str = f"{p.current_value or 0:g}/{p.target_value or 0:g} {p.unit}"
+        else:
+            val_str = f"{p.total_minutes_spent}m spent"
+        lines.append(f"<code>[{p.id}]</code> {p.title} - {val_str}")
     return "\n".join(lines)
 
 # FinOps & Stats
@@ -125,10 +130,28 @@ def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str
             f_h, f_m = divmod(stats.get('focus_minutes', 0), 60)
             parts.append(f"{e['focus']} <b>Deep Work:</b> {f_h}h {f_m}m")
             if stats.get('projects'):
-                for p, mins in stats['projects'].items():
-                    p_h, p_m = divmod(mins, 60)
-                    import html
-                    parts.append(f"  - {html.escape(str(p))}: {p_h}h {p_m}m")
+                for p, data in stats['projects'].items():
+                    # Handle both old format (int minutes) and new format (dict)
+                    if isinstance(data, dict):
+                        mins = data["minutes"]
+                        prog = data["progress"]
+                        unit = data["unit"]
+                        
+                        p_h, p_m = divmod(mins, 60)
+                        import html
+                        
+                        msg = f"  - {html.escape(str(p))}:"
+                        if mins > 0:
+                            msg += f" {p_h}h {p_m}m"
+                        if prog > 0:
+                            unit_str = f" {unit}" if unit and unit != "minutes" else ""
+                            msg += f" (+{prog:g}{unit_str})"
+                        parts.append(msg)
+                    else:
+                        mins = data
+                        p_h, p_m = divmod(mins, 60)
+                        import html
+                        parts.append(f"  - {html.escape(str(p))}: {p_h}h {p_m}m")
         
         elif block == "habits":
             habits = stats.get('habits', [])

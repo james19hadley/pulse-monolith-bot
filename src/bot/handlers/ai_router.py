@@ -306,10 +306,17 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
         user_id=user.id,
         project_id=project.id,
         duration_minutes=extraction.duration_minutes,
+        progress_amount=extraction.progress_amount,
+        progress_unit=extraction.progress_unit,
         description=extraction.description
     )
     db.add(log_entry)
     project.total_minutes_spent += extraction.duration_minutes
+    if extraction.progress_amount is not None:
+        project.current_value = (project.current_value or 0.0) + extraction.progress_amount
+        if not project.unit and extraction.progress_unit:
+            project.unit = extraction.progress_unit
+            
     db.commit()
     db.refresh(log_entry)
 
@@ -321,10 +328,26 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
         InlineKeyboardButton(text="↩️ Undo", callback_data=f"undo_work_{log_entry.id}")
     ]])
     
-    hours = extraction.duration_minutes / 60
+    msg_lines = []
+    
+    if extraction.duration_minutes > 0:
+        hours = extraction.duration_minutes / 60
+        msg_lines.append(f"✅ Logged <b>{hours:g}h</b> to <b>{project.title}</b>!")
+        # Optional: total time
+    else:
+        msg_lines.append(f"✅ Updated <b>{project.title}</b>!")
+
+    if extraction.progress_amount is not None:
+        unit_str = f" {extraction.progress_unit}" if extraction.progress_unit else " units"
+        msg_lines.append(f"📈 Progress: +{extraction.progress_amount}{unit_str}")
+        
+    msg_lines.append(f"📉 Total Progress: {project.current_value or 0:g} / {project.target_value or 0:g} {project.unit or 'minutes'}")
+    
+    if append_desc:
+        msg_lines.append(append_desc)
+
     await message.answer(
-        f"✅ Logged <b>{hours:g}h</b> to <b>{project.title}</b>!{append_desc}\n" \
-        f"📈 Total: {project.total_minutes_spent / 60:g}h",
+        "\n".join(msg_lines),
         parse_mode="HTML",
         reply_markup=keyboard
     )
@@ -384,10 +407,16 @@ async def cq_undo_work(callback: aiogram.types.CallbackQuery):
                 project.total_minutes_spent -= log.duration_minutes
                 if project.total_minutes_spent < 0:
                     project.total_minutes_spent = 0
+                
+                if log.progress_amount is not None:
+                    project.current_value = (project.current_value or 0.0) - log.progress_amount
+                    if project.current_value < 0:
+                        project.current_value = 0.0
             
             db.delete(log)
             db.commit()
-            await callback.message.edit_text(f"↩️ Undid {log.duration_minutes}m log.", parse_mode="HTML")
+            extra_msg = f" and {log.progress_amount} {log.progress_unit or 'units'}" if getattr(log, 'progress_amount', None) else ""
+            await callback.message.edit_text(f"↩️ Undid log: {log.duration_minutes}m{extra_msg}.", parse_mode="HTML")
         else:
             await callback.message.edit_text("❌ Could not undo (log might not exist or already undone).", parse_mode="HTML")
 

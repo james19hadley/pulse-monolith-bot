@@ -58,8 +58,12 @@ def generate_daily_report_text(db, user, force_date: str = None) -> str:
         if log.project_id:
             proj = db.query(Project).filter(Project.id == log.project_id).first()
             if proj:
-                proj_stats[proj.title] = proj_stats.get(proj.title, 0) + log.duration_minutes
-                
+                if proj.title not in proj_stats:
+                    proj_stats[proj.title] = {"minutes": 0, "progress": 0.0, "unit": proj.unit or "minutes"}
+                proj_stats[proj.title]["minutes"] += log.duration_minutes
+                if log.progress_amount:
+                    proj_stats[proj.title]["progress"] += log.progress_amount
+    
     user_habits = db.query(Habit).filter(Habit.user_id == user.id).all()
     habits_data = [{"title": h.title, "current": h.current_value, "target": h.target_value} for h in user_habits]
     
