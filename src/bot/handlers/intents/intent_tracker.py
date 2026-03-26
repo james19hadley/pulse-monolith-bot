@@ -184,15 +184,10 @@ async def _handle_log_habit(message: Message, db, user, provider_name, api_key):
     # We could add an UNDO button here! User asked for it.
     # For undo, we would ideally track history, but for habits we can just allow them to undo the completion
     
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="↩️ Undo", callback_data=f"undo_habit_{habit.id}_{extraction.amount_completed}")
-    ]])
-    
     await message.answer(
         f"✅ <b>{habit.title}</b> logged! (+{extraction.amount_completed} completion)\n" \
         f"🏃 Progress: {habit.current_value}/{habit.target_value}{streak_msg}{append_desc}",
-        parse_mode="HTML",
-        reply_markup=keyboard
+        parse_mode="HTML"
     )
 
 

@@ -26,12 +26,17 @@ async def _handle_create_entities(message: Message, db, user, provider_name, api
         proj = Project(user_id=user.id, title=p.title, status="active", target_value=p.target_value)
         db.add(proj)
         db.flush()
+        
+        # Log action for SMART UNDO
+        from src.db.models import ActionLog
+        import json
+        alog = ActionLog(user_id=user.id, tool_name="create_project", previous_state_json={}, new_state_json={"project_id": proj.id})
+        db.add(alog)
+        
         msg = f"✅ Project created: <b>{proj.title}</b>"
         if proj.target_value > 0:
             msg += f" (Target: {proj.target_value / 60:g}h)"
-        
-        kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="↩️ Undo", callback_data=f"undo_c_proj_{proj.id}")]])
-        await message.answer(msg, parse_mode="HTML", reply_markup=kb)
+        await message.answer(msg, parse_mode="HTML")
         
     for h in extraction.habits:
         existing = db.query(Habit).filter(Habit.user_id == user.id, func.lower(Habit.title) == h.title.lower()).first()
@@ -44,8 +49,13 @@ async def _handle_create_entities(message: Message, db, user, provider_name, api
         db.add(habit)
         db.flush()
         
-        kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="↩️ Undo", callback_data=f"undo_c_hab_{habit.id}")]])
-        await message.answer(f"✅ Habit created: <b>{habit.title}</b>", parse_mode="HTML", reply_markup=kb)
+        # Log action for SMART UNDO
+        from src.db.models import ActionLog
+        import json
+        alog = ActionLog(user_id=user.id, tool_name="create_habit", previous_state_json={}, new_state_json={"habit_id": habit.id})
+        db.add(alog)
+        
+        await message.answer(f"✅ Habit created: <b>{habit.title}</b>", parse_mode="HTML")
         
     db.commit()
 
