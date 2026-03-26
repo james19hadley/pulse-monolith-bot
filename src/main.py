@@ -32,6 +32,7 @@ class SafeLoggingMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: Dict[str, Any]
     ) -> Any:
+        # Logging Phase
         try:
             if event.message:
                 user_id = event.message.from_user.id if event.message.from_user else "Unknown"
@@ -47,7 +48,22 @@ class SafeLoggingMiddleware(BaseMiddleware):
                 logging.info(f"User {user_id} tapped inline button: {data_cb}")
         except Exception as e:
             logging.error(f"Error in SafeLoggingMiddleware: {e}")
-        return await handler(event, data)
+            
+        # Exception Handling Phase for inner routes
+        try:
+            return await handler(event, data)
+        except Exception as e:
+            logging.error(f"Global exception caught: {e}", exc_info=True)
+            if event.message:
+                try:
+                    await event.message.answer("⚠️ Простите, на сервере произошла ошибка. Пожалуйста, обратитесь позднее.")
+                except Exception:
+                    pass
+            elif getattr(event, "callback_query", None):
+                try:
+                    await event.callback_query.message.answer("⚠️ Простите, на сервере произошла ошибка. Пожалуйста, обратитесь позднее.")
+                except Exception:
+                    pass
 
 async def main():
     bot = Bot(token=TELEGRAM_BOT_TOKEN)

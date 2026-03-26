@@ -18,6 +18,12 @@ async def handle_unknown_command(message: Message):
 
 @router.message()
 async def handle_freeform_text(message: Message):
+    # Quick typing status manually
+    try:
+        await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
+    except Exception:
+        pass
+        
     from aiogram.utils.chat_action import ChatActionSender
     async with ChatActionSender.typing(bot=message.bot, chat_id=message.chat.id):
     

@@ -10,7 +10,7 @@ def get_main_menu() -> ReplyKeyboardMarkup:
             KeyboardButton(text="🌙 End Day")
         ],
         [
-            KeyboardButton(text="📥 Inbox"),
+            KeyboardButton(text="/inbox"),
             KeyboardButton(text="⚙️ Settings"),
             KeyboardButton(text="❓ Help")
         ],
