@@ -47,6 +47,14 @@ def session_ended_message(total_minutes: int, focus_minutes: int, void_minutes: 
     msg += f"<b>The Void (Lost):</b> {v_h}h {v_m}m\n"
     return msg
 
+def build_progress_bar(current: int, target: int, length: int = 10) -> str:
+    if target <= 0:
+        return ""
+    ratio = min(max(current / target, 0.0), 1.0)
+    filled = int(round(ratio * length))
+    empty = length - filled
+    return f"[{'█' * filled}{'░' * empty}] {int(ratio * 100)}%"
+
 def project_created_message(project_id: int, title: str) -> str:
     return f"✅ Created project: <code>[{project_id}]</code> {title}"
 
@@ -56,15 +64,9 @@ def project_list_message(projects: list) -> str:
     
     lines = ["📂 <b>Active Projects:</b>"]
     for p in projects:
-        val_str = ""
         if getattr(p, "unit", None) and p.unit != "minutes":
-            val_str = f"{p.current_value or 0:g}/{p.target_value or 0:g} {p.unit}"
-        else:
-            val_str = f"{p.current_value}m spent"
-        lines.append(f"<code>[{p.id}]</code> {p.title} - {val_str}")
-    return "\n".join(lines)
-
-# FinOps & Stats
+            p_bar = build_progress_bar(p.current_value or 0, p.target_value or 0, length=8)
+            val_str = f"{p.current_value or 0}/{p.target_value or 0} {p.unit} {p_bar}"
 def stats_message(prompt_total: int, comp_total: int, cost: float) -> str:
     return (
         f"📊 <b>FinOps / Token Usage</b>\n"
@@ -143,9 +145,16 @@ def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str
                         msg = f"  - {html.escape(str(p))}:"
                         if mins > 0:
                             msg += f" {p_h}h {p_m}m"
-                        if prog > 0:
-                            unit_str = f" {unit}" if unit and unit != "minutes" else ""
-                            msg += f" (+{prog:g}{unit_str})"
+                        if unit and unit != "minutes":
+                            target = data.get("target_value", 0)
+                            current = data.get("current_value", 0)
+                            p_bar = build_progress_bar(current, target, length=8)
+                            msg += f" | {current}/{target} {unit} {p_bar}"
+                            if prog > 0:
+                                msg += f" (+{prog:g})"
+                        else:
+                            if prog > 0:
+                                msg += f" (+{prog:g} items)"
                         parts.append(msg)
                     else:
                         mins = data
