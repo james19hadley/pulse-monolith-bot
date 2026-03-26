@@ -8,6 +8,7 @@ class Buttons:
     INBOX = "📥 Inbox"
     SETTINGS = "⚙️ Settings"
     PROJECTS = "🗂 Projects"
+    HABITS = "🎯 Habits"
     HELP = "❓ Help"
     UNDO = "↩️ Undo"
 

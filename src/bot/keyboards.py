@@ -13,6 +13,7 @@ def get_main_menu() -> ReplyKeyboardMarkup:
         [
             KeyboardButton(text=Buttons.INBOX),
             KeyboardButton(text=Buttons.PROJECTS),
+            KeyboardButton(text=Buttons.HABITS),
             KeyboardButton(text=Buttons.SETTINGS)
         ],
         [

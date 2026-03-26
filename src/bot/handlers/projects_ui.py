@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 
 from src.db.repo import SessionLocal
@@ -18,22 +18,39 @@ from src.bot.states import EntityState
 router = Router()
 
 @router.message(lambda msg: msg.text == Buttons.PROJECTS)
-async def cmd_entities_menu(message: Message, state: FSMContext):
+async def cmd_projects_menu(message: Message, state: FSMContext):
     await state.clear()
-    await message.answer(
-        "🗂 <b>Data & Entities Management</b>\nChoose what you want to manage:",
-        parse_mode="HTML",
-        reply_markup=get_entities_main_keyboard()
-    )
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        projects = db.query(Project).filter(
+            Project.user_id == user.id, 
+            Project.status == "active"
+        ).all()
+        await message.answer(
+            "<b>Your Active Projects:</b>",
+            parse_mode="HTML",
+            reply_markup=get_projects_list_keyboard(projects)
+        )
 
-@router.callback_query(F.data == "ui_entities_menu")
-async def cb_entities_menu(cb: CallbackQuery, state: FSMContext):
+@router.message(lambda msg: msg.text == getattr(Buttons, "HABITS", "🎯 Habits"))
+async def cmd_habits_menu(message: Message, state: FSMContext):
     await state.clear()
-    await cb.message.edit_text(
-        "🗂 <b>Data & Entities Management</b>\nChoose what you want to manage:",
-        parse_mode="HTML",
-        reply_markup=get_entities_main_keyboard()
-    )
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        habits = db.query(Habit).filter(Habit.user_id == user.id).all()
+        await message.answer(
+            "<b>Your Active Habits:</b>",
+            parse_mode="HTML",
+            reply_markup=get_habits_list_keyboard(habits)
+        )
+
+@router.callback_query(F.data == "cancel_projects_action")
+async def cb_cancel_projects_action(cb: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await cb.message.edit_text("Action canceled.")
+
+
+
 
 @router.callback_query(F.data == "ui_projects_list")
 async def cb_projects_list(cb: CallbackQuery, state: FSMContext):
@@ -56,7 +73,7 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
     
     if data[0] == "new":
         await state.set_state(EntityState.waiting_for_project_name)
-        await cb.message.edit_text("Enter the **name** and **target hours** for the new project (e.g. `My Project | 50`).", parse_mode="HTML")
+        await cb.message.edit_text("Enter the **name** and **target hours** for the new project (e.g. `My Project | 50`).", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]]))
         return
         
     action_or_id = data[0]
@@ -72,8 +89,24 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
                 await cb.answer("Project not found.")
                 return
             
+            from datetime import datetime, time
+            from src.db.models import TimeLog
+            today_start = datetime.combine(datetime.utcnow().date(), time.min)
+            logs = db.query(TimeLog).filter(TimeLog.project_id == proj.id).all()
+            total_minutes = sum([l.duration_minutes for l in logs])
+            today_minutes = sum([l.duration_minutes for l in logs if l.created_at >= today_start])
+            
             hours = proj.target_value / 60 if proj.target_value > 0 else 0
-            text = f"📁 <b>{proj.title}</b>\n\nTarget Hours: {hours:g}h\nStatus: {proj.status}"
+            total_hours = total_minutes / 60
+            today_hours = today_minutes / 60
+            
+            progress_bar = ""
+            if proj.target_value > 0:
+                pct = min(1.0, total_minutes / proj.target_value)
+                filled = int(pct * 10)
+                progress_bar = "\nProgress: [" + "█" * filled + "░" * (10 - filled) + f"] {pct*100:.1f}%\n"
+                
+            text = f"📁 <b>{proj.title}</b>\n\nTarget Hours: {hours:g}h\nTotal Tracked: {total_hours:g}h\nToday Tracked: {today_hours:g}h\n{progress_bar}\nStatus: {proj.status}"
             await cb.message.edit_text(text, parse_mode="HTML", reply_markup=get_project_view_keyboard(proj.id))
             return
             
@@ -96,13 +129,13 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
             await cb.message.edit_text(
                 f"Enter new target <b>hours</b> for project <code>{proj.title}</code> (0 to disable target):", 
                 parse_mode="HTML",
-                reply_markup=None
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]])
             )
             
         elif action == "add":
             await state.update_data(eid=proj.id)
             await state.set_state(EntityState.waiting_for_add_project_time)
-            await cb.message.edit_text(f"Enter minutes to log for <code>{proj.title}</code>:", parse_mode="HTML")
+            await cb.message.edit_text(f"Enter minutes to log for <code>{proj.title}</code>:", parse_mode="HTML", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]]))
 
 @router.message(EntityState.waiting_for_project_name)
 async def state_new_project(message: Message, state: FSMContext):
@@ -169,7 +202,7 @@ async def cb_habit_action(cb: CallbackQuery, state: FSMContext):
     
     if data[0] == "new":
         await state.set_state(EntityState.waiting_for_habit_name)
-        await cb.message.edit_text("Enter the **name** for the new habit:", parse_mode="Markdown")
+        await cb.message.edit_text("Enter the **name** for the new habit:", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]]))
         return
         
     action_or_id = data[0]
@@ -206,7 +239,7 @@ async def cb_habit_action(cb: CallbackQuery, state: FSMContext):
         elif action == "edit":
             await state.update_data(eid=hab.id)
             await state.set_state(EntityState.waiting_for_edit_habit_target)
-            await cb.message.edit_text(f"Enter new target <b>value</b> for <code>{hab.title}</code>:", parse_mode="HTML")
+            await cb.message.edit_text(f"Enter new target <b>value</b> for <code>{hab.title}</code>:", parse_mode="HTML", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]]))
             
         elif action == "add":
             hab.current_value += 1
@@ -271,7 +304,7 @@ async def state_add_project_time(message: Message, state: FSMContext):
         user = get_or_create_user(db, message.from_user.id)
         proj = db.query(Project).filter(Project.id == pid, Project.user_id == user.id).first()
         if proj:
-            log = TimeLog(user_id=user.id, project_id=proj.id, duration_minutes=minutes, description="Manual entry via UI", logged_at=datetime.utcnow())
+            log = TimeLog(user_id=user.id, project_id=proj.id, duration_minutes=minutes, description="Manual entry via UI", created_at=datetime.utcnow())
             db.add(log)
             db.commit()
             await message.answer(f"✅ Logged {minutes}m to `{proj.title}`.", parse_mode="Markdown")

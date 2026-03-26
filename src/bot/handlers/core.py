@@ -1,5 +1,6 @@
 from aiogram import Router, F
 from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ChatMemberUpdated
 from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, IS_MEMBER, IS_ADMIN, IS_NOT_MEMBER
 
@@ -97,3 +98,8 @@ async def cmd_undo(message: Message):
         "To undo an action, please tap the **↩️ Undo** inline button attached to the exact confirmation message (like when you log a habit or time).\n\n<i>This prevents accidentally deleting the wrong data!</i>", 
         parse_mode="HTML"
     )
+
+@router.message(Command("cancel"))
+async def cmd_cancel(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Action canceled.", reply_markup=get_main_menu())
