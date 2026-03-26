@@ -2,9 +2,9 @@ from datetime import datetime, time, date
 from typing import Optional, Any
 from sqlalchemy import (
     String, 
-    Integer, Float, 
+    Integer, 
     Float, 
-    BigInteger, Float,
+    BigInteger,
     DateTime, 
     Time, 
     Date, 
@@ -22,7 +22,7 @@ class User(Base):
     __tablename__ = "users"
     
     id: Mapped[int] = mapped_column(primary_key=True)
-    telegram_id: Mapped[int] = mapped_column(BigInteger, Float, unique=True, index=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
     timezone: Mapped[str] = mapped_column(String, default="UTC")
     # Determines when the "day" ends for the Evening Report
     day_cutoff_time: Mapped[time] = mapped_column(Time, default=time(23, 0)) # 23:00 (11 PM) by default
@@ -35,13 +35,13 @@ class User(Base):
     
     # Links to the currently active session (if any)
     active_session_id: Mapped[Optional[int]] = mapped_column(ForeignKey("sessions.id", use_alter=True), nullable=True)
-    last_ping_message_id: Mapped[Optional[int]] = mapped_column(Integer, Float, nullable=True)
+    last_ping_message_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     last_manual_report_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     
     # Catalyst Settings
-    catalyst_threshold_minutes: Mapped[int] = mapped_column(Integer, Float, default=60)
-    catalyst_interval_minutes: Mapped[int] = mapped_column(Integer, Float, default=20)
-    target_channel_id: Mapped[Optional[int]] = mapped_column(BigInteger, Float, nullable=True)
+    catalyst_threshold_minutes: Mapped[int] = mapped_column(Integer, default=60)
+    catalyst_interval_minutes: Mapped[int] = mapped_column(Integer, default=20)
+    target_channel_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
     report_config: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)
 
     @property
@@ -88,8 +88,10 @@ class Project(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     title: Mapped[str] = mapped_column(String)
     status: Mapped[str] = mapped_column(String, default="active") # 'active', 'paused', 'completed'
-    target_minutes: Mapped[int] = mapped_column(Integer, Float, default=0) # Total estimated effort
-    total_minutes_spent: Mapped[int] = mapped_column(Integer, Float, default=0)
+    target_value: Mapped[float] = mapped_column(Float, default=0.0)
+    current_value: Mapped[float] = mapped_column(Float, default=0.0)
+    unit: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    total_minutes_spent: Mapped[int] = mapped_column(Integer, default=0)
     next_action_text: Mapped[Optional[str]] = mapped_column(String, nullable=True) # E.g., "Read pointers chapter"
 
 class Habit(Base):
@@ -98,14 +100,14 @@ class Habit(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     title: Mapped[str] = mapped_column(String)
-    target_value: Mapped[float] = mapped_column(Float, default=0.0)
+    target_value: Mapped[float] = mapped_column(Float, default=1.0)
     current_value: Mapped[float] = mapped_column(Float, default=0.0)
     type: Mapped[str] = mapped_column(String, default="counter") # 'counter' or 'boolean'
     unit: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     last_reset_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    total_completions: Mapped[int] = mapped_column(Integer, Float, default=0)
-    current_streak: Mapped[int] = mapped_column(Integer, Float, default=0)
+    total_completions: Mapped[int] = mapped_column(Integer, default=0)
+    current_streak: Mapped[int] = mapped_column(Integer, default=0)
 
 class TimeLog(Base):
     """The Ledger: Tracks actual focused work blocks"""
@@ -147,8 +149,8 @@ class TokenUsage(Base):
     
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
-    prompt_tokens: Mapped[int] = mapped_column(Integer, Float, default=0)
-    completion_tokens: Mapped[int] = mapped_column(Integer, Float, default=0)
-    total_tokens: Mapped[int] = mapped_column(Integer, Float, default=0)
+    prompt_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    completion_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    total_tokens: Mapped[int] = mapped_column(Integer, default=0)
     model_name: Mapped[str] = mapped_column(String)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
