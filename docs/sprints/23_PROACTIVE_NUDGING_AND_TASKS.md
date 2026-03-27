@@ -29,3 +29,12 @@
 - User can attach specific small tasks/milestones to a project.
 - Bot triggers a spontaneous message after prolonged user inactivity.
 - Bot successfully navigates the user through a flow that presents exact predefined tasks, successfully reducing "what do I do now" friction.
+
+### 5. Pedagogical Evening Chats 🦉
+- **Concept**: If a habit hasn't been logged for 2+ days, the bot initiates a coaching/pedagogical conversation in the evening ('You haven't done X, what is blocking you?').
+- **Constraint**: Must strictly respect timezone/working hours (no daytime bugging for evening routines, no nighttime pings).
+
+### 6. "Save-State" Rest Mode ⏸️
+- **Concept:** Allow the user to transition into a "Rest" state via natural language, dropping a contextual bookmark (e.g., "Going to eat, stopped at fixing the SQL query").
+- **Mechanics:** This pauses the focus session without closing it. The bot responds with a "Dopamine Receipt" showing time accumulated so far today.
+- **Contextual Rest Nudge:** After X minutes (e.g., 30m), the bot pings not just with an alarm, but by quoting the user's last `Save-State`, acting as a mental ramp to return to work with zero friction.
