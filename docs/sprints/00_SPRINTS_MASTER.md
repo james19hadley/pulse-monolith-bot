@@ -56,3 +56,4 @@ Every new Sprint Markdown file must follow this strict structure to maintain con
 
 | [Sprint 22](22_DAILY_PROGRESS_AND_ABSOLUTE_VALUES.md) | Daily Progress Tracking and Absolute Values | 🟡 Active |
 | [Sprint 23](23_PROACTIVE_NUDGING_AND_TASKS.md) | Proactive Nudging and Spoon-fed Tasks | ⚪ Draft |
+| [Sprint 24](24_OPEN_SESSIONS_AND_RETRO_BILLING.md) | Frictionless Open Sessions & Save-State Rest Mode | ⚪ Draft |
