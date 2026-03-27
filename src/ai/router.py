@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 from src.ai.providers import GoogleProvider, LogWorkParams, LogHabitParams, AddInboxParams, SessionControlParams, ReportConfigParams, SystemConfigParams, CreateEntitiesParams, AddTasksParams
 from src.core.constants import IntentType
 
@@ -73,7 +73,7 @@ def extract_system_config(user_text: str, provider_name: str, api_key: str, regi
             return None, {}
     return None, {}
 
-def extract_entities(user_text: str, provider_name: str, api_key: str) -> Tuple[Optional[CreateEntitiesParams, AddTasksParams], dict]:
+def extract_entities(user_text: str, provider_name: str, api_key: str) -> Tuple[Optional[Union[CreateEntitiesParams, AddTasksParams]], dict]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
