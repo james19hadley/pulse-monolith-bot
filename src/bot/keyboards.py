@@ -302,6 +302,10 @@ def get_habit_view_keyboard(hab_id) -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="➕ Add Progress", callback_data=f"ui_hab_add_{hab_id}")
         ],
         [
+            InlineKeyboardButton(text="⚙️ Periodicity", callback_data=f"ui_hab_period_{hab_id}"),
+            InlineKeyboardButton(text="⏱️ Nudge Days", callback_data=f"ui_hab_nudge_{hab_id}")
+        ],
+        [
             InlineKeyboardButton(text="🗑 Delete/Archive", callback_data=f"ui_hab_arch_{hab_id}")
         ],
         [

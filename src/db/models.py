@@ -117,6 +117,8 @@ class Habit(Base):
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), server_default=func.now())
     total_completions: Mapped[int] = mapped_column(Integer, default=0)
     current_streak: Mapped[int] = mapped_column(Integer, default=0)
+    periodicity_days: Mapped[int] = mapped_column(Integer, default=1)
+    nudge_threshold_days: Mapped[int] = mapped_column(Integer, default=2)
 
 class TimeLog(Base):
     """The Ledger: Tracks actual focused work blocks"""

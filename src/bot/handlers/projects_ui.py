@@ -247,6 +247,8 @@ async def cb_habit_action(cb: CallbackQuery, state: FSMContext):
                 text += f" / {hab.target_value}{unit}"
             else:
                 text += f"{unit}"
+            text += f"\n🗓 Periodicity: Every {hab.periodicity_days} day(s)\n⏱ Nudge Threshold: {hab.nudge_threshold_days} day(s) missing"
+            text += f"\n🗓 Periodicity: Every {hab.periodicity_days} day(s)\n⏱ Nudge Threshold: {hab.nudge_threshold_days} day(s) missing"
             await cb.message.edit_text(text, parse_mode="HTML", reply_markup=get_habit_view_keyboard(hab.id))
             return
             
@@ -268,6 +270,30 @@ async def cb_habit_action(cb: CallbackQuery, state: FSMContext):
             await state.set_state(EntityState.waiting_for_edit_habit_target)
             await cb.message.edit_text(f"Enter new target <b>value</b> for <code>{hab.title}</code>:", parse_mode="HTML", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]]))
             
+        elif action == "period":
+            await state.update_data(eid=hab.id)
+            await state.set_state(EntityState.waiting_for_habit_periodicity)
+            await cb.message.edit_text(f"Enter new periodicity in <b>days</b> (e.g. 1 for daily) for <code>{hab.title}</code>:", parse_mode="HTML", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]]))
+            return
+
+        elif action == "nudge":
+            await state.update_data(eid=hab.id)
+            await state.set_state(EntityState.waiting_for_habit_nudge)
+            await cb.message.edit_text(f"Enter new nudge threshold in <b>days</b> for <code>{hab.title}</code> (0 to disable nudges):", parse_mode="HTML", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]]))
+            return
+
+        elif action == "period":
+            await state.update_data(eid=hab.id)
+            await state.set_state(EntityState.waiting_for_habit_periodicity)
+            await cb.message.edit_text(f"Enter new periodicity in <b>days</b> (e.g. 1 for daily) for <code>{hab.title}</code>:", parse_mode="HTML", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]]))
+            return
+
+        elif action == "nudge":
+            await state.update_data(eid=hab.id)
+            await state.set_state(EntityState.waiting_for_habit_nudge)
+            await cb.message.edit_text(f"Enter new nudge threshold in <b>days</b> for <code>{hab.title}</code> (0 to disable nudges):", parse_mode="HTML", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]]))
+            return
+
         elif action == "add":
             hab.current_value += 1
             db.commit()
@@ -280,6 +306,8 @@ async def cb_habit_action(cb: CallbackQuery, state: FSMContext):
                 text += f" / {hab.target_value}{unit}"
             else:
                 text += f"{unit}"
+            text += f"\n🗓 Periodicity: Every {hab.periodicity_days} day(s)\n⏱ Nudge Threshold: {hab.nudge_threshold_days} day(s) missing"
+            text += f"\n🗓 Periodicity: Every {hab.periodicity_days} day(s)\n⏱ Nudge Threshold: {hab.nudge_threshold_days} day(s) missing"
             await cb.message.edit_text(text, parse_mode="HTML", reply_markup=get_habit_view_keyboard(hab.id))
 
 
@@ -364,3 +392,67 @@ async def cb_entities_menu(cb: CallbackQuery, state: FSMContext):
             parse_mode="HTML",
             reply_markup=get_entities_menu_keyboard()
         )
+
+@router.message(EntityState.waiting_for_habit_periodicity)
+async def state_edit_habit_periodicity(message: Message, state: FSMContext):
+    data = await state.get_data()
+    hid = data.get("eid")
+    
+    try:
+        val = int(message.text.strip())
+        if val < 1:
+            raise ValueError
+    except:
+        await message.answer("Please enter a valid positive integer (e.g., 1 for daily).")
+        return
+        
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        hab = db.query(Habit).filter(Habit.id == hid, Habit.user_id == user.id).first()
+        if hab:
+            hab.periodicity_days = val
+            db.commit()
+            
+            unit = f" {hab.unit}" if hab.unit else ""
+            text = f"🎯 <b>{hab.title}</b>\\n\\nProgress: {hab.current_value}"
+            if hab.target_value:
+                text += f" / {hab.target_value}{unit}"
+            else:
+                text += f"{unit}"
+            text += f"\\n🗓 Periodicity: Every {hab.periodicity_days} day(s)\\n⏱ Nudge Threshold: {hab.nudge_threshold_days} day(s) missing"
+            
+            await message.answer(f"✅ Periodicity for {hab.title} updated!", parse_mode="HTML")
+            await message.answer(text, parse_mode="HTML", reply_markup=get_habit_view_keyboard(hab.id))
+    await state.clear()
+
+@router.message(EntityState.waiting_for_habit_nudge)
+async def state_edit_habit_nudge(message: Message, state: FSMContext):
+    data = await state.get_data()
+    hid = data.get("eid")
+    
+    try:
+        val = int(message.text.strip())
+        if val < 0:
+            raise ValueError
+    except:
+        await message.answer("Please enter a valid integer (0 or greater).")
+        return
+        
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        hab = db.query(Habit).filter(Habit.id == hid, Habit.user_id == user.id).first()
+        if hab:
+            hab.nudge_threshold_days = val
+            db.commit()
+            
+            unit = f" {hab.unit}" if hab.unit else ""
+            text = f"🎯 <b>{hab.title}</b>\\n\\nProgress: {hab.current_value}"
+            if hab.target_value:
+                text += f" / {hab.target_value}{unit}"
+            else:
+                text += f"{unit}"
+            text += f"\\n🗓 Periodicity: Every {hab.periodicity_days} day(s)\\n⏱ Nudge Threshold: {hab.nudge_threshold_days} day(s) missing"
+            
+            await message.answer(f"✅ Nudge threshold for {hab.title} updated!", parse_mode="HTML")
+            await message.answer(text, parse_mode="HTML", reply_markup=get_habit_view_keyboard(hab.id))
+    await state.clear()

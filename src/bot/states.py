@@ -23,3 +23,6 @@ class EntityState(StatesGroup):
     
     waiting_for_edit_habit_target = State()
     waiting_for_add_habit_progress = State()
+    
+    waiting_for_habit_periodicity = State()
+    waiting_for_habit_nudge = State()
