@@ -213,3 +213,55 @@ def evening_nudge_job():
                         run_async(bot.send_message(chat_id=target_chat_id, text=msg_text))
                 except Exception as e:
                     print(f"Failed to send evening nudge to {user.telegram_id}: {e}")
+
+@shared_task(name="job_morning_planner")
+def morning_planner_job():
+    """
+    Runs periodically. Triggers around 9 AM user time.
+    Reviews all pending tasks, selects the most impactful 1-3, and sends a gentle
+    "Good morning" note encouraging the user to pick one.
+    """
+    now = datetime.utcnow()
+    with SessionLocal() as db:
+        users = db.query(User).all()
+        for user in users:
+            import zoneinfo
+            try:
+                user_tz = zoneinfo.ZoneInfo(user.timezone)
+            except Exception:
+                user_tz = zoneinfo.ZoneInfo("UTC")
+            
+            local_time = now.astimezone(user_tz)
+            if local_time.hour != 9:
+                continue
+                
+            target_chat_id = user.target_channel_id or user.telegram_id
+            
+            # Fetch pending tasks
+            pending_tasks = db.query(Task).filter(Task.user_id == user.id, Task.status == 'pending').all()
+            if not pending_tasks:
+                continue
+                
+            # Clear previous "focus today" flags? We can reset daily.
+            for t in pending_tasks:
+                t.is_focus_today = False
+            
+            tasks_list_str = "\\n".join([f"- {t.title}" for t in pending_tasks[:15]])
+            
+            msg_text = "Good morning! ☀️ You have some tasks lined up. Take a look at your Projects when you're ready."
+            if user.api_key_encrypted:
+                try:
+                    api_key = decrypt_key(user.api_key_encrypted)
+                    ai = GoogleProvider(api_key=api_key)
+                    prompt = f"The user has these pending tasks:\\n{tasks_list_str}\\n\\nDon't list all of them. Act as a gentle productivity sherpa. Welcome them to a new day. Pick the top 1 or 2 most impactful tasks from the list to suggest as the 'Priority for today'. Keep it conversational, short, and not overwhelming. Ask if they want to start one of those."
+                    msg_text = run_async(ai.generate_text(prompt))
+                except Exception as e:
+                    print(f"Failed to generate morning AI planner: {e}")
+            
+            db.commit() # Save the cleared focus flags just in case
+            
+            try:
+                if bot:
+                    run_async(bot.send_message(chat_id=target_chat_id, text=msg_text, parse_mode="HTML"))
+            except Exception as e:
+                print(f"Failed to send morning planner to {user.telegram_id}: {e}")

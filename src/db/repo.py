@@ -66,6 +66,10 @@ def init_db():
                     conn.execute(sql_text("ALTER TABLE sessions ADD COLUMN save_state_context VARCHAR"))
                 except Exception:
                     pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE tasks ADD COLUMN is_focus_today BOOLEAN DEFAULT 0"))
+                except Exception:
+                    pass
             else:
                 # PostgreSQL
                 columns_to_add = [
@@ -82,6 +86,7 @@ def init_db():
                     ("time_logs", "progress_unit", "VARCHAR"),
                     ("sessions", "rest_start_time", "TIMESTAMP"),
                     ("sessions", "save_state_context", "VARCHAR"),
+                    ("tasks", "is_focus_today", "BOOLEAN DEFAULT FALSE"),
                 ]
                 for table, col, col_type in columns_to_add:
                     try:

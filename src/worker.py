@@ -36,6 +36,10 @@ celery_app.conf.update(
         "evening-nudge-every-hour": {
             "task": "job_evening_nudge",
             "schedule": 3600.0,
+        },
+        "morning-planner-every-hour": {
+            "task": "job_morning_planner",
+            "schedule": 3600.0,
         }
     }
 )

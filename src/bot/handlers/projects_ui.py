@@ -130,7 +130,8 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
             if pending_tasks:
                 text += "\n\n📋 <b>Next Tasks:</b>\n"
                 for i, t in enumerate(pending_tasks, 1):
-                    text += f"{i}. {t.title}\n"
+                    prefix = "🎯 " if getattr(t, 'is_focus_today', False) else ""
+                    text += f"{i}. {prefix}{t.title}\n"
                 
             await cb.message.edit_text(text, parse_mode="HTML", reply_markup=get_project_view_keyboard(proj.id))
             return
@@ -148,6 +149,94 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
             await cb.answer(f"Sent {proj.title} to archive.")
             await cb_projects_list(cb, state)
             
+        elif action == "tasks":
+            from src.db.models import Task
+            pending_tasks = db.query(Task).filter(Task.project_id == proj.id, Task.status == 'pending').limit(10).all()
+            
+            if not pending_tasks:
+                await cb.answer("No pending tasks for this project.", show_alert=True)
+                return
+            
+            kb = []
+            for t in pending_tasks:
+                prefix = "🎯 " if getattr(t, 'is_focus_today', False) else ""
+                kb.append([InlineKeyboardButton(text=f"✅ {prefix}{t.title}", callback_data=f"ui_proj_comptask_{t.id}")])
+                if not getattr(t, 'is_focus_today', False):
+                    kb.append([InlineKeyboardButton(text=f"🎯 Set Focus: {t.title}", callback_data=f"ui_proj_setfocus_{t.id}")])
+                    
+            kb.append([InlineKeyboardButton(text="🔙 Back to Project", callback_data=f"ui_proj_{proj.id}")])
+            
+            await cb.message.edit_text(
+                f"<b>Tasks for {proj.title}</b>\nSelect a task to complete it, or set it as today's focus:",
+                parse_mode="HTML",
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=kb)
+            )
+
+        elif action == "comptask":
+            from src.db.models import Task
+            task_id = int(data[1])
+            task = db.query(Task).filter(Task.id == task_id).first()
+            if task:
+                task.status = "completed"
+                db.commit()
+                
+                # Check for gentle AI follow up
+                if getattr(task, 'is_focus_today', False) and user.api_key_encrypted:
+                    from src.core.security import decrypt_key
+                    from src.ai.providers import GoogleProvider
+                    import asyncio
+                    try:
+                        api_key = decrypt_key(user.api_key_encrypted)
+                        ai = GoogleProvider(api_key=api_key)
+                        prompt = f"The user just finished their 'Focus of the Day' task: '{task.title}'. Be a gentle productivity sherpa. Congratulate them warmly but briefly, and ask gently if they'd like to tackle one more, or call it a day to avoid burnout."
+                        
+                        async def send_followup(text, chat_id):
+                            from src.main import bot
+                            if bot:
+                                await bot.send_message(chat_id=chat_id, text=text, parse_mode="HTML")
+                        
+                        followup_text = await ai.generate_text(prompt)
+                        asyncio.create_task(send_followup(followup_text, cb.from_user.id))
+                        
+                    except Exception as e:
+                        pass
+
+                await cb.answer(f"Task '{task.title}' completed!")
+                # Go back to task list or project
+                # Re-invoke tasks via hack
+                cb.data = f"ui_proj_tasks_{task.project_id}"
+                await cb_project_action(cb, state)
+            else:
+                await cb.answer("Task not found.")
+
+        elif action == "setfocus":
+            from src.db.models import Task
+            task_id = int(data[1])
+            task = db.query(Task).filter(Task.id == task_id).first()
+            if task:
+                task.is_focus_today = True
+                db.commit()
+                await cb.answer(f"Set '{task.title}' as Focus!")
+                cb.data = f"ui_proj_tasks_{task.project_id}"
+                await cb_project_action(cb, state)
+            else:
+                await cb.answer("Task not found.")
+
+        
+
+        elif action == "setfocus":
+            from src.db.models import Task
+            task_id = int(data[1])
+            task = db.query(Task).filter(Task.id == task_id).first()
+            if task:
+                task.is_focus_today = True
+                db.commit()
+                await cb.answer(f"Set '{task.title}' as Focus!")
+                cb.data = f"ui_proj_tasks_{task.project_id}"
+                await cb_project_action(cb, state)
+            else:
+                await cb.answer("Task not found.")
+
         elif action == "edit":
             await state.update_data(eid=proj.id)
             await state.set_state(EntityState.waiting_for_edit_project_target)
