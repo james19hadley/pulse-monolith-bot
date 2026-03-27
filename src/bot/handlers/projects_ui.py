@@ -248,7 +248,6 @@ async def cb_habit_action(cb: CallbackQuery, state: FSMContext):
             else:
                 text += f"{unit}"
             text += f"\n🗓 Periodicity: Every {hab.periodicity_days} day(s)\n⏱ Nudge Threshold: {hab.nudge_threshold_days} day(s) missing"
-            text += f"\n🗓 Periodicity: Every {hab.periodicity_days} day(s)\n⏱ Nudge Threshold: {hab.nudge_threshold_days} day(s) missing"
             await cb.message.edit_text(text, parse_mode="HTML", reply_markup=get_habit_view_keyboard(hab.id))
             return
             
@@ -306,7 +305,6 @@ async def cb_habit_action(cb: CallbackQuery, state: FSMContext):
                 text += f" / {hab.target_value}{unit}"
             else:
                 text += f"{unit}"
-            text += f"\n🗓 Periodicity: Every {hab.periodicity_days} day(s)\n⏱ Nudge Threshold: {hab.nudge_threshold_days} day(s) missing"
             text += f"\n🗓 Periodicity: Every {hab.periodicity_days} day(s)\n⏱ Nudge Threshold: {hab.nudge_threshold_days} day(s) missing"
             await cb.message.edit_text(text, parse_mode="HTML", reply_markup=get_habit_view_keyboard(hab.id))
 
