@@ -28,7 +28,9 @@
 
 ### 4. Daytime Proactive Nudges & Evening Chats
 - [ ] Integrate LLM into the `catalyst_heartbeat` to generate "warm" check-in messages that extract pending tasks to suggest automatically.
-- [ ] Add Evening Nudge logic to detect unlogged habits for 2+ days and spawn an accountability coach message.
+- [ ] Add `periodicity_days` and `nudge_threshold_days` to the `Habit` model.
+- [ ] Update Habit UI to natively allow configuration of periodicity and nudge logic per habit.
+- [ ] Add Evening Nudge logic to detect unlogged habits and generate coach messages (using custom threshold).
 
 ## 🔒 Security & Architecture Notes
 - We maintain `Task` as a separate SQL table rather than muddying `Project` or `Habit` schemas (KISS + YAGNI).
