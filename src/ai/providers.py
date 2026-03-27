@@ -28,7 +28,8 @@ class AddInboxParams(BaseModel):
     raw_content: str = Field(description="The actual idea, note, or thought, omitting conversational filler like 'save this idea' or 'remind me to'")
 
 class SessionControlParams(BaseModel):
-    action: str = Field(description="Strictly 'START' or 'END' depending on whether they are starting a session or finishing one.")
+    action: str = Field(description="Strictly 'START', 'END', 'REST', or 'RESUME' depending on whether they are starting a session, finishing one, taking a break, or coming back from a break.")
+    context: Optional[str] = Field(description="If action is 'REST', this captures what they were just working on as a save-state context. e.g., 'fixing the SQL query'.", default=None)
 
 class ReportConfigParams(BaseModel):
     blocks: List[str] = Field(description="Blocks to include in the report. Allowed values: 'focus', 'habits', 'inbox', 'void'. Output in the order requested by user.", default=["focus", "habits", "inbox", "void"])

@@ -78,7 +78,11 @@ class Session(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     start_time: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     end_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    status: Mapped[str] = mapped_column(String, default="active") # 'active', 'closed', 'force_closed_by_cron'
+    status: Mapped[str] = mapped_column(String, default="active") # 'active', 'closed', 'force_closed_by_cron', 'rest', 'pending_split'
+    
+    # Save-State Rest Mode
+    rest_start_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    save_state_context: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
 class Project(Base):
     __tablename__ = "projects"

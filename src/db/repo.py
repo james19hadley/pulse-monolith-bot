@@ -58,6 +58,14 @@ def init_db():
                     conn.execute(sql_text("ALTER TABLE habits ADD COLUMN last_reset_date DATE"))
                 except Exception:
                     pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE sessions ADD COLUMN rest_start_time TIMESTAMP"))
+                except Exception:
+                    pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE sessions ADD COLUMN save_state_context VARCHAR"))
+                except Exception:
+                    pass
             else:
                 # PostgreSQL
                 columns_to_add = [
@@ -72,6 +80,8 @@ def init_db():
                     ("projects", "next_action_text", "VARCHAR"),
                     ("time_logs", "progress_amount", "FLOAT"),
                     ("time_logs", "progress_unit", "VARCHAR"),
+                    ("sessions", "rest_start_time", "TIMESTAMP"),
+                    ("sessions", "save_state_context", "VARCHAR"),
                 ]
                 for table, col, col_type in columns_to_add:
                     try:

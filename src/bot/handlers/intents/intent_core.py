@@ -13,6 +13,16 @@ async def _handle_chat(message: Message, db, user, provider_name, api_key):
         log_tokens(db, message.from_user.id, tokens)
         
     if response_text:
+        # Check for pending_split close out in chat
+        if user.active_session_id:
+            from src.db.models import Session
+            session = db.query(Session).filter(Session.id == user.active_session_id).first()
+            if session and session.status == "pending_split":
+                session.status = "closed"
+                user.active_session_id = None
+                db.commit()
+                response_text += "\n\n<i>✅ Session closed. (Void time acknowledged)</i>"
+
         try:
             # We instructed the LLM to use strict HTML tags. 
             # Send raw response first, letting aiogram parse <b>, <i>, <code>.
