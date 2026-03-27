@@ -123,6 +123,14 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
             text = f"📁 <b>{proj.title}</b>\n\nTarget Hours: {hours:g}h\nTotal Tracked: {total_hours:g}h\nToday Tracked: {today_hours:g}h\n🕒 Last active: {last_active_str}\n{progress_bar}\nStatus: {proj.status}"
             if proj.unit and proj.unit != 'minutes':
                 text += f"\n📈 Daily Progress: {today_progress:g} {proj.unit}"
+                
+            from src.db.models import Task
+            pending_tasks = db.query(Task).filter(Task.project_id == proj.id, Task.status == 'pending').limit(5).all()
+            if pending_tasks:
+                text += "\n\n📋 <b>Next Tasks:</b>\n"
+                for i, t in enumerate(pending_tasks, 1):
+                    text += f"{i}. {t.title}\n"
+                
             await cb.message.edit_text(text, parse_mode="HTML", reply_markup=get_project_view_keyboard(proj.id))
             return
             
