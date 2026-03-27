@@ -47,8 +47,16 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
         description=extraction.description
     )
     db.add(log_entry)
+    
+    logged_progress = extraction.progress_amount
     if extraction.progress_amount is not None:
-        project.current_value = (project.current_value or 0.0) + extraction.progress_amount
+        if extraction.is_absolute_progress:
+            delta = extraction.progress_amount - (project.current_value or 0.0)
+            log_entry.progress_amount = delta
+            project.current_value = extraction.progress_amount
+            logged_progress = delta
+        else:
+            project.current_value = (project.current_value or 0.0) + extraction.progress_amount
         if not project.unit and extraction.progress_unit:
             project.unit = extraction.progress_unit
     else:
@@ -75,9 +83,12 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
     else:
         msg_lines.append(f"✅ Updated <b>{project.title}</b>!")
 
-    if extraction.progress_amount is not None:
+    if logged_progress is not None:
         unit_str = f" {extraction.progress_unit}" if extraction.progress_unit else " units"
-        msg_lines.append(f"📈 Progress: +{extraction.progress_amount}{unit_str}")
+        if extraction.is_absolute_progress:
+            msg_lines.append(f"📈 Progress set to: {extraction.progress_amount}{unit_str} (Delta: {logged_progress:g})")
+        else:
+            msg_lines.append(f"📈 Progress: +{logged_progress:g}{unit_str}")
         
     
     if project.unit == 'minutes' or not project.unit:

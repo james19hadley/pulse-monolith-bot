@@ -96,6 +96,20 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
             total_minutes = sum([l.duration_minutes for l in logs])
             today_minutes = sum([l.duration_minutes for l in logs if l.created_at >= today_start])
             
+            now_dt = datetime.now(timezone.utc)
+            last_active_str = "Never"
+            if logs:
+                last_log_dt = max(l.created_at for l in logs).replace(tzinfo=timezone.utc)
+                diff = now_dt - last_log_dt
+                if diff.total_seconds() < 3600:
+                    last_active_str = f"{int(diff.total_seconds() // 60)} mins ago"
+                elif diff.total_seconds() < 86400:
+                    last_active_str = f"{int(diff.total_seconds() // 3600)} hours ago"
+                else:
+                    last_active_str = f"{diff.days} days ago"
+
+            today_progress = sum([l.progress_amount or 0 for l in logs if l.created_at >= today_start and l.progress_amount])
+            
             hours = proj.target_value / 60 if proj.target_value > 0 else 0
             total_hours = total_minutes / 60
             today_hours = today_minutes / 60
@@ -106,7 +120,9 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
                 filled = int(pct * 10)
                 progress_bar = "\nProgress: [" + "█" * filled + "░" * (10 - filled) + f"] {pct*100:.1f}%\n"
                 
-            text = f"📁 <b>{proj.title}</b>\n\nTarget Hours: {hours:g}h\nTotal Tracked: {total_hours:g}h\nToday Tracked: {today_hours:g}h\n{progress_bar}\nStatus: {proj.status}"
+            text = f"📁 <b>{proj.title}</b>\n\nTarget Hours: {hours:g}h\nTotal Tracked: {total_hours:g}h\nToday Tracked: {today_hours:g}h\n🕒 Last active: {last_active_str}\n{progress_bar}\nStatus: {proj.status}"
+            if proj.unit and proj.unit != 'minutes':
+                text += f"\n📈 Daily Progress: {today_progress:g} {proj.unit}"
             await cb.message.edit_text(text, parse_mode="HTML", reply_markup=get_project_view_keyboard(proj.id))
             return
             
