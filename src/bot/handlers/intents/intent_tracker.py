@@ -40,6 +40,7 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
     # Log it
     log_entry = TimeLog(
         user_id=user.id,
+        session_id=user.active_session_id,
         project_id=project.id,
         duration_minutes=extraction.duration_minutes,
         progress_amount=extraction.progress_amount,
