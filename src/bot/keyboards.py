@@ -280,6 +280,9 @@ def get_habits_list_keyboard(habits) -> InlineKeyboardMarkup:
 def get_project_view_keyboard(proj_id) -> InlineKeyboardMarkup:
     kb = [
         [
+            InlineKeyboardButton(text="📋 Manage Tasks", callback_data=f"ui_proj_tasks_{proj_id}")
+        ],
+        [
             InlineKeyboardButton(text="✏️ Edit Target", callback_data=f"ui_proj_edit_{proj_id}"),
             InlineKeyboardButton(text="⏱ Add Time", callback_data=f"ui_proj_add_{proj_id}")
         ],
