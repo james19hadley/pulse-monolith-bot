@@ -92,6 +92,17 @@ class Project(Base):
     unit: Mapped[Optional[str]] = mapped_column(String, default="minutes")
     next_action_text: Mapped[Optional[str]] = mapped_column(String, nullable=True) # E.g., "Read pointers chapter"
 
+class Task(Base):
+    __tablename__ = "tasks"
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    project_id: Mapped[Optional[int]] = mapped_column(ForeignKey("projects.id"), index=True, nullable=True)
+    title: Mapped[str] = mapped_column(String)
+    status: Mapped[str] = mapped_column(String, default="pending") # 'pending', 'completed', 'cancelled'
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
 class Habit(Base):
     __tablename__ = "habits"
     

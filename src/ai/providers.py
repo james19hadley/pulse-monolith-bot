@@ -80,6 +80,15 @@ class CreateEntitiesParams(BaseModel):
     projects: List[CreateProjectParams] = Field(description="List of new projects to create.")
     habits: List[CreateHabitParams] = Field(description="List of new habits to create.")
 
+
+class TaskParam(BaseModel):
+    title: str = Field(description="The short actionable title of the task")
+    project_id: Optional[int] = Field(description="The ID of the matching project if the user specified one or context implies it. Null if standalone.", default=None)
+    unmatched_project_name: Optional[str] = Field(description="If the user specified a project but it's not in the active projects list, put its inferred name here.", default=None)
+
+class AddTasksParams(BaseModel):
+    tasks: List[TaskParam] = Field(description="List of tasks to create.")
+
 class GoogleProvider:
     def __init__(self, api_key: str):
         self.client = genai.Client(api_key=api_key)
@@ -262,3 +271,16 @@ If they don't specify blocks, use the default list."""
         except Exception as e:
             print(f"Chat generation error: {e}")
             return None, {}
+
+    def extract_add_tasks_parameters(self, text: str, active_projects_text: str) -> Tuple[Optional[AddTasksParams], dict]:
+        prompt = f"User input:\n{text}\n\nExtract the tasks the user wants to add.\n\n{active_projects_text}"
+        response = self.client.models.generate_content(
+            model=self.model_id,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=AddTasksParams,
+                temperature=0.0
+            ),
+        )
+        return AddTasksParams.model_validate_json(response.text), self._get_usage(response)

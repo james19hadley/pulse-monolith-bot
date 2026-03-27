@@ -1,5 +1,5 @@
 from aiogram.types import Message
-from src.ai.router import extract_entities, extract_inbox
+from src.ai.router import extract_entities, extract_inbox, extract_add_tasks
 from src.bot.handlers.utils import log_tokens
 async def _handle_create_entities(message: Message, db, user, provider_name, api_key):
     from src.db.models import Project, Habit
@@ -64,7 +64,7 @@ async def _handle_add_inbox(message: Message, db, user, provider_name, api_key):
     from src.db.models import Inbox
     from src.bot.handlers.utils import log_tokens
     
-    extraction, tokens = extract_inbox(message.text, provider_name, api_key)
+    extraction, tokens = extract_inbox, extract_add_tasks(message.text, provider_name, api_key)
     
     if tokens:
         log_tokens(db, message.from_user.id, tokens)
@@ -82,3 +82,57 @@ async def _handle_add_inbox(message: Message, db, user, provider_name, api_key):
     await message.answer(f"📥 <b>Saved to Inbox:</b>\n<i>{safe_text}</i>", parse_mode="HTML")
 
 
+
+
+async def _handle_add_tasks(message: Message, db, user, provider_name, api_key):
+    from src.db.models import Project, Task
+    
+    # 1. Fetch active projects formatting for AI prompt
+    projects = db.query(Project).filter(Project.user_id == user.id, Project.status == 'active').all()
+    if not projects:
+        active_projects_text = "User has no active projects yet."
+    else:
+        active_projects_text = "User's active projects:\n" + "\n".join([f"ID: {p.id}, Title: {p.title}" for p in projects])
+
+    extraction, tokens = extract_add_tasks(message.text, provider_name, api_key, active_projects_text)
+    
+    if tokens:
+        log_tokens(db, message.from_user.id, tokens)
+        
+    if not extraction or not extraction.tasks:
+        await message.answer("I could not verify the exact tasks to add.")
+        return
+
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+    count = 0
+    msg_lines = []
+    
+    for t in extraction.tasks:
+        project_id = t.project_id
+        if project_id is None and t.unmatched_project_name:
+            # We skip creating standalone tasks if they explicitly meant a project but we missed it. 
+            # Or we could prompt a keyboard. Let's just create it as standalone and notify.
+            pass
+            
+        task = Task(
+            user_id=user.id,
+            project_id=project_id,
+            title=t.title,
+            status='pending'
+        )
+        db.add(task)
+        count += 1
+        
+        proj_name = "(Standalone)"
+        if project_id:
+            proj = next((p for p in projects if p.id == project_id), None)
+            if proj:
+                proj_name = proj.title
+            
+        msg_lines.append(f"• {t.title} 📂 <i>{proj_name}</i>")
+        
+    db.commit()
+    
+    nl = '\n'
+    await message.answer(f"✅ <b>Added {count} task(s):</b>\n{nl.join(msg_lines)}", parse_mode="HTML")

@@ -5,6 +5,7 @@ Return strictly valid JSON and nothing else. Do NOT include markdown code blocks
 
 Categorize the user's input into one of the following exact intents:
 - LOG_WORK: The user is reporting time spent working or progressing on a project/quest. (e.g. "I coded for 40 mins", "Did 2 hours of writing").
+- ADD_TASKS: The user is adding actionable to-do items, steps, or tasks to a plan/project (e.g. "Add tasks: buy milk, call Bob", "For Frontend project I need to design UI and fix bugs").
 - LOG_HABIT: The user is reporting the completion of a daily habit or routine (e.g. "Did 10 pushups", "Read my pages").
 - ADD_INBOX: The user is dumping a random raw idea, thought, or note to save for later (e.g. "Idea: add stripe later", "Don't forget to buy milk").
 - CREATE_ENTITIES: The user wants to create a new project (possibly with a target number of hours/minutes) or a new habit. (e.g. "Create a project 'Write Book' with a 50h goal", "создай проект Х и привычку Y").
