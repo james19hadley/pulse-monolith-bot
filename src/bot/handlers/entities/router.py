@@ -1,0 +1,12 @@
+from aiogram import Router
+from .menu import router as menu_router
+from .projects import router as projects_router
+from .habits import router as habits_router
+
+router = Router()
+
+router.include_router(menu_router)
+router.include_router(projects_router)
+router.include_router(habits_router)
+from .commands import router as commands_router
+router.include_router(commands_router)

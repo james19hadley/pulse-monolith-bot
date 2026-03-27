@@ -13,7 +13,10 @@ from src.ai.providers import GoogleProvider
 # --- NEW DISPATCHER IMPORTS ---
 from src.bot.handlers.intents.intent_core import _handle_chat, _handle_config_update, _handle_config_report
 from src.bot.handlers.intents.intent_entities import _handle_create_entities, _handle_add_inbox, _handle_add_tasks
-from src.bot.handlers.intents.intent_tracker import _handle_log_work, _handle_log_habit, _handle_session_control
+from src.bot.handlers.intents.intent_log_work import _handle_log_work
+from src.bot.handlers.intents.intent_log_habit import _handle_log_habit
+from src.bot.handlers.intents.intent_session import _handle_session_control
+# _handle_log_work, _handle_log_habit, _handle_session_control
 
 router = Router()
 logger = logging.getLogger(__name__)
