@@ -1,6 +1,6 @@
 # Sprint 22: Daily Progress Tracking and Absolute Values
 
-**Status:** `Draft`
+**Status:** `Completed`
 **Date Proposed:** March 27, 2026
 **Objective:** Enhance the project tracking capabilities by displaying daily progress and time since last activity, and allow users to set absolute progress values instead of only additive deltas.
 
