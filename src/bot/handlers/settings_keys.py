@@ -676,6 +676,7 @@ async def process_cutoff_text(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "settings_test_report")
 async def cq_test_report(callback: CallbackQuery):
+    await callback.message.bot.send_chat_action(chat_id=callback.from_user.id, action="typing")
     from src.db.repo import SessionLocal
     from src.bot.handlers.utils import get_or_create_user
     from src.bot.views import build_daily_report

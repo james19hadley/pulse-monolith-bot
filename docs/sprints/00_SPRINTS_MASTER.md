@@ -50,4 +50,4 @@ Every new Sprint Markdown file must follow this strict structure to maintain con
 | [Sprint 19](19_REPORTING_ENGINE.md) | Reporting Engine & Timezone Accuracy | 🟢 Completed |
 | [Sprint 20](20_ENTITY_MANAGEMENT_UI.md) | Entity Management UI (Inline Panels) | 🟢 Completed |
 
-| [Sprint 21](21_CONVERSATIONAL_ANALYTICS.md) | Conversational Analytics (CHECK_STATS) | ⚪ Draft |
+| [Sprint 21](21_SMART_UNDO_REPORTING_UI.md) | Smart Undo & Reporting Redesign | 🟢 Completed |

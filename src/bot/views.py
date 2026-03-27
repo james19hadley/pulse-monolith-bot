@@ -135,12 +135,12 @@ def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str
     }
     
     date_str = stats.get('date', 'Today')
-    parts = [f"<b>{e['header']} Daily Accountability Report: {date_str}</b>\n" if e['header'] else f"<b>Daily Accountability Report: {date_str}</b>\n"]
+    parts = [f"<b>{e['header']} Daily Report: {date_str}</b>\n" if e['header'] else f"<b>Daily Report: {date_str}</b>\n"]
     
     for block in blocks:
         if block == "focus":
             f_h, f_m = divmod(stats.get('focus_minutes', 0), 60)
-            parts.append(f"{e['focus']} <b>Deep Work:</b> {f_h}h {f_m}m")
+            parts.append(f"{e['focus']} <b>Focus:</b> {f_h}h {f_m}m")
             if stats.get('projects'):
                 for p, data in stats['projects'].items():
                     # Handle both old format (int minutes) and new format (dict)
@@ -152,9 +152,9 @@ def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str
                         p_h, p_m = divmod(mins, 60)
                         import html
                         
-                        msg = f"  - {html.escape(str(p))}:"
+                        msg = f"  └ <i>{html.escape(str(p))}</i>:"
                         if mins > 0:
-                            msg += f" {p_h}h {p_m}m"
+                            msg += f" <b>{p_h}h {p_m}m</b>"
                         if unit and unit != "minutes":
                             target = data.get("target_value", 0)
                             current = data.get("current_value", 0)
@@ -170,15 +170,16 @@ def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str
                         mins = data
                         p_h, p_m = divmod(mins, 60)
                         import html
-                        parts.append(f"  - {html.escape(str(p))}: {p_h}h {p_m}m")
+                        parts.append(f"  └ <i>{html.escape(str(p))}</i>: <b>{p_h}h {p_m}m</b>")
         
         elif block == "habits":
             habits = stats.get('habits', [])
             if habits:
-                parts.append(f"\n{e['habits']} <b>Habit Execution:</b>")
+                parts.append(f"\n{e['habits']} <b>Habits:</b>")
                 for h in habits:
                     import html
-                    parts.append(f"  - {html.escape(str(h['title']))}: {h['current']}/{h['target']} {h.get('unit', '')}".strip())
+                    done = "✅" if h['current'] >= h['target'] else "⏳"
+                    parts.append(f"  └ {done} <i>{html.escape(str(h['title']))}</i>: <b>{h['current']}/{h['target']}</b> {h.get('unit', '')}".strip() )
                     
         elif block == "inbox":
             inbox = stats.get('inbox_count', 0)
@@ -187,14 +188,13 @@ def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str
                 
         elif block == "void":
             v_h, v_m = divmod(stats.get('void_minutes', 0), 60)
-            parts.append(f"\n{e['void']} <b>The Void (Lost Time):</b> {v_h}h {v_m}m")
+            parts.append(f"\n{e['void']} <b>Void (Lost Time):</b> {v_h}h {v_m}m")
 
     # Clean up empty lines and join
     report = "\n".join([p for p in parts if p]).strip()
     
     if ai_comment:
-        import html
-        report += f"\n\n{html.escape(str(ai_comment))}"
+        report += f"\n\n💡 {str(ai_comment)}"
         
     return report
 

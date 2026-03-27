@@ -42,12 +42,20 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
     cutoff_time = getattr(user, 'day_cutoff_time', datetime.time(23, 0))
     today_cutoff = datetime.datetime.combine(now.date(), cutoff_time)
     
-    if now < today_cutoff:
-        start_bound = today_cutoff - datetime.timedelta(days=1)
-        end_bound = today_cutoff
+    if is_auto_cron:
+        if now >= today_cutoff:
+            start_bound = today_cutoff - datetime.timedelta(days=1)
+            end_bound = today_cutoff
+        else:
+            start_bound = today_cutoff - datetime.timedelta(days=2)
+            end_bound = today_cutoff - datetime.timedelta(days=1)
     else:
-        start_bound = today_cutoff
-        end_bound = today_cutoff + datetime.timedelta(days=1)
+        if now < today_cutoff:
+            start_bound = today_cutoff - datetime.timedelta(days=1)
+            end_bound = today_cutoff
+        else:
+            start_bound = today_cutoff
+            end_bound = today_cutoff + datetime.timedelta(days=1)
     
     config = user.report_config
     if isinstance(config, str):
@@ -107,7 +115,7 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
                 import json
                 stats_json = json.dumps(stats, ensure_ascii=False)
                 context_msg = "The user's day has just automatically ended via chronjob." if is_auto_cron else "The user has manually triggered the end of their day."
-                prompt = f"{context_msg} Look at their logged stats: {stats_json}. Write a short 1-2 sentence closing comment in your persona's tone. Mention specific achievements or failures if notable. DO NOT wrap your response in italics. Use bold text to highlight names of specific projects or habits. Just output the sentence, nothing else."
+                prompt = f"{context_msg} Look at their logged stats: {stats_json}. Write a short 1-2 sentence closing comment in your persona's tone. Mention specific achievements or failures if notable. DO NOT wrap your response in italics. Use Telegram HTML tag <b> to highlight names of specific projects or habits, e.g., <b>Pulse Monolith Bot</b>. NEVER use markdown (**bold**). Just output the sentence, nothing else."
                 
                 response, tokens = provider.generate_chat_response(prompt, persona_sys)
                 if response:
