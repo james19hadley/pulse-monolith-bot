@@ -64,6 +64,7 @@ def init_db():
                     ("habits", "type", "VARCHAR DEFAULT 'counter'"),
                     ("habits", "unit", "VARCHAR"),
                     ("habits", "last_reset_date", "DATE"),
+                    ("habits", "updated_at", "TIMESTAMP WITH TIME ZONE DEFAULT NOW()"),
                     ("habits", "periodicity_days", "INTEGER DEFAULT 1"),
                     ("habits", "nudge_threshold_days", "INTEGER DEFAULT 2"),
                     ("users", "report_config", "JSON"),

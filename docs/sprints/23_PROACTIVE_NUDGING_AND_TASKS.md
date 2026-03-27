@@ -27,10 +27,10 @@
 - [x] Abandon complex *Emulated Online Status* (last_interacted_at) to avoid over-engineering; rely purely on session heartbeat.
 
 ### 4. Daytime Proactive Nudges & Evening Chats
-- [ ] Integrate LLM into the `catalyst_heartbeat` to generate "warm" check-in messages that extract pending tasks to suggest automatically.
+- [x] Integrate LLM into the `catalyst_heartbeat` to generate "warm" check-in messages that extract pending tasks to suggest automatically.
 - [x] Add `periodicity_days` and `nudge_threshold_days` to the `Habit` model.
 - [x] Update Habit UI to natively allow configuration of periodicity and nudge logic per habit.
-- [ ] Add Evening Nudge logic to detect unlogged habits and generate coach messages (using custom threshold).
+- [x] Add Evening Nudge logic to detect unlogged habits and generate coach messages (using custom threshold).
 
 ## 🔒 Security & Architecture Notes
 - We maintain `Task` as a separate SQL table rather than muddying `Project` or `Habit` schemas (KISS + YAGNI).

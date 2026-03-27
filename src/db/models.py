@@ -115,6 +115,8 @@ class Habit(Base):
     unit: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     last_reset_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     total_completions: Mapped[int] = mapped_column(Integer, default=0)
     current_streak: Mapped[int] = mapped_column(Integer, default=0)
     periodicity_days: Mapped[int] = mapped_column(Integer, default=1)

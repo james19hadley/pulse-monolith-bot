@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, time
 from sqlalchemy.orm import Session as DBSession
 from sqlalchemy import func
 from src.db.repo import SessionLocal
-from src.db.models import User, Session as AppSession, TimeLog, Habit, Inbox, Project
+from src.db.models import User, Session as AppSession, TimeLog, Habit, Inbox, Project, Task, Task
 from aiogram import Bot
 
 from src.bot.views import catalyst_ping_message, stale_session_closed_message
@@ -147,3 +147,50 @@ def daily_accountability_job():
                         ))
                     except Exception as e:
                         print(f"Failed to send accountability report to {target_chat_id}: {e}")
+
+@shared_task(name="job_evening_nudge")
+def evening_nudge_job():
+    """
+    Runs periodically. Checks for habits that haven't been logged in over their nudge_threshold_days.
+    Sends a warm coach message to remind them, a few hours before day_cutoff_time.
+    """
+    now = datetime.utcnow()
+    with SessionLocal() as db:
+        users = db.query(User).all()
+        for user in users:
+            # Trigger about 3 hours before cutoff time (e.g. 20:00 if cutoff is 23:00)
+            target_hour = (getattr(user, 'day_cutoff_time', time(23, 0)).hour - 3) % 24
+            
+            if now.hour == target_hour and 0 <= now.minute < 60:
+                target_chat_id = user.target_channel_id or user.telegram_id
+                
+                # Find lagging habits
+                habits = db.query(Habit).filter(Habit.user_id == user.id, Habit.nudge_threshold_days > 0).all()
+                lagging_habits = []
+                for h in habits:
+                    last_update = h.updated_at if h.updated_at else h.created_at
+                    if last_update:
+                        last_update = last_update.replace(tzinfo=None) # naive comparison
+                        since_update = (now - last_update).days
+                        if since_update >= h.nudge_threshold_days:
+                            lagging_habits.append(h.title)
+                
+                if not lagging_habits:
+                    continue
+                
+                msg_text = "It looks like you've fallen behind on these habits: " + ", ".join(lagging_habits) + "\nPlease remember why you started."
+                
+                if user.encrypted_google_api_key:
+                    try:
+                        api_key = decrypt_key(user.encrypted_google_api_key)
+                        ai = GoogleProvider(api_key=api_key)
+                        prompt = f"The user has fallen behind on these habits for several days: {', '.join(lagging_habits)}. Write a brief, supportive, and pedagogical evening nudge (1-2 sentences) encouraging them to restart without feeling guilty. No markdown."
+                        msg_text = run_async(ai.generate_text(prompt))
+                    except Exception as e:
+                        print(f"Failed to generate AI habit nudge: {e}")
+                
+                try:
+                    if bot:
+                        run_async(bot.send_message(chat_id=target_chat_id, text=msg_text))
+                except Exception as e:
+                    print(f"Failed to send evening nudge to {user.telegram_id}: {e}")

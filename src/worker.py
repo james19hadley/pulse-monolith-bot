@@ -32,6 +32,10 @@ celery_app.conf.update(
         "daily-accountability-every-hour": {
             "task": "job_daily_accountability",
             "schedule": 3600.0, # Will internally skip if it's not the right hour
+        },
+        "evening-nudge-every-hour": {
+            "task": "job_evening_nudge",
+            "schedule": 3600.0,
         }
     }
 )
