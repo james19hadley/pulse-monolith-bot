@@ -51,3 +51,8 @@ Every new Sprint Markdown file must follow this strict structure to maintain con
 | [Sprint 20](20_ENTITY_MANAGEMENT_UI.md) | Entity Management UI (Inline Panels) | 🟢 Completed |
 
 | [Sprint 21](21_SMART_UNDO_REPORTING_UI.md) | Smart Undo & Reporting Redesign | 🟢 Completed |
+| [Sprint 22](22_DAILY_PROGRESS_AND_ABSOLUTE_VALUES.md) | Daily Progress Tracking and Absolute Values | 🟡 Active |
+| [Sprint 23](23_PROACTIVE_NUDGING_AND_TASKS.md) | Proactive Nudging and Spoon-fed Tasks | ⚪ Draft |
+
+| [Sprint 22](22_DAILY_PROGRESS_AND_ABSOLUTE_VALUES.md) | Daily Progress Tracking and Absolute Values | 🟡 Active |
+| [Sprint 23](23_PROACTIVE_NUDGING_AND_TASKS.md) | Proactive Nudging and Spoon-fed Tasks | ⚪ Draft |
