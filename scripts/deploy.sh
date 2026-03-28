@@ -5,7 +5,9 @@ echo "🚀 Starting Pulse Monolith Deployment..."
 
 # 1. Pull the latest code
 echo "📥 Pulling latest code..."
-git pull
+git fetch origin main
+git reset --hard origin/main
+git clean -fd
 
 # 2. Rebuild and restart the containers
 echo "🏗️ Building and restarting Docker containers..."
