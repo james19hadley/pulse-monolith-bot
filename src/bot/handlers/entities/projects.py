@@ -134,6 +134,7 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
 
         elif action == "delete":
             # Real delete
+            status = proj.status
             from src.db.models import ActionLog
             import json
             delete_log = ActionLog(
@@ -151,9 +152,11 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
             db.delete(proj)
             db.commit()
             await cb.answer(f"Deleted {proj.title}.")
-            # Hack to invoke archlist
-            cb = cb.model_copy(update={"data": "ui_proj_archlist"})
-            await cb_project_action(cb, state)
+            if status == "archived":
+                cb = cb.model_copy(update={"data": "ui_proj_archlist"})
+                await cb_project_action(cb, state)
+            else:
+                await cb_projects_list(cb, state)
             
         elif action == "tasks":
             from src.db.models import Task

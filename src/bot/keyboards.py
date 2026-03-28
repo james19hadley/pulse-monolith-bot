@@ -300,7 +300,8 @@ def get_project_view_keyboard(proj_id, status="active") -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="⏱ Add Time", callback_data=f"ui_proj_add_{proj_id}")
         ],
         [
-            InlineKeyboardButton(text="📦 Archive", callback_data=f"ui_proj_arch_{proj_id}")
+            InlineKeyboardButton(text="📦 Archive", callback_data=f"ui_proj_arch_{proj_id}"),
+            InlineKeyboardButton(text="🗑 Delete", callback_data=f"ui_proj_delete_{proj_id}")
         ],
         [
             InlineKeyboardButton(text="🔙 Back", callback_data="ui_projects_list")
