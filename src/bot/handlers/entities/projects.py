@@ -152,7 +152,7 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
             db.commit()
             await cb.answer(f"Deleted {proj.title}.")
             # Hack to invoke archlist
-            cb.data = "ui_proj_archlist"
+            cb = cb.model_copy(update={"data": "ui_proj_archlist"})
             await cb_project_action(cb, state)
             
         elif action == "tasks":
@@ -210,7 +210,7 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
                 await cb.answer(f"Task '{task.title}' completed!")
                 # Go back to task list or project
                 # Re-invoke tasks via hack
-                cb.data = f"ui_proj_tasks_{task.project_id}"
+                cb = cb.model_copy(update={"data": f"ui_proj_tasks_{task.project_id}"})
                 await cb_project_action(cb, state)
             else:
                 await cb.answer("Task not found.")
@@ -223,7 +223,7 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
                 task.is_focus_today = True
                 db.commit()
                 await cb.answer(f"Set '{task.title}' as Focus!")
-                cb.data = f"ui_proj_tasks_{task.project_id}"
+                cb = cb.model_copy(update={"data": f"ui_proj_tasks_{task.project_id}"})
                 await cb_project_action(cb, state)
             else:
                 await cb.answer("Task not found.")
@@ -238,7 +238,7 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
                 task.is_focus_today = True
                 db.commit()
                 await cb.answer(f"Set '{task.title}' as Focus!")
-                cb.data = f"ui_proj_tasks_{task.project_id}"
+                cb = cb.model_copy(update={"data": f"ui_proj_tasks_{task.project_id}"})
                 await cb_project_action(cb, state)
             else:
                 await cb.answer("Task not found.")
