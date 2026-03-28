@@ -7,7 +7,6 @@ from src.db.models import User, Project, Habit
 from src.bot.states import EntityState
 from datetime import datetime, timezone
 from src.bot.keyboards import get_projects_list_keyboard, get_project_view_keyboard
-from .menu import cb_projects_list # Or just internal import
 
 router = Router()
 
