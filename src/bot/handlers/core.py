@@ -93,7 +93,7 @@ async def cmd_faq(message: Message):
 
 @router.message(Command("undo"))
 @router.message(lambda msg: msg.text == "↩️ Undo")
-async def cmd_undo(message: Message):
+async def cmd_undo(message: Message, state: FSMContext):
     from src.db.models import ActionLog, Habit, Project, TimeLog
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
@@ -140,6 +140,14 @@ async def cmd_undo(message: Message):
                             p.current_value = max(0, (p.current_value or 0) - mins)
                     await message.answer("↩️ Time log successfully undone.", parse_mode="HTML")
                     
+            elif tool == "delete_habit":
+                title = action.previous_state_json.get("title")
+                target_value = action.previous_state_json.get("target_value")
+                current_value = action.previous_state_json.get("current_value")
+                h = Habit(user_id=action.user_id, title=title, target_value=target_value, current_value=current_value)
+                db.add(h)
+                await message.answer(f"↩️ Habit deletion undone: <b>{title}</b>", parse_mode="HTML")
+
             elif tool == "log_habit":
                 hid = action.new_state_json.get("habit_id")
                 amt = action.previous_state_json.get("amount", 0)
