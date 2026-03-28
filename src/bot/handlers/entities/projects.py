@@ -87,20 +87,29 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
                     last_active_str = f"{diff.days} days ago"
 
             today_progress = sum([l.progress_amount or 0 for l in logs if l.created_at >= today_start and l.progress_amount])
-            
-            hours = proj.target_value / 60 if proj.target_value > 0 else 0
+            total_progress = sum([l.progress_amount or 0 for l in logs if l.progress_amount])
+
             total_hours = total_minutes / 60
             today_hours = today_minutes / 60
             
+            is_time_based = not proj.unit or proj.unit in ['minutes', 'hours']
+
             progress_bar = ""
             if proj.target_value > 0:
-                pct = min(1.0, total_minutes / proj.target_value)
+                if is_time_based:
+                    pct = min(1.0, (total_minutes / proj.target_value) if proj.target_value else 0)
+                else:
+                    pct = min(1.0, (total_progress / proj.target_value) if proj.target_value else 0)
                 filled = int(pct * 10)
                 progress_bar = "\nProgress: [" + "█" * filled + "░" * (10 - filled) + f"] {pct*100:.1f}%\n"
                 
-            text = f"📁 <b>{proj.title}</b>\n\nTarget Hours: {hours:g}h\nTotal Tracked: {total_hours:g}h\nToday Tracked: {today_hours:g}h\n🕒 Last active: {last_active_str}\n{progress_bar}\nStatus: {proj.status}"
-            if proj.unit and proj.unit != 'minutes':
-                text += f"\n📈 Daily Progress: {today_progress:g} {proj.unit}"
+            if is_time_based:
+                hours = proj.target_value / 60 if proj.target_value > 0 else 0
+                text = f"📁 <b>{proj.title}</b>\n\nTarget Hours: {hours:g}h\nTotal Tracked: {total_hours:g}h\nToday Tracked: {today_hours:g}h\n🕒 Last active: {last_active_str}\n{progress_bar}\nStatus: {proj.status}"
+            else:
+                text = f"📁 <b>{proj.title}</b>\n\nTarget: {proj.target_value:g} {proj.unit}\nTotal Progress: {total_progress:g} {proj.unit}\nToday Progress: {today_progress:g} {proj.unit}\n🕒 Last active: {last_active_str}\n{progress_bar}\nStatus: {proj.status}"
+                text += f"\n⏳ Time Tracked: {total_hours:g}h"
+
                 
             from src.db.models import Task
             pending_tasks = db.query(Task).filter(Task.project_id == proj.id, Task.status == 'pending').limit(5).all()
@@ -249,8 +258,10 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
         elif action == "edit":
             await state.update_data(eid=proj.id)
             await state.set_state(EntityState.waiting_for_edit_project_target)
+            is_time_based = not proj.unit or proj.unit in ['minutes', 'hours']
+            unit_str = "hours" if is_time_based else proj.unit
             await cb.message.edit_text(
-                f"Enter new target <b>hours</b> for project <code>{proj.title}</code> (0 to disable target):", 
+                f"Enter new target <b>{unit_str}</b> for project <code>{proj.title}</code> (0 to disable target):", 
                 parse_mode="HTML",
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]])
             )
@@ -258,7 +269,8 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
         elif action == "add":
             await state.update_data(eid=proj.id)
             await state.set_state(EntityState.waiting_for_add_project_time)
-            await cb.message.edit_text(f"Enter minutes to log for <code>{proj.title}</code>:", parse_mode="HTML", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]]))
+            unit_str = proj.unit if proj.unit and proj.unit not in ['minutes', 'hours'] else 'minutes'
+            await cb.message.edit_text(f"Enter <b>{unit_str}</b> to log for <code>{proj.title}</code>:", parse_mode="HTML", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]]))
 
 
 @router.message(EntityState.waiting_for_project_name)
@@ -282,7 +294,11 @@ async def state_new_project(message: Message, state: FSMContext):
         
         msg = f"✅ Project created: {proj.title}"
         if proj.target_value > 0:
-            msg += f" (Target: {proj.target_value / 60:g}h)"
+            is_time_based = not proj.unit or proj.unit in ['minutes', 'hours']
+            if is_time_based:
+                msg += f" (Target: {proj.target_value / 60:g}h)"
+            else:
+                msg += f" (Target: {proj.target_value:g} {proj.unit})"
         await message.answer(msg)
     await state.clear()
 
@@ -293,8 +309,7 @@ async def state_edit_project_target(message: Message, state: FSMContext):
     pid = data.get("eid")
     
     try:
-        hours = float(message.text.strip())
-        minutes = int(hours * 60)
+        val = float(message.text.strip())
     except:
         await message.answer("Please enter a valid number.")
         return
@@ -303,9 +318,15 @@ async def state_edit_project_target(message: Message, state: FSMContext):
         user = get_or_create_user(db, message.from_user.id)
         proj = db.query(Project).filter(Project.id == pid, Project.user_id == user.id).first()
         if proj:
-            proj.target_value = minutes
-            db.commit()
-            await message.answer(f"✅ Target for `{proj.title}` updated to {hours:g}h.", parse_mode="Markdown")
+            is_time_based = not proj.unit or proj.unit in ['minutes', 'hours']
+            if is_time_based:
+                proj.target_value = int(val * 60)
+                db.commit()
+                await message.answer(f"✅ Target for `{proj.title}` updated to {val:g}h.", parse_mode="Markdown")
+            else:
+                proj.target_value = val
+                db.commit()
+                await message.answer(f"✅ Target for `{proj.title}` updated to {val:g} {proj.unit}.", parse_mode="Markdown")
             
     await state.clear()
 
@@ -316,9 +337,9 @@ async def state_add_project_time(message: Message, state: FSMContext):
     pid = data.get("eid")
     
     try:
-        minutes = int(message.text.strip())
+        val = float(message.text.strip())
     except:
-        await message.answer("Please enter a valid number of minutes.")
+        await message.answer("Please enter a valid number.")
         return
         
     with SessionLocal() as db:
@@ -327,10 +348,17 @@ async def state_add_project_time(message: Message, state: FSMContext):
         user = get_or_create_user(db, message.from_user.id)
         proj = db.query(Project).filter(Project.id == pid, Project.user_id == user.id).first()
         if proj:
-            log = TimeLog(user_id=user.id, project_id=proj.id, duration_minutes=minutes, description="Manual entry via UI", created_at=datetime.utcnow())
+            is_time_based = not proj.unit or proj.unit in ['minutes', 'hours']
+            if is_time_based:
+                log = TimeLog(user_id=user.id, project_id=proj.id, duration_minutes=int(val), description="Manual entry via UI", created_at=datetime.utcnow())
+                msg_text = f"✅ Logged {int(val)}m to `{proj.title}`."
+            else:
+                log = TimeLog(user_id=user.id, project_id=proj.id, duration_minutes=0, progress_amount=val, description="Manual entry via UI", created_at=datetime.utcnow())
+                msg_text = f"✅ Logged {val:g} {proj.unit} to `{proj.title}`."
+                
             db.add(log)
             db.commit()
-            await message.answer(f"✅ Logged {minutes}m to `{proj.title}`.", parse_mode="Markdown")
+            await message.answer(msg_text, parse_mode="Markdown")
             
     await state.clear()
 
