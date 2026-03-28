@@ -20,10 +20,32 @@ async def _handle_create_entities(message: Message, db, user, provider_name, api
     for p in extraction.projects:
         existing = db.query(Project).filter(Project.user_id == user.id, func.lower(Project.title) == p.title.lower()).first()
         if existing:
-            await message.answer(f"⚠️ Project already exists: <b>{existing.title}</b>", parse_mode="HTML")
+            if existing.status == "archived":
+                existing.status = "active"
+                existing.target_value = getattr(p, 'target_value', 0)
+                if hasattr(p, 'unit') and p.unit:
+                    existing.unit = p.unit
+                db.commit()
+                # Log action for SMART UNDO
+                from src.db.models import ActionLog
+                import json
+                alog = ActionLog(user_id=user.id, tool_name="create_project", previous_state_json={"status": "archived", "target_value": existing.target_value}, new_state_json={"project_id": existing.id, "status": "active"})
+                db.add(alog)
+                db.commit()
+                
+                msg = f"✅ Project restored from archive: <b>{existing.title}</b>"
+                if existing.target_value > 0:
+                    msg += f" (Target: {existing.target_value})"
+                if hasattr(existing, 'unit') and existing.unit:
+                    msg += f" {existing.unit}"
+                await message.answer(msg, parse_mode="HTML")
+            else:
+                await message.answer(f"⚠️ Project already exists: <b>{existing.title}</b>", parse_mode="HTML")
             continue
             
-        proj = Project(user_id=user.id, title=p.title, status="active", target_value=p.target_value)
+        proj = Project(user_id=user.id, title=p.title, status="active", target_value=getattr(p, 'target_value', 0))
+        if hasattr(p, 'unit') and p.unit:
+            proj.unit = p.unit
         db.add(proj)
         db.flush()
         

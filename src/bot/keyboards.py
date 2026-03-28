@@ -266,7 +266,8 @@ def get_projects_list_keyboard(projects) -> InlineKeyboardMarkup:
     for p in projects:
         kb.append([InlineKeyboardButton(text=f"📁 {p.title}", callback_data=f"ui_proj_{p.id}")])
     kb.append([InlineKeyboardButton(text="➕ New Project", callback_data="ui_proj_new")])
-    kb.append([InlineKeyboardButton(text="🔙 Back", callback_data="ui_entities_menu")])
+    kb.append([InlineKeyboardButton(text="🗄️ Archive", callback_data="ui_proj_archlist")])
+    kb.append([InlineKeyboardButton(text="�🔙 Back", callback_data="ui_entities_menu")])
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
 def get_habits_list_keyboard(habits) -> InlineKeyboardMarkup:
@@ -277,7 +278,19 @@ def get_habits_list_keyboard(habits) -> InlineKeyboardMarkup:
     kb.append([InlineKeyboardButton(text="🔙 Back", callback_data="ui_entities_menu")])
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
-def get_project_view_keyboard(proj_id) -> InlineKeyboardMarkup:
+def get_project_view_keyboard(proj_id, status="active") -> InlineKeyboardMarkup:
+    if status == "archived":
+        kb = [
+            [
+                InlineKeyboardButton(text="🔄 Restore", callback_data=f"ui_proj_unarch_{proj_id}"),
+                InlineKeyboardButton(text="🗑 Delete", callback_data=f"ui_proj_delete_{proj_id}")
+            ],
+            [
+                InlineKeyboardButton(text="🔙 Back", callback_data="ui_proj_archlist")
+            ]
+        ]
+        return InlineKeyboardMarkup(inline_keyboard=kb)
+        
     kb = [
         [
             InlineKeyboardButton(text="📋 Manage Tasks", callback_data=f"ui_proj_tasks_{proj_id}")
