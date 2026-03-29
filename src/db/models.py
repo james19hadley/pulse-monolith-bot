@@ -24,6 +24,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
     timezone: Mapped[str] = mapped_column(String, default="UTC")
+    language: Mapped[str] = mapped_column(String, default="Russian")
     # Determines when the "day" ends for the Evening Report
     day_cutoff_time: Mapped[time] = mapped_column(Time, default=time(23, 0)) # 23:00 (11 PM) by default
     llm_provider: Mapped[str] = mapped_column(String, default="google")

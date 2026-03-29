@@ -1,4 +1,4 @@
-# Sprint 27: Report Engine Polish & Mathematical Fixes
+# Sprint 28: Report Engine Polish & Mathematical Fixes
 
 **Status:** `Draft`
 **Date Proposed:** March 29, 2026
@@ -11,13 +11,20 @@
 ## 📋 Tasks
 
 ### 1. Progress State Math Correction
-- [ ] Audit `intent_log_work.py` and absolute value calculations from Sprint 22.
-- [ ] Ensure that `project.current_value` is explicitly tracked, persisted, and accurately summed when computing the `[░░░░░░░░] 0%` UI bar.
-- [ ] Make sure adding "+15 pages" updates both the `TimeLog` and actively increments `Project.current_value`.
+- [x] Audit `intent_log_work.py` and absolute value calculations from Sprint 22.
+- [x] Ensure that `project.current_value` is explicitly tracked, persisted, and accurately summed when computing the `[░░░░░░░░] 0%` UI bar.
+- [x] Make sure adding "+15 pages" updates both the `TimeLog` and actively increments `Project.current_value` and `daily_progress`.
+- [x] Fix NLP logic: ensure daily targets fill up properly even if partial execution isn't explicitly detailed.
+- [x] Clarify architecture constraint: enforce a strict single-scale tracking scheme per project (time OR absolute units) to ensure mathematical purity.
 
-### 2. Localization & "Chef's Kiss" Tuning
-- [ ] Add rules to the AI Report generation prompt (Chef's Kiss) to respect the user's implicit or explicit language (Russian).
-- [ ] Investigate UI parameters for defining how this final AI text block is formatted.
+### 2. UI and Menu Polish
+- [x] Rename inline button from "Add Time" to "Add Progress" across project menus, since not all projects are time-based.
+- [x] Add configuring `daily_target_value` (or setting it to 0 to disable) directly inside the project management menu.
+- [x] Remove the obsolete 'report time' setting from the General Settings menu.
+
+### 3. Localization & "Chef's Kiss" Tuning
+- [x] Add rules to the AI Report generation prompt (Chef's Kiss) to respect the user's implicit or explicit language (Russian).
+- [x] Investigate UI parameters for defining how this final AI text block is formatted (Wrapped in `<blockquote>`).
 
 ## 🔒 Security & Architecture Notes
 - Only structural UI formatting; must not leak context between users.

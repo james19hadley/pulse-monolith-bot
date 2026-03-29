@@ -53,25 +53,44 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
     db.add(log_entry)
     
     logged_progress = extraction.progress_amount
+    amount_to_add = 0
+    is_time_based = not project.unit or project.unit in ['minutes', 'hours']
+
+    # 1. Determine what we logged based on what AI extracted
     if extraction.progress_amount is not None:
         if extraction.is_absolute_progress:
             delta = extraction.progress_amount - (project.current_value or 0.0)
             log_entry.progress_amount = delta
             project.current_value = extraction.progress_amount
             logged_progress = delta
+            amount_to_add = delta
         else:
             project.current_value = (project.current_value or 0.0) + extraction.progress_amount
+            amount_to_add = extraction.progress_amount
+            
         if not project.unit and extraction.progress_unit:
             project.unit = extraction.progress_unit
     else:
-        project.current_value = (project.current_value or 0.0) + extraction.duration_minutes
+        # If no explicit progress, fallback to time
+        if extraction.duration_minutes > 0:
+            if is_time_based:
+                project.current_value = (project.current_value or 0.0) + extraction.duration_minutes
+            amount_to_add = extraction.duration_minutes
 
-            
+    # 2. AUTO-FILL logic: If the user just said "did my habit" (0 mins, 0 progress extracted)
+    if amount_to_add == 0 and project.daily_target_value is not None:
+        remains = project.daily_target_value - (project.daily_progress or 0)
+        if remains > 0:
+            amount_to_add = remains
+            if is_time_based:
+                log_entry.duration_minutes = amount_to_add
+                project.current_value = (project.current_value or 0.0) + amount_to_add
+            else:
+                log_entry.progress_amount = amount_to_add
+                project.current_value = (project.current_value or 0.0) + amount_to_add
 
-    # Update Daily target if applicable
+    # 3. Update Daily target if applicable
     if project.daily_target_value is not None:
-        amount_to_add = logged_progress if logged_progress is not None else extraction.duration_minutes
-        if amount_to_add > 0:
             project.daily_progress = (project.daily_progress or 0) + amount_to_add
             # For immediate user feedback in msg
             msg_lines.append(f"🔥 Daily target progress: {project.daily_progress:g} / {project.daily_target_value:g} {project.unit or 'minutes'}")

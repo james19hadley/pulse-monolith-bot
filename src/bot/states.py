@@ -6,6 +6,7 @@ class AddKeyState(StatesGroup):
 
 class SettingsState(StatesGroup):
     waiting_for_tz_text = State()
+    waiting_for_language = State()
     waiting_for_catalyst = State()
     waiting_for_interval = State()
     waiting_for_channel = State()
@@ -19,6 +20,7 @@ class EntityState(StatesGroup):
     waiting_for_habit_target = State()
     
     waiting_for_edit_project_target = State()
+    waiting_for_edit_project_daily_target = State()
     waiting_for_add_project_time = State()
     
     waiting_for_edit_habit_target = State()

@@ -45,7 +45,7 @@ def get_settings_keyboard() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(text="🌍 Timezone", callback_data="settings_timezone"),
-            InlineKeyboardButton(text="⏰ Report Time", callback_data="settings_cutoff")
+            InlineKeyboardButton(text="🌐 Language", callback_data="settings_language")
         ],
         [
             InlineKeyboardButton(text="📊 Report", callback_data="settings_reports"),
@@ -123,10 +123,13 @@ def get_reports_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="📢 Send to Channel", callback_data="set_report_channel")
         ],
         [
-            InlineKeyboardButton(text="❌ Disable Reports", callback_data="set_report_none"),
-            InlineKeyboardButton(text="🧪 Test Report", callback_data="settings_test_report")
+            InlineKeyboardButton(text="⏰ Report Time", callback_data="settings_cutoff"),
+            InlineKeyboardButton(text="❌ Disable", callback_data="set_report_none")
         ],
-        [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
+        [
+            InlineKeyboardButton(text="🧪 Test Report", callback_data="settings_test_report"),
+            InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")
+        ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
@@ -278,10 +281,13 @@ def get_project_view_keyboard(proj_id, status="active") -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(text="✏️ Edit Target", callback_data=f"ui_proj_edit_{proj_id}"),
-            InlineKeyboardButton(text="⏱ Add Time", callback_data=f"ui_proj_add_{proj_id}")
+            InlineKeyboardButton(text="📊 Add Progress", callback_data=f"ui_proj_add_{proj_id}")
         ],
         [
-            InlineKeyboardButton(text="📦 Archive", callback_data=f"ui_proj_arch_{proj_id}"),
+            InlineKeyboardButton(text="� Edit Daily Target", callback_data=f"ui_proj_editdaily_{proj_id}")
+        ],
+        [
+            InlineKeyboardButton(text="�📦 Archive", callback_data=f"ui_proj_arch_{proj_id}"),
             InlineKeyboardButton(text="🗑 Delete", callback_data=f"ui_proj_delete_{proj_id}")
         ],
         [

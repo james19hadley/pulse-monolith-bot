@@ -1,46 +1,17 @@
 import re
 
 with open("src/bot/handlers/intents/intent_entities.py", "r") as f:
-    content = f.read()
+    text = f.read()
 
-replacement = """
-            if edit.action == "delete":
-                prev_state = {"title": proj.title, "target_value": proj.target_value, "unit": proj.unit, "status": proj.status}
-                proj.status = "archived" # Soft delete
-                db.flush()
-                alog = ActionLog(
-                    user_id=user.id,
-                    tool_name="delete_project",
-                    previous_state_json=prev_state,
-                    new_state_json={"id": proj.id, "status": "archived"}
-                )
-                db.add(alog)
-                responses.append(f"🗑 Project deleted: <b>{proj.title}</b>")
-                continue
-            
-            prev_state = {"title": proj.title, "target_value": proj.target"""
+# 1. Clean out the creation of habits via NLP
+# The whole block for 'h in extraction.habits:' should just be gone since providers doesn't return extraction.habits
+text = re.sub(r'if getattr\(extraction, "habits", None\):.*?# Flush.*?\n', '', text, flags=re.DOTALL)
+text = text.replace("I could not determine the exact details for the project or habit to create.", "I could not determine the exact details for the project to create.")
 
-content = content.replace('            prev_state = {"title": proj.title, "target_value": proj.target', replacement)
-
-replacement_habit = """
-            if edit.action == "delete":
-                prev_state = {"title": habit.title, "target_value": habit.target_value, "unit": habit.unit, "status": habit.status}
-                habit.status = "archived" # Soft delete
-                db.flush()
-                alog = ActionLog(
-                    user_id=user.id,
-                    tool_name="delete_habit",
-                    previous_state_json=prev_state,
-                    new_state_json={"id": habit.id, "status": "archived"}
-                )
-                db.add(alog)
-                responses.append(f"🗑 Habit deleted: <b>{habit.title}</b>")
-                continue
-            
-            prev_state = {"title": habit.title, "target_value": habit.target"""
-
-content = content.replace('            prev_state = {"title": habit.title, "target_value": habit.target', replacement_habit)
+# 2. Clean out editing capabilities for habits
+text = re.sub(r'from src\.db\.models import Project(.*?)\n', r'from src.db.models import Project\n', text)
+text = re.sub(r'habits = db.query\(Habit\).*?entities_list\.append\(.*?\)\s*', '', text, flags=re.DOTALL)
+text = re.sub(r'elif entity_type == "habit":.*?msg \+= f" \(Target: \{habit\.target_value\} \{habit\.unit or \'times\'\}\)"\n.*?responses\.append\(msg\)\s*', '', text, flags=re.DOTALL)
 
 with open("src/bot/handlers/intents/intent_entities.py", "w") as f:
-    f.write(content)
-print("Intent entities patched.")
+    f.write(text)

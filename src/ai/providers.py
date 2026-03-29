@@ -18,8 +18,6 @@ class LogWorkParams(BaseModel):
     unmatched_project_name: Optional[str] = Field(description="If no project matches, provide the inferred name of the project here", default=None)
     description: Optional[str] = Field(description="A brief 1-5 word summary of what was done.", default=None)
 
-    amount_completed: int = Field(description="The numeric amount completed. If user just says 'did pushups', default to 1 unless specified.", default=1)
-    description: Optional[str] = Field(description="A brief description or comment if the user provided one.", default=None)
 
 class AddInboxParams(BaseModel):
     raw_content: str = Field(description="The actual idea, note, or thought, omitting conversational filler like 'save this idea' or 'remind me to'")

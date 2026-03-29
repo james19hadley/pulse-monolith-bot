@@ -272,6 +272,17 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]])
             )
             
+        elif action == "editdaily":
+            await state.update_data(eid=proj.id)
+            await state.set_state(EntityState.waiting_for_edit_project_daily_target)
+            is_time_based = not proj.unit or proj.unit in ['minutes', 'hours']
+            unit_str = "minutes" if is_time_based else proj.unit
+            await cb.message.edit_text(
+                f"Enter new **DAILY** target <b>{unit_str}</b> for project <code>{proj.title}</code> (0 to disable daily target):",
+                parse_mode="HTML",
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]])
+            )
+
         elif action == "add":
             await state.update_data(eid=proj.id)
             await state.set_state(EntityState.waiting_for_add_project_time)
@@ -333,6 +344,35 @@ async def state_edit_project_target(message: Message, state: FSMContext):
                 proj.target_value = val
                 db.commit()
                 await message.answer(f"✅ Target for `{proj.title}` updated to {val:g} {proj.unit}.", parse_mode="Markdown")
+            
+    await state.clear()
+
+
+@router.message(EntityState.waiting_for_edit_project_daily_target)
+async def state_edit_project_daily_target(message: Message, state: FSMContext):
+    data = await state.get_data()
+    pid = data.get("eid")
+    
+    try:
+        val = float(message.text.strip())
+    except:
+        await message.answer("Please enter a valid number.")
+        return
+        
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        proj = db.query(Project).filter(Project.id == pid, Project.user_id == user.id).first()
+        if proj:
+            # Note: We save daily target in the same raw unit, whether it's pages or minutes.
+            if val <= 0:
+                proj.daily_target_value = None
+                db.commit()
+                await message.answer(f"✅ Daily target disabled for `{proj.title}`.", parse_mode="Markdown")
+            else:
+                proj.daily_target_value = val
+                db.commit()
+                unit_str = "minutes" if (not proj.unit or proj.unit in ['minutes', 'hours']) else proj.unit
+                await message.answer(f"✅ Daily target for `{proj.title}` updated to {val:g} {unit_str}.", parse_mode="Markdown")
             
     await state.clear()
 

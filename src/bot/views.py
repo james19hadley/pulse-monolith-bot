@@ -188,7 +188,7 @@ def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str
     report = "\n".join([p for p in parts if p]).strip()
     
     if ai_comment:
-        report += f"\n\n💡 {str(ai_comment)}"
+        report += f"\n\n<blockquote>💡 {str(ai_comment)}</blockquote>"
         
     return report
 

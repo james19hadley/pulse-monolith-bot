@@ -140,7 +140,8 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
                 import json
                 stats_json = json.dumps(stats, ensure_ascii=False)
                 context_msg = "The user's day has just automatically ended via chronjob." if is_auto_cron else "The user has manually triggered the end of their day."
-                prompt = f"{context_msg} Look at their logged stats: {stats_json}. Write a short 1-2 sentence closing comment in your persona's tone. Mention specific achievements or failures if notable. DO NOT wrap your response in italics. Use Telegram HTML tag <b> to highlight names of specific projects or habits, e.g., <b>Pulse Monolith Bot</b>. NEVER use markdown (**bold**). Just output the sentence, nothing else."
+                user_lang = getattr(user, 'language', 'Russian') or 'Russian'
+                prompt = f"{context_msg} Look at their logged stats: {stats_json}. Write a short 1-2 sentence closing comment in your persona's tone. Mention specific achievements or failures if notable. NOTE IMPORTANT: You must respond in the user's explicit language: {user_lang}. DO NOT wrap your response in italics. Use Telegram HTML tag <b> to highlight names of specific projects or habits, e.g., <b>Pulse Monolith Bot</b>. NEVER use markdown (**bold**). Just output the sentence, nothing else."
                 
                 response, tokens = provider.generate_chat_response(prompt, persona_sys)
                 if response:

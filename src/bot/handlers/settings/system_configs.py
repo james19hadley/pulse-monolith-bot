@@ -232,3 +232,26 @@ async def process_cutoff_text(message: Message, state: FSMContext):
         await message.answer("Please send a valid time like '23:00'.")
 
 
+
+@router.callback_query(F.data == "settings_language")
+async def cq_settings_language(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(SettingsState.waiting_for_language)
+    await callback.message.edit_text(
+        "🌐 <b>Select Bot Output Language</b>\n\n"
+        "Type your preferred language for the AI output (e.g., 'Russian', 'English', 'Spanish'):",
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="settings_main")]])
+    )
+
+@router.message(SettingsState.waiting_for_language)
+async def process_language_text(message: Message, state: FSMContext):
+    lang = message.text.strip()
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        user.language = lang
+        db.commit()
+    await state.clear()
+    
+    from src.bot.handlers.settings.general import get_control_panel_data
+    text, markup = get_control_panel_data(message.from_user.id)
+    await message.answer(f"✅ AI output language set to: <b>{lang}</b>.\n\n{text}", reply_markup=markup, parse_mode="HTML")
