@@ -96,7 +96,7 @@ async def cmd_general_settings(message: Message):
         await message.answer(text, parse_mode="HTML", reply_markup=get_settings_keyboard())
 
 
-@router.callback_query(F.data.in_({"settings_keys", "settings_add_key", "settings_persona", "settings_timezone", "settings_reports", "settings_back", "settings_main"}))
+@router.callback_query(F.data.in_({"settings_keys", "settings_add_key", "settings_persona", "settings_timezone", "settings_reports", "settings_back", "settings_main", "settings_close"}))
 async def cq_settings_stubs(callback: CallbackQuery, state: FSMContext):
     try:
         if callback.data == "settings_keys":
@@ -131,6 +131,9 @@ async def cq_settings_stubs(callback: CallbackQuery, state: FSMContext):
             await callback.answer()
         elif callback.data == "settings_reports":
             await callback.message.edit_text("<b>Report Destination:</b>\n\nWhere should I send your daily Evening Report?", parse_mode="HTML", reply_markup=get_reports_keyboard())
+            await callback.answer()
+        elif callback.data == "settings_close":
+            await callback.message.delete()
             await callback.answer()
         elif callback.data in ["settings_back", "settings_main"]:
             await state.clear()

@@ -143,14 +143,16 @@ def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str
                         p_h, p_m = divmod(mins, 60)
                         import html
                         
-                        msg = f"  └ <i>{html.escape(str(p))}</i>:"
+                        indent_level = data.get("indent", 0)
+                        prefix = "  " + "│  " * max(0, indent_level - 1) + ("└ " if indent_level > 0 else "└ ")
+                        msg = f"{prefix}<i>{html.escape(str(p))}</i>:"
                         if mins > 0:
                             msg += f" <b>{p_h}h {p_m}m</b>"
                         if unit and unit != "minutes":
                             target = data.get("target_value", 0) or 0
                             current = data.get("current_value", 0) or 0
                             p_bar = build_progress_bar(current, target, length=8)
-                            msg += f" | {current}/{target} {unit} {p_bar}"
+                            msg += f" | {current:g}/{target:g} {unit} {p_bar}"
                             if prog > 0:
                                 msg += f" (+{prog:g})"
                         else:

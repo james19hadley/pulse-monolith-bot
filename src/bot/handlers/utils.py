@@ -95,6 +95,10 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
     user_logs = db.query(TimeLog).filter(TimeLog.user_id == user.id, TimeLog.created_at >= start_bound, TimeLog.created_at < end_bound).all()
     focus_time = sum(l.duration_minutes for l in user_logs if l.project_id is not None)
     
+    # Pre-calculate global total progress for display correctness
+    from sqlalchemy import func
+    global_progress = dict(db.query(TimeLog.project_id, func.sum(TimeLog.progress_amount)).filter(TimeLog.user_id == user.id).group_by(TimeLog.project_id).all())
+    
     # Build project stats with hierarchy
     all_projects = {p.id: p for p in db.query(Project).filter(Project.user_id == user.id).all()}
     
@@ -143,7 +147,7 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
             "progress": raw_stats.get(pid, {}).get("progress", 0),
             "unit": p.unit or "minutes",
             "target_value": p.target_value or 0,
-            "current_value": p.current_value or 0,
+            "current_value": global_progress.get(pid) or p.current_value or 0,
             "indent": indent_level
         }
         
