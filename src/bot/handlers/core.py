@@ -135,7 +135,7 @@ async def cmd_undo(message: Message, state: FSMContext):
             
         except Exception as e:
             await message.answer(f"Failed to undo: {e}")
-    await state.clear()
+    if state: await state.clear()
     await message.answer("Action canceled.", reply_markup=get_main_menu())
 
 from aiogram.types import CallbackQuery
