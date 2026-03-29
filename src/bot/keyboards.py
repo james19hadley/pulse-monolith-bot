@@ -248,42 +248,97 @@ def get_entities_main_keyboard() -> InlineKeyboardMarkup:
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
-def get_projects_list_keyboard(projects, page=0, parent_id=None) -> InlineKeyboardMarkup:
+def get_projects_tree_keyboard(all_projects, page=0, toggled_ids=None) -> InlineKeyboardMarkup:
+    """Builds a tree-like accordion list of projects."""
+    if toggled_ids is None:
+        toggled_ids = set()
+        
     kb = []
     
-    # Sort: Project 0 first, then alphabetically
-    sorted_projects = sorted(projects, key=lambda p: (0 if p.title.startswith("Project 0") else 1, p.title))
+    from collections import defaultdict
+    children_map = defaultdict(list)
+    for p in all_projects:
+        children_map[p.parent_id].append(p)
+        
+    for k in children_map:
+        children_map[k].sort(key=lambda p: (0 if p.title.startswith("Project 0") else 1, p.title))
+        
+    # Flatten the tree
+    flat_list = []
     
-    items_per_page = 7
-    total_pages = max(1, (len(sorted_projects) + items_per_page - 1) // items_per_page)
+    def walk(parent_id, depth):
+        for p in children_map[parent_id]:
+            has_children = len(children_map[p.id]) > 0
+            is_expanded = p.id in toggled_ids
+            flat_list.append((p, depth, has_children, is_expanded))
+            
+            if is_expanded and has_children:
+                flat_list.append((p, depth + 1, False, False, True)) # special "Manage" node
+                walk(p.id, depth + 1)
+                
+    walk(None, 0)
+    
+    items_per_page = 15 # more items since it's a tree
+    total_pages = max(1, (len(flat_list) + items_per_page - 1) // items_per_page)
     page = max(0, min(page, total_pages - 1))
     
     start = page * items_per_page
     end = start + items_per_page
     
-    for p in sorted_projects[start:end]:
-        prefix = "📂" if parent_id else "📁"
-        kb.append([InlineKeyboardButton(text=f"{prefix} {p.title}", callback_data=f"ui_proj_{p.id}")])
+    for item in flat_list[start:end]:
+        if len(item) == 5:
+            # Special manage node
+            p, depth, _, _, _ = item
+            prefix = "⠀" * (depth * 2) + "└ ⚙️ Open " + p.title
+            pad_len = 35 - len(prefix)
+            text = prefix + "⠀" * pad_len if pad_len > 0 else prefix
+            kb.append([InlineKeyboardButton(text=text, callback_data=f"ui_proj_{p.id}")])
+            continue
+            
+        p, depth, has_children, is_expanded = item
         
+        # Calculate prefix
+        if depth == 0:
+            prefix = ("📂 " if is_expanded else "📁 ") if has_children else " "
+        else:
+            prefix = "⠀" * (depth * 2) + "└ "
+            
+        core = f"{prefix}[{p.id}] {p.title}"
+        pad_len = 35 - len(core)
+        text = core + "⠀" * max(0, pad_len)
+        
+        # Determine callback
+        if has_children:
+            # Toggle logic
+            new_toggles = set(toggled_ids)
+            if is_expanded:
+                new_toggles.remove(p.id)
+            else:
+                new_toggles.add(p.id)
+            t_str = ".".join(map(str, new_toggles))
+            cb_data = f"ui_prjl_{page}_{t_str}"
+            if len(cb_data) > 64: # fallback if too large (rare)
+                cb_data = f"ui_proj_{p.id}"
+        else:
+            cb_data = f"ui_proj_{p.id}"
+            
+        kb.append([InlineKeyboardButton(text=text, callback_data=cb_data)])
+        
+    # Navigation
     if total_pages > 1:
         nav = []
-        suffix = f"_sub_{parent_id}" if parent_id else ""
+        t_str = ".".join(map(str, toggled_ids))
         if page > 0:
-            nav.append(InlineKeyboardButton(text="⬅️", callback_data=f"ui_projects_page_{page-1}{suffix}"))
+            nav.append(InlineKeyboardButton(text="⬅️", callback_data=f"ui_prjl_{page-1}_{t_str}"))
         nav.append(InlineKeyboardButton(text=f"{page+1}/{total_pages}", callback_data="ignore"))
         if page < total_pages - 1:
-            nav.append(InlineKeyboardButton(text="➡️", callback_data=f"ui_projects_page_{page+1}{suffix}"))
-        if nav:
-            kb.append(nav)
-
-    if parent_id:
-        # Actually it's hard to pass parent id to new project creation right now, but we can just fallback to global new
-        kb.append([InlineKeyboardButton(text="🔙 Back to Parent", callback_data=f"ui_proj_{parent_id}")])
-    else:
-        kb.append([InlineKeyboardButton(text="➕ New Project", callback_data="ui_proj_new")])
-        kb.append([InlineKeyboardButton(text="🗄️ Archive", callback_data="ui_proj_archlist")])
-        kb.append([InlineKeyboardButton(text="🔙 Back", callback_data="ui_entities_menu")])
+            nav.append(InlineKeyboardButton(text="➡️", callback_data=f"ui_prjl_{page+1}_{t_str}"))
+        kb.append(nav)
         
+    kb.append([InlineKeyboardButton(text="➕ New Project", callback_data="ui_proj_new")])
+    kb.append([InlineKeyboardButton(text="🗄️ Archive", callback_data="ui_proj_archlist")])
+    kb.append([InlineKeyboardButton(text="🔙 Back", callback_data="ui_entities_menu")])
+    
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
 def get_habits_list_keyboard(habits) -> InlineKeyboardMarkup:

@@ -6,56 +6,44 @@ from src.bot.handlers.utils import get_or_create_user
 from src.db.models import User, Project
 from src.bot.states import EntityState
 from datetime import datetime, timezone
-from src.bot.keyboards import get_projects_list_keyboard, get_project_view_keyboard
+from src.bot.keyboards import get_projects_tree_keyboard, get_project_view_keyboard
 
 router = Router()
 
-@router.callback_query(lambda c: c.data == "ui_projects_list" or c.data.startswith("ui_projects_page_") or c.data.startswith("ui_projects_sub_"))
+@router.callback_query(lambda c: c.data == "ui_projects_list" or c.data.startswith("ui_prjl_"))
 async def cb_projects_list(cb: CallbackQuery, state: FSMContext):
     await state.clear()
     page = 0
-    parent_id = None
+    toggled_ids = set()
     
-    if cb.data.startswith("ui_projects_page_"):
+    if cb.data.startswith("ui_prjl_"):
         try:
             parts = cb.data.split("_")
-            page = int(parts[3])
-            if len(parts) > 5 and parts[4] == "sub":
-                parent_id = int(parts[5])
-        except:
-            pass
-    elif cb.data.startswith("ui_projects_sub_"):
-        try:
-            parent_id = int(cb.data.split("_")[3])
-        except:
+            page = int(parts[2])
+            if len(parts) > 3 and parts[3]:
+                toggled_ids = set(int(x) for x in parts[3].split(".") if x)
+        except Exception:
             pass
             
     with SessionLocal() as db:
         user = get_or_create_user(db, cb.from_user.id)
         
-        query = db.query(Project).filter(
-            Project.user_id == user.id, 
+        all_projects = db.query(Project).filter(
+            Project.user_id == user.id,
             Project.status == "active"
-        )
-        if parent_id:
-            query = query.filter(Project.parent_id == parent_id)
-        else:
-            query = query.filter(Project.parent_id == None)
-            
-        projects = query.all()
+        ).all()
         
         title = "<b>Your Active Projects:</b>"
-        if parent_id:
-            parent = db.query(Project).filter(Project.id == parent_id).first()
-            if parent:
-                import html
-                title = f"<b>📂 Sub-projects of {html.escape(parent.title)}:</b>"
-                
-        await cb.message.edit_text(
-            title,
-            parse_mode="HTML",
-            reply_markup=get_projects_list_keyboard(projects, page=page, parent_id=parent_id)
-        )
+        
+        try:
+            await cb.message.edit_text(
+                title,
+                parse_mode="HTML",
+                reply_markup=get_projects_tree_keyboard(all_projects, page=page, toggled_ids=toggled_ids)
+            )
+        except Exception:
+            pass
+        await cb.answer()
 
 
 @router.callback_query(F.data.startswith("ui_proj_"))
