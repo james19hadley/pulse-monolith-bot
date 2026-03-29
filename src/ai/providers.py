@@ -180,7 +180,7 @@ CURRENT HABITS:
             model=self.model_id,
             contents=text,
             config=types.GenerateContentConfig(
-                system_instruction="Determine if the user is starting or ending a work session.",
+                system_instruction="Determine if the user is starting, ending, pausing (rest/break), or resuming a work session.",
                 response_mime_type='application/json',
                 response_schema=SessionControlParams,
                 temperature=0.0

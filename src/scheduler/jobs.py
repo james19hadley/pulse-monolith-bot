@@ -105,7 +105,7 @@ def stale_session_killer():
     Runs periodically (e.g. every hour). Ends sessions that have been open for over 16 hours.
     """
     with SessionLocal() as db:
-        active_sessions = db.query(AppSession).filter(AppSession.status == "active").all()
+        active_sessions = db.query(AppSession).filter(AppSession.status.in_(["active", "rest", "pending_split"])).all()
         now = datetime.utcnow()
         for session in active_sessions:
             duration_hours = (now - session.start_time).total_seconds() / 3600
@@ -116,11 +116,14 @@ def stale_session_killer():
                 else:
                     close_time = session.start_time + timedelta(minutes=1)
                 
-                session.status = "ended"
+                session.status = "closed"
                 session.end_time = close_time
-                db.commit()
                 
                 user = db.query(User).filter(User.id == session.user_id).first()
+                if user and user.active_session_id == session.id:
+                    user.active_session_id = None
+                    
+                db.commit()
                 if user and bot:
                     try:
                         run_async(bot.send_message(
