@@ -285,27 +285,37 @@ def get_projects_tree_keyboard(all_projects, page=0, toggled_ids=None) -> Inline
     start = page * items_per_page
     end = start + items_per_page
     
+    EMOJIS = ["🚀", "⚡", "💡", "🧠", "🔥", "✨", "🌟", "🎯", "🏆", "💎", "🎮", "🕹️", "🧩", "🎨", "🎭", "🎬", "🎸", "🎧", "📚", "📖", "🔬", "🔭", "📡", "🧭", "🛠️", "⚙️", "📈", "📉", "📊", "📌", "🖊️", "🪴", "🌿", "🍀", "🍎", "🍏", "🍕", "🍔", "☕", "🍵", "🚗", "⛵", "🚁", "🛸"]
+    
+    def get_emoji(p):
+        if p.title.startswith("Project 0"):
+            return "🗂️"
+        return EMOJIS[p.id % len(EMOJIS)]
+
     for item in flat_list[start:end]:
         if len(item) == 5:
             # Special manage node
             p, depth, _, _, _ = item
-            prefix = "⠀" * (depth * 2) + "└ ⚙️ Open " + p.title
-            pad_len = 35 - len(prefix)
-            text = prefix + "⠀" * pad_len if pad_len > 0 else prefix
+            prefix = "  " * depth + "└ ⚙️ Open "
+            text = f"{prefix}{p.title}"
             kb.append([InlineKeyboardButton(text=text, callback_data=f"ui_proj_{p.id}")])
             continue
             
         p, depth, has_children, is_expanded = item
         
+        emoji = get_emoji(p)
+        
         # Calculate prefix
         if depth == 0:
-            prefix = ("📂 " if is_expanded else "📁 ") if has_children else " "
+            prefix = f"{emoji} "
         else:
-            prefix = "⠀" * (depth * 2) + "└ "
+            prefix = "  " * depth + f"└ {emoji} "
             
-        core = f"{prefix}[{p.id}] {p.title}"
-        pad_len = 35 - len(core)
-        text = core + "⠀" * max(0, pad_len)
+        tree_indicator = ""
+        if has_children:
+            tree_indicator = " ▾" if is_expanded else " ▸"
+            
+        text = f"{prefix}[{p.id}] {p.title}{tree_indicator}"
         
         # Determine callback
         if has_children:
