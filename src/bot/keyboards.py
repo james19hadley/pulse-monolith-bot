@@ -61,7 +61,7 @@ def get_pulse_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="⏱️ Catalyst Limit", callback_data="settings_catalyst")
     builder.button(text="🔁 Ping Interval", callback_data="settings_interval")
-    builder.button(text="« Back", callback_data="settings_main")
+    builder.button(text="🔙 Back", callback_data="settings_main")
     builder.adjust(1, 1, 1)
     return builder.as_markup()
 
@@ -72,13 +72,13 @@ def get_cutoff_keyboard() -> InlineKeyboardMarkup:
     builder.button(text="23:00", callback_data="set_cutoff_23:00")
     builder.button(text="00:00", callback_data="set_cutoff_00:00")
     builder.button(text="Custom Time", callback_data="set_cutoff_custom")
-    builder.button(text="« Back", callback_data="settings_main")
+    builder.button(text="🔙 Back", callback_data="settings_main")
     builder.adjust(2, 2, 1, 1)
     return builder.as_markup()
 
 def get_back_settings_keyboard() -> InlineKeyboardMarkup:
     """Keyboard to return to the main settings control panel."""
-    kb = [[InlineKeyboardButton(text="« Back", callback_data="settings_back")]]
+    kb = [[InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
 def get_persona_keyboard() -> InlineKeyboardMarkup:
@@ -92,7 +92,7 @@ def get_persona_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="👩‍💻 Friday", callback_data="set_persona_friday"),
             InlineKeyboardButton(text="🤵‍♂️ Alfred", callback_data="set_persona_alfred")
         ],
-        [InlineKeyboardButton(text="« Back", callback_data="settings_back")]
+        [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
@@ -111,7 +111,7 @@ def get_timezone_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="UTC+8 (CST)", callback_data="set_tz_UTC+8"),
             InlineKeyboardButton(text="UTC+9 (JST)", callback_data="set_tz_UTC+9")
         ],
-        [InlineKeyboardButton(text="« Back", callback_data="settings_back")]
+        [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
@@ -128,14 +128,14 @@ def get_reports_keyboard() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(text="🧪 Test Report", callback_data="settings_test_report"),
-            InlineKeyboardButton(text="« Back", callback_data="settings_back")
+            InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
 def get_back_settings_keyboard() -> InlineKeyboardMarkup:
     """Keyboard to return to the main settings control panel."""
-    kb = [[InlineKeyboardButton(text="« Back", callback_data="settings_back")]]
+    kb = [[InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
 def get_persona_keyboard() -> InlineKeyboardMarkup:
@@ -149,7 +149,7 @@ def get_persona_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="👩‍💻 Friday", callback_data="set_persona_friday"),
             InlineKeyboardButton(text="🤵‍♂️ Alfred", callback_data="set_persona_alfred")
         ],
-        [InlineKeyboardButton(text="« Back", callback_data="settings_back")]
+        [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
@@ -168,7 +168,7 @@ def get_timezone_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="UTC+8 (CST)", callback_data="set_tz_UTC+8"),
             InlineKeyboardButton(text="UTC+9 (JST)", callback_data="set_tz_UTC+9")
         ],
-        [InlineKeyboardButton(text="« Back", callback_data="settings_back")]
+        [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
@@ -187,7 +187,7 @@ def get_api_keys_manage_keyboard(keys: dict = None, active_key: str = None) -> I
             kb.append([InlineKeyboardButton(text=text, callback_data=cb_data)])
             
     kb.append([InlineKeyboardButton(text="➕ Add New Key", callback_data="settings_add_key")])
-    kb.append([InlineKeyboardButton(text="« Back", callback_data="settings_back")])
+    kb.append([InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")])
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
 def get_api_keys_manage_keyboard(keys: dict = None, active_key: str = None) -> InlineKeyboardMarkup:
@@ -205,7 +205,7 @@ def get_api_keys_manage_keyboard(keys: dict = None, active_key: str = None) -> I
             kb.append([InlineKeyboardButton(text=text, callback_data=cb_data)])
             
     kb.append([InlineKeyboardButton(text="➕ Add New Key", callback_data="settings_add_key")])
-    kb.append([InlineKeyboardButton(text="« Back", callback_data="settings_back")])
+    kb.append([InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")])
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
 def get_catalyst_keyboard() -> InlineKeyboardMarkup:
@@ -215,7 +215,7 @@ def get_catalyst_keyboard() -> InlineKeyboardMarkup:
     builder.button(text="60 Min", callback_data="set_catalyst_60")
     builder.button(text="120 Min", callback_data="set_catalyst_120")
     builder.button(text="Custom", callback_data="set_catalyst_custom")
-    builder.button(text="« Back", callback_data="settings_pulse")
+    builder.button(text="🔙 Back", callback_data="settings_pulse")
     builder.adjust(2, 2, 1, 1)
     return builder.as_markup()
 
@@ -225,7 +225,7 @@ def get_interval_keyboard() -> InlineKeyboardMarkup:
     builder.button(text="30 Min", callback_data="set_interval_30")
     builder.button(text="60 Min", callback_data="set_interval_60")
     builder.button(text="Custom", callback_data="set_interval_custom")
-    builder.button(text="« Back", callback_data="settings_pulse")
+    builder.button(text="🔙 Back", callback_data="settings_pulse")
     builder.adjust(2, 2, 1)
     return builder.as_markup()
 
@@ -233,7 +233,7 @@ def get_channel_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="Untie Channel", callback_data="set_channel_clear")
     builder.button(text="Custom", callback_data="set_channel_custom")
-    builder.button(text="« Back", callback_data="settings_main")
+    builder.button(text="🔙 Back", callback_data="settings_main")
     builder.adjust(1, 1, 1)
     return builder.as_markup()
 
@@ -275,11 +275,11 @@ def get_projects_list_keyboard(projects, page=0, parent_id=None) -> InlineKeyboa
 
     if parent_id:
         # Actually it's hard to pass parent id to new project creation right now, but we can just fallback to global new
-        kb.append([InlineKeyboardButton(text="« Back to Parent", callback_data=f"ui_proj_{parent_id}")])
+        kb.append([InlineKeyboardButton(text="🔙 Back to Parent", callback_data=f"ui_proj_{parent_id}")])
     else:
         kb.append([InlineKeyboardButton(text="➕ New Project", callback_data="ui_proj_new")])
         kb.append([InlineKeyboardButton(text="🗄️ Archive", callback_data="ui_proj_archlist")])
-        kb.append([InlineKeyboardButton(text="« Back", callback_data="ui_entities_menu")])
+        kb.append([InlineKeyboardButton(text="🔙 Back", callback_data="ui_entities_menu")])
         
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
@@ -288,10 +288,10 @@ def get_habits_list_keyboard(habits) -> InlineKeyboardMarkup:
     for h in habits:
         kb.append([InlineKeyboardButton(text=f"🎯 {h.title}", callback_data=f"ui_hab_{h.id}")])
     kb.append([InlineKeyboardButton(text="➕ New", callback_data="ui_hab_new")])
-    kb.append([InlineKeyboardButton(text="« Back", callback_data="ui_entities_menu")])
+    kb.append([InlineKeyboardButton(text="🔙 Back", callback_data="ui_entities_menu")])
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
-def get_project_view_keyboard(proj_id, status="active") -> InlineKeyboardMarkup:
+def get_project_view_keyboard(proj_id, status="active", sub_count=0, parent_id=None) -> InlineKeyboardMarkup:
     if status == "archived":
         kb = [
             [
@@ -299,7 +299,7 @@ def get_project_view_keyboard(proj_id, status="active") -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="🗑 Delete", callback_data=f"ui_proj_delete_{proj_id}")
             ],
             [
-                InlineKeyboardButton(text="« Back", callback_data="ui_proj_archlist")
+                InlineKeyboardButton(text="🔙 Back", callback_data="ui_proj_archlist")
             ]
         ]
         return InlineKeyboardMarkup(inline_keyboard=kb)
@@ -313,14 +313,14 @@ def get_project_view_keyboard(proj_id, status="active") -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="📊 Add Progress", callback_data=f"ui_proj_add_{proj_id}")
         ],
         [
-            InlineKeyboardButton(text="� Edit Daily Target", callback_data=f"ui_proj_editdaily_{proj_id}")
+            InlineKeyboardButton(text="�🔥 Edit Daily Target", callback_data=f"ui_proj_editdaily_{proj_id}")
         ],
         [
             InlineKeyboardButton(text="�📦 Archive", callback_data=f"ui_proj_arch_{proj_id}"),
             InlineKeyboardButton(text="🗑 Delete", callback_data=f"ui_proj_delete_{proj_id}")
         ],
         [
-            InlineKeyboardButton(text="« Back", callback_data="ui_projects_list")
+            InlineKeyboardButton(text="🔙 Back", callback_data="ui_projects_list")
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
@@ -339,7 +339,7 @@ def get_habit_view_keyboard(hab_id) -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="🗑 Delete/Archive", callback_data=f"ui_hab_arch_{hab_id}")
         ],
         [
-            InlineKeyboardButton(text="« Back", callback_data="ui_habits_list")
+            InlineKeyboardButton(text="🔙 Back", callback_data="ui_habits_list")
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)

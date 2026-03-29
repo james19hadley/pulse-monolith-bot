@@ -73,7 +73,7 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
             kb = []
             for p in projects:
                 kb.append([InlineKeyboardButton(text=f"📦 {p.title}", callback_data=f"ui_proj_{p.id}")])
-            kb.append([InlineKeyboardButton(text="« Back to Active", callback_data="ui_projects_list")])
+            kb.append([InlineKeyboardButton(text="🔙 Back to Active", callback_data="ui_projects_list")])
             await cb.message.edit_text(
                 "<b>Archived Projects:</b>",
                 parse_mode="HTML",
@@ -226,7 +226,7 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
                 if not getattr(t, 'is_focus_today', False):
                     kb.append([InlineKeyboardButton(text=f"🎯 Set Focus: {t.title}", callback_data=f"ui_proj_setfocus_{t.id}")])
                     
-            kb.append([InlineKeyboardButton(text="« Back to Project", callback_data=f"ui_proj_{proj.id}")])
+            kb.append([InlineKeyboardButton(text="🔙 Back to Project", callback_data=f"ui_proj_{proj.id}")])
             
             await cb.message.edit_text(
                 f"<b>Tasks for {proj.title}</b>\nSelect a task to complete it, or set it as today's focus:",

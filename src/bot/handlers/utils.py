@@ -142,8 +142,8 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
             "minutes": total_mins,
             "progress": raw_stats.get(pid, {}).get("progress", 0),
             "unit": p.unit or "minutes",
-            "target_value": p.target_value,
-            "current_value": p.current_value,
+            "target_value": p.target_value or 0,
+            "current_value": p.current_value or 0,
             "indent": indent_level
         }
         
