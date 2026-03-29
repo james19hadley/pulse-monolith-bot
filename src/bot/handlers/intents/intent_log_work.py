@@ -90,10 +90,11 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
                 project.current_value = (project.current_value or 0.0) + amount_to_add
 
     # 3. Update Daily target if applicable
+    daily_msg = ""
     if project.daily_target_value is not None:
             project.daily_progress = (project.daily_progress or 0) + amount_to_add
             # For immediate user feedback in msg
-            msg_lines.append(f"🔥 Daily target progress: {project.daily_progress:g} / {project.daily_target_value:g} {project.unit or 'minutes'}")
+            daily_msg = f"🔥 Daily target progress: {project.daily_progress:g} / {project.daily_target_value:g} {project.unit or 'minutes'}"
 
     db.commit()
     db.refresh(log_entry)
@@ -107,6 +108,9 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
     keyboard = get_main_menu()
     
     msg_lines = []
+    
+    if daily_msg:
+        msg_lines.append(daily_msg)
     
     if extraction.duration_minutes > 0:
         hours = extraction.duration_minutes / 60
