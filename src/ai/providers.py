@@ -64,6 +64,7 @@ class EditEntitiesParam(BaseModel):
     new_name: Optional[str] = Field(description="The new name for the entity, if renaming", default=None)
     new_target_value: Optional[int] = Field(description="The new target value for the entity", default=None)
     new_unit: Optional[str] = Field(description="The new unit for measurement", default=None)
+    new_parent_project_id: Optional[int] = Field(description="The ID of the new parent project if they want to move/link this project under another one. Send -1 to unlink.", default=None)
 
 class EditEntitiesParams(BaseModel):
     edits: List[EditEntitiesParam] = Field(description="List of entity edits requested by user")

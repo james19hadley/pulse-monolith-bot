@@ -227,13 +227,21 @@ async def _handle_edit_entities(message: Message, db, user, provider_name, api_k
             if edit.new_unit:
                 proj.unit = edit.new_unit
             
+            if hasattr(edit, 'new_parent_project_id') and edit.new_parent_project_id is not None:
+                if edit.new_parent_project_id == -1:
+                    proj.parent_id = None
+                else:
+                    parent = db.query(Project).filter(Project.id == edit.new_parent_project_id, Project.user_id == user.id).first()
+                    if parent and parent.id != proj.id:
+                        proj.parent_id = parent.id
+            
             db.flush()
             
             alog = ActionLog(
                 user_id=user.id,
                 tool_name="edit_project",
                 previous_state_json=prev_state,
-                new_state_json={"id": proj.id, "title": proj.title, "target_value": proj.target_value, "unit": proj.unit}
+                new_state_json={"id": proj.id, "title": proj.title, "target_value": proj.target_value, "unit": proj.unit, "parent_id": proj.parent_id}
             )
             db.add(alog)
             
