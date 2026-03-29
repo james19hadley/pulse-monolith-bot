@@ -169,21 +169,6 @@ def get_timezone_keyboard() -> InlineKeyboardMarkup:
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
-def get_reports_keyboard() -> InlineKeyboardMarkup:
-    """Keyboard to select report destination and format."""
-    kb = [
-        [
-            InlineKeyboardButton(text="📩 Send to DM", callback_data="set_report_dm"),
-            InlineKeyboardButton(text="📢 Send to Channel", callback_data="set_report_channel")
-        ],
-        [
-            InlineKeyboardButton(text="❌ Disable Reports", callback_data="set_report_none"),
-            InlineKeyboardButton(text="🧪 Test Report", callback_data="settings_test_report")
-        ],
-        [InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")]
-    ]
-    return InlineKeyboardMarkup(inline_keyboard=kb)
-
 def get_api_keys_manage_keyboard(keys: dict = None, active_key: str = None) -> InlineKeyboardMarkup:
     """Manage API Keys Main Menu, allowing switching active keys."""
     kb = []
