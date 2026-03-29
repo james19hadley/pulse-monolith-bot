@@ -144,7 +144,7 @@ def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str
                         import html
                         
                         indent_level = data.get("indent", 0)
-                        prefix = "  " + "│  " * max(0, indent_level - 1) + ("└ " if indent_level > 0 else "└ ")
+                        prefix = "  " * indent_level + "└ "
                         msg = f"{prefix}<i>{html.escape(str(p))}</i>:"
                         if mins > 0:
                             msg += f" <b>{p_h}h {p_m}m</b>"
