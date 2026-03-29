@@ -143,6 +143,17 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
     if append_desc:
         msg_lines.append(append_desc)
 
+    # ADD ACTION LOG FOR UNDO
+    from src.db.models import ActionLog
+    action = ActionLog(
+        user_id=user.id,
+        tool_name="log_work",
+        previous_state_json={"amount": amount_to_add, "progress_amount": logged_progress},
+        new_state_json={"log_id": log_entry.id, "project_id": project.id}
+    )
+    db.add(action)
+    db.commit()
+
     # Sprint 24: Check if there was a pending_split session
     if user.active_session_id:
         from src.db.models import Session
