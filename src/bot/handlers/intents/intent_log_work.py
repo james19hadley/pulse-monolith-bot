@@ -30,12 +30,10 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
     if extraction.project_id is None:
-        title = extraction.unmatched_project_name or "New Project"
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="✅ Click to Create", callback_data=f"create_project_{title[:32]}")
-        ]])
-        await message.answer(f"🧩 I couldn't find a matching project. Do you want to create <b>{title}</b> first?", parse_mode="HTML", reply_markup=keyboard)
-        return
+        # Fallback to Project 0: Operations for pure time logging
+        from src.bot.handlers.utils import get_or_create_project_zero
+        project = get_or_create_project_zero(db, user.id)
+        extraction.project_id = project.id
         
     project = db.query(Project).filter_by(id=extraction.project_id, user_id=user.id).first()
     if not project:

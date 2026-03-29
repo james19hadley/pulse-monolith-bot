@@ -93,6 +93,17 @@ class TaskParam(BaseModel):
 class AddTasksParams(BaseModel):
     tasks: List[TaskParam] = Field(description="List of tasks to create.")
 
+
+class EditEntitiesParam(BaseModel):
+    entity_type: str = Field(description="Strictly 'project' or 'habit' - what kind of entity to edit")
+    entity_name_or_id: str = Field(description="The name or ID of the existing entity to edit")
+    new_name: Optional[str] = Field(description="The new name for the entity, if renaming", default=None)
+    new_target_value: Optional[int] = Field(description="The new target value for the entity", default=None)
+    new_unit: Optional[str] = Field(description="The new unit for measurement", default=None)
+
+class EditEntitiesParams(BaseModel):
+    edits: List[EditEntitiesParam] = Field(description="List of entity edits requested by user")
+
 class GoogleProvider:
     def __init__(self, api_key: str):
         self.client = genai.Client(api_key=api_key)
@@ -260,6 +271,28 @@ If they don't specify blocks, use the default list."""
         except Exception as e:
             print(f"Extraction error: {e}")
             return None, {}
+
+
+    def extract_edit_entities(self, text: str, entities_text: str):
+        """Extract entity edit requests from user text"""
+        system_prompt = f"""You are a data extraction tool.
+The user wants to edit (rename, change target value) one or more existing entities.
+Extract the entity type (project or habit), the current name or identifier, and the changes requested.
+
+CURRENT ENTITIES:
+{entities_text}
+"""
+        response = self.client.models.generate_content(
+            model=self.model_id,
+            contents=text,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                response_mime_type='application/json',
+                response_schema=EditEntitiesParams,
+                temperature=0.0
+            ),
+        )
+        return EditEntitiesParams.model_validate_json(response.text), self._get_usage(response)
 
     def generate_chat_response(self, text: str, persona_prompt: str) -> Tuple[Optional[str], dict]:
         try:

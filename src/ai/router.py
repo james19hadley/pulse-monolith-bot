@@ -1,5 +1,5 @@
 from typing import Optional, Tuple, Union
-from src.ai.providers import GoogleProvider, LogWorkParams, LogHabitParams, AddInboxParams, SessionControlParams, ReportConfigParams, SystemConfigParams, CreateEntitiesParams, AddTasksParams
+from src.ai.providers import GoogleProvider, LogWorkParams, LogHabitParams, AddInboxParams, SessionControlParams, ReportConfigParams, SystemConfigParams, CreateEntitiesParams, AddTasksParams, EditEntitiesParams
 from src.core.constants import IntentType
 
 def get_intent(user_text: str, provider_name: str, api_key: str) -> Tuple[IntentType, dict, Optional[str]]:
@@ -99,6 +99,16 @@ def extract_add_tasks(user_text: str, provider_name: str, api_key: str, active_p
         provider = GoogleProvider(api_key=api_key)
         try:
             return provider.extract_add_tasks_parameters(user_text, active_projects_text)
+        except Exception as e:
+            print(f'LLM Extraction Error: {e}')
+            return None, {}
+    return None, {}
+
+def extract_edit_entities(user_text: str, provider_name: str, api_key: str, entities_text: str):
+    if provider_name == 'google':
+        provider = GoogleProvider(api_key=api_key)
+        try:
+            return provider.extract_edit_entities(user_text, entities_text)
         except Exception as e:
             print(f'LLM Extraction Error: {e}')
             return None, {}

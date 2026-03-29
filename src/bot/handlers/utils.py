@@ -36,6 +36,31 @@ from src.core.security import decrypt_key
 from src.ai.providers import GoogleProvider
 from src.core.personas import get_persona_prompt
 
+
+def get_or_create_project_zero(db: DBSession, user_id: int):
+    """Ensures Project 0: Operations exists for the user, creates if needed"""
+    from src.db.models import Project
+    existing = db.query(Project).filter(
+        Project.user_id == user_id,
+        Project.title == "Project 0: Operations"
+    ).first()
+    
+    if existing:
+        return existing
+    
+    proj_zero = Project(
+        user_id=user_id,
+        title="Project 0: Operations",
+        status="active",
+        target_value=0,
+        unit="minutes"
+    )
+    db.add(proj_zero)
+    db.commit()
+    db.refresh(proj_zero)
+    return proj_zero
+
+
 def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: bool = False) -> str:
     now = datetime.datetime.utcnow()
     # Calculate logical day boundaries based on server UTC cutoff

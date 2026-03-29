@@ -161,3 +161,130 @@ async def _handle_add_tasks(message: Message, db, user, provider_name, api_key):
     
     nl = '\n'
     await message.answer(f"✅ <b>Added {count} task(s):</b>\n{nl.join(msg_lines)}", parse_mode="HTML")
+
+
+
+async def _handle_edit_entities(message: Message, db, user, provider_name, api_key):
+    """Handle entity renaming and property modification"""
+    from src.db.models import Project, Habit
+    from src.ai.router import extract_edit_entities
+    from sqlalchemy import func
+    
+    # Fetch all user entities for context
+    projects = db.query(Project).filter(Project.user_id == user.id, Project.status == 'active').all()
+    habits = db.query(Habit).filter(Habit.user_id == user.id).all()
+    
+    entities_list = []
+    for p in projects:
+        entities_list.append(f"Project: {p.title} (ID: {p.id}, Target: {p.target_value} {p.unit or 'minutes'})")
+    for h in habits:
+        entities_list.append(f"Habit: {h.title} (ID: {h.id}, Target: {h.target_value} {h.unit or 'times'})")
+    
+    if not entities_list:
+        await message.answer("You have no projects or habits to edit yet.")
+        return
+    
+    entities_text = "Your entities:\n" + "\n".join(entities_list)
+    
+    # Extract edit requests
+    extraction, tokens = extract_edit_entities(message.text, provider_name, api_key, entities_text)
+    
+    if tokens:
+        log_tokens(db, message.from_user.id, tokens)
+    
+    if not extraction or not extraction.edits:
+        await message.answer("I couldn't understand what you want to edit.")
+        return
+    
+    responses = []
+    from src.db.models import ActionLog
+    
+    for edit in extraction.edits:
+        entity_type = (edit.entity_type or "").lower()
+        
+        if entity_type == "project":
+            proj = None
+            try:
+                entity_id = int(edit.entity_name_or_id)
+                proj = db.query(Project).filter(Project.id == entity_id, Project.user_id == user.id).first()
+            except ValueError:
+                proj = db.query(Project).filter(
+                    Project.user_id == user.id,
+                    func.lower(Project.title) == edit.entity_name_or_id.lower()
+                ).first()
+            
+            if not proj:
+                responses.append(f"⚠️ Project '{edit.entity_name_or_id}' not found.")
+                continue
+            
+            prev_state = {"title": proj.title, "target_value": proj.target_value, "unit": proj.unit}
+            
+            if edit.new_name:
+                proj.title = edit.new_name
+            if edit.new_target_value is not None:
+                proj.target_value = edit.new_target_value
+            if edit.new_unit:
+                proj.unit = edit.new_unit
+            
+            db.flush()
+            
+            alog = ActionLog(
+                user_id=user.id,
+                tool_name="edit_project",
+                previous_state_json=prev_state,
+                new_state_json={"id": proj.id, "title": proj.title, "target_value": proj.target_value, "unit": proj.unit}
+            )
+            db.add(alog)
+            
+            msg = f"✅ Project updated: <b>{proj.title}</b>"
+            if proj.target_value > 0:
+                msg += f" (Target: {proj.target_value} {proj.unit or 'minutes'})"
+            responses.append(msg)
+        
+        elif entity_type == "habit":
+            habit = None
+            try:
+                entity_id = int(edit.entity_name_or_id)
+                habit = db.query(Habit).filter(Habit.id == entity_id, Habit.user_id == user.id).first()
+            except ValueError:
+                habit = db.query(Habit).filter(
+                    Habit.user_id == user.id,
+                    func.lower(Habit.title) == edit.entity_name_or_id.lower()
+                ).first()
+            
+            if not habit:
+                responses.append(f"⚠️ Habit '{edit.entity_name_or_id}' not found.")
+                continue
+            
+            prev_state = {"title": habit.title, "target_value": habit.target_value, "unit": habit.unit}
+            
+            if edit.new_name:
+                habit.title = edit.new_name
+            if edit.new_target_value is not None:
+                habit.target_value = edit.new_target_value
+            if edit.new_unit:
+                habit.unit = edit.new_unit
+            
+            db.flush()
+            
+            alog = ActionLog(
+                user_id=user.id,
+                tool_name="edit_habit",
+                previous_state_json=prev_state,
+                new_state_json={"id": habit.id, "title": habit.title, "target_value": habit.target_value, "unit": habit.unit}
+            )
+            db.add(alog)
+            
+            msg = f"✅ Habit updated: <b>{habit.title}</b>"
+            if habit.target_value > 1:
+                msg += f" (Target: {habit.target_value} {habit.unit or 'times'})"
+            responses.append(msg)
+        else:
+            responses.append(f"⚠️ Unknown entity type: {entity_type}")
+    
+    db.commit()
+    
+    if responses:
+        await message.answer("\n".join(responses), parse_mode="HTML")
+    else:
+        await message.answer("No entities were edited.")

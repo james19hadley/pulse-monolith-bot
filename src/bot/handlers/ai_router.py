@@ -12,7 +12,7 @@ from src.ai.providers import GoogleProvider
 
 # --- NEW DISPATCHER IMPORTS ---
 from src.bot.handlers.intents.intent_core import _handle_chat, _handle_config_update, _handle_config_report, _handle_undo
-from src.bot.handlers.intents.intent_entities import _handle_create_entities, _handle_add_inbox, _handle_add_tasks
+from src.bot.handlers.intents.intent_entities import _handle_create_entities, _handle_add_inbox, _handle_add_tasks, _handle_edit_entities
 from src.bot.handlers.intents.intent_log_work import _handle_log_work
 from src.bot.handlers.intents.intent_log_habit import _handle_log_habit
 from src.bot.handlers.intents.intent_session import _handle_session_control
@@ -32,6 +32,7 @@ INTENT_HANDLERS = {
     IntentType.ADD_TASKS: _handle_add_tasks,
     IntentType.SYSTEM_CONFIG: _handle_config_update,
     IntentType.CONFIG_REPORT: _handle_config_report,
+    IntentType.EDIT_ENTITIES: _handle_edit_entities,
     IntentType.UNDO: _handle_undo,
 }
 

@@ -13,18 +13,18 @@
 ## 📋 Tasks
 
 ### 1. Project Zero & Floating Time
-- [ ] Ensure "Project 0: Operations" is automatically seeded for all users.
-- [ ] Update `intent_log_work.py` and Prompts: if the user specifies pure time/progress without a distinct project, assign it to Project 0 instead of prompting to create "New Project".
+- [x] Ensure "Project 0: Operations" is automatically seeded for all users.
+- [x] Update `intent_log_work.py` and Prompts: if the user specifies pure time/progress without a distinct project, assign it to Project 0 instead of prompting to create "New Project".
 
 ### 2. UI: Sticky Menus & Undo Centralization
-- [ ] Remove `InlineKeyboardMarkup` undo buttons from `intent_log_work.py` and others.
-- [ ] Update the `ReplyKeyboardMarkup` initialization to use `is_persistent=True` (or similar Telegram API flag) so the menu stays visible after sending a text message or interacting with inline prompts.
-- [ ] Ensure the main menu has a universal "Undo" option.
+- [x] Remove `InlineKeyboardMarkup` undo buttons from `intent_log_work.py` and others.
+- [x] Update the `ReplyKeyboardMarkup` initialization to use `is_persistent=True` (or similar Telegram API flag) so the menu stays visible after sending a text message or interacting with inline prompts.
+- [x] Ensure the main menu has a universal "Undo" option.
 
 ### 3. NLP Entity Editing Intent
-- [ ] Create a new intent `EDIT_ENTITIES`.
-- [ ] Implement AI extraction (entity type, target name, new name/value).
-- [ ] Route properly and respond gracefully if the user asks for something unsupported.
+- [x] Create a new intent `EDIT_ENTITIES`.
+- [x] Implement AI extraction (entity type, target name, new name/value).
+- [x] Route properly and respond gracefully if the user asks for something unsupported.
 
 ## 🔒 Security & Architecture Notes
 - Entity editing must restrict queries using `user_id`.

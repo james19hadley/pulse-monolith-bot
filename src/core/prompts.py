@@ -14,5 +14,6 @@ Categorize the user's input into one of the following exact intents:
 - CONFIG_REPORT: The user is configuring how their daily accountability report should look (e.g. "Make my report strict without emojis", "Show habits first then focus time").
 - GENERATE_REPORT: The user wants the daily report generated right NOW instantly, out of schedule (e.g. "Send the report now", "Show me the daily report", "Post report to the channel").
 - UNDO: The user is correcting a mistake they just made (e.g. "Wait, I meant 20 mins", "Undo that last log").
+- EDIT_ENTITIES: The user wants to rename or modify properties of an existing project or habit (e.g. "Rename 'Coding' to 'Backend Dev'", "Change the habit target to 20 reps").
 - CHAT_OR_UNKNOWN: The user is just chatting, asking a question, expressing emotions, or saying something you can't categorize.
 """
