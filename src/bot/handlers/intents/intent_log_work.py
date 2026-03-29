@@ -29,7 +29,7 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
 
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-    if extraction.project_id is None:
+    if extraction.project_id is None or extraction.project_id == 0:
         # Fallback to Project 0: Operations for pure time logging
         from src.bot.handlers.utils import get_or_create_project_zero
         project = get_or_create_project_zero(db, user.id)
