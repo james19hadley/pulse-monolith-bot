@@ -248,6 +248,36 @@ def get_entities_main_keyboard() -> InlineKeyboardMarkup:
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
+
+def _get_display_width(text: str) -> float:
+    width = 0.0
+    for char in text:
+        code = ord(char)
+        if char.isupper():
+            width += 1.4
+        elif char.islower():
+            width += 1.0
+        elif char.isdigit():
+            width += 1.1
+        elif char.isspace():
+            width += 0.8
+        elif 0x0400 <= code <= 0x04FF: # Cyrillic
+            if char.isupper(): width += 1.5
+            else: width += 1.1
+        elif code > 0x2000: # Emojis, Symbols
+            width += 2.1
+        else:
+            width += 1.0
+    return width
+
+def _pad_to_left(text: str, target: float = 38.0) -> str:
+    w = _get_display_width(text)
+    pad_needed = target - w
+    if pad_needed > 0:
+        import math
+        return text + "⠀" * int(math.ceil(pad_needed / 0.65))
+    return text
+
 def get_projects_tree_keyboard(all_projects, page=0, toggled_ids=None) -> InlineKeyboardMarkup:
     """Builds a tree-like accordion list of projects."""
     if toggled_ids is None:
@@ -301,6 +331,7 @@ def get_projects_tree_keyboard(all_projects, page=0, toggled_ids=None) -> Inline
             p, depth, _, _, _ = item
             prefix = "  " * depth + "└ ⚙️ Open "
             text = f"{prefix}{p.title}"
+            text = _pad_to_left(text)
             kb.append([InlineKeyboardButton(text=text, callback_data=f"ui_proj_{p.id}")])
             continue
             
@@ -319,7 +350,7 @@ def get_projects_tree_keyboard(all_projects, page=0, toggled_ids=None) -> Inline
             tree_indicator = " ▾" if is_expanded else " ▸"
             
         text = f"{prefix}[{p.id}] {p.title}{tree_indicator}"
-        
+        text = _pad_to_left(text)
         # Determine callback
         if has_children:
             # Toggle logic
