@@ -43,7 +43,7 @@ def session_ended_message(total_minutes: int, focus_minutes: int) -> str:
     msg = f"Session closed.\n\n"
     msg += f"<b>Total Time:</b> {t_h}h {t_m}m\n"
     msg += f"<b>Focused:</b> {f_h}h {f_m}m\n"
-        return msg
+    return msg
 
 def build_progress_bar(current: int, target: int, length: int = 10) -> str:
     if target <= 0:
