@@ -10,8 +10,14 @@ async def _handle_session_control(message: Message, db, user, provider_name, api
     from src.db.models import Session
     from datetime import datetime
     
-    params, err = extract_session_control(message.text, provider_name, api_key)
-    if err or not params:
+
+    params, tokens = extract_session_control(message.text, provider_name, api_key)
+    if tokens:
+        from src.bot.handlers.utils import log_tokens
+        log_tokens(db, user.id, tokens)
+        
+    if not params:
+
         await message.answer("Я не смог разобрать команду для управления сессией. 😬")
         return
         

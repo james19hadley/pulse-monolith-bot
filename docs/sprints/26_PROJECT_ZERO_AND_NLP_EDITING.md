@@ -26,6 +26,10 @@
 - [x] Implement AI extraction (entity type, target name, new name/value).
 - [x] Route properly and respond gracefully if the user asks for something unsupported.
 
+### 4. Sprint 24 Debt: Session Control Bugfix
+- [x] Fix intent unpacking assignment where `tokens` dict evaluated as truthy `err`, causing valid AI commands like "начал сессию" to throw "Я не смог разобрать команду" without actually failing context mapping.
+
+
 ## 🔒 Security & Architecture Notes
 - Entity editing must restrict queries using `user_id`.
 
