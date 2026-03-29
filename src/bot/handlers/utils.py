@@ -95,21 +95,66 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
     user_logs = db.query(TimeLog).filter(TimeLog.user_id == user.id, TimeLog.created_at >= start_bound, TimeLog.created_at < end_bound).all()
     focus_time = sum(l.duration_minutes for l in user_logs if l.project_id is not None)
     
-    proj_stats = {}
-    for log in user_logs:
-        if log.project_id:
-            proj = db.query(Project).filter(Project.id == log.project_id).first()
-            if proj:
-                if proj.title not in proj_stats:
-                    # Capture the base values for percentage calculation
-                    start_val = proj.current_value
-                    # We have to subtract the total progress accumulated today to find the start_val of the day, but we don't have that easily here. 
-                    # Actually, we can sum the day's progress to find today's percent increase over total.
-                    proj_stats[proj.title] = {"minutes": 0, "progress": 0, "unit": proj.unit or "minutes", "target_value": proj.target_value, "current_value": proj.current_value}
-                proj_stats[proj.title]["minutes"] += log.duration_minutes
-                if log.progress_amount:
-                    proj_stats[proj.title]["progress"] += log.progress_amount
+    # Build project stats with hierarchy
+    all_projects = {p.id: p for p in db.query(Project).filter(Project.user_id == user.id).all()}
     
+    # 1. Aggregate raw logs
+    raw_stats = {}
+    for log in user_logs:
+        if log.project_id and log.project_id in all_projects:
+            pid = log.project_id
+            if pid not in raw_stats:
+                raw_stats[pid] = {"minutes": 0, "progress": 0}
+            raw_stats[pid]["minutes"] += log.duration_minutes
+            if log.progress_amount:
+                raw_stats[pid]["progress"] += log.progress_amount
+                
+    # 2. Bubble up minutes to parents (only 1 level deep as per spec: Epic -> Main Quest isn't fully enforced but we handle 2 levels via parent_id)
+    parent_totals = {}
+    for pid, data in raw_stats.items():
+        node = all_projects[pid]
+        curr = node
+        visited = set()
+        while curr.parent_id and curr.parent_id in all_projects and curr.id not in visited:
+            visited.add(curr.id)
+            parent = all_projects[curr.parent_id]
+            if parent.id not in parent_totals:
+                parent_totals[parent.id] = {"minutes": 0}
+            parent_totals[parent.id]["minutes"] += data["minutes"]
+            curr = parent
+            
+    # Combine
+    combined = set(raw_stats.keys()).union(set(parent_totals.keys()))
+
+    # Build tree representation
+    roots = [pid for pid in combined if not all_projects[pid].parent_id]
+    roots.sort(key=lambda pid: (0 if all_projects[pid].title.startswith("Project 0") else 1, all_projects[pid].title))
+    
+    proj_stats = {} 
+    
+    def add_node(pid, indent_level):
+        p = all_projects[pid]
+        self_mins = raw_stats.get(pid, {}).get("minutes", 0)
+        bubble_mins = parent_totals.get(pid, {}).get("minutes", 0)
+        total_mins = self_mins + bubble_mins
+        
+        proj_stats[p.title] = {
+            "minutes": total_mins,
+            "progress": raw_stats.get(pid, {}).get("progress", 0),
+            "unit": p.unit or "minutes",
+            "target_value": p.target_value,
+            "current_value": p.current_value,
+            "indent": indent_level
+        }
+        
+        # add children
+        children = [c_id for c_id in combined if all_projects[c_id].parent_id == pid]
+        children.sort(key=lambda c: all_projects[c].title)
+        for c in children:
+            add_node(c, indent_level + 1)
+            
+    for r in roots:
+        add_node(r, 0)
     user_habits = db.query(Project).filter(Project.user_id == user.id, Project.daily_target_value != None).all()
     habits_data = [{"title": h.title, "current": h.daily_progress or 0, "target": h.daily_target_value, "unit": h.unit or ""} for h in user_habits]
     

@@ -10,19 +10,51 @@ from src.bot.keyboards import get_projects_list_keyboard, get_project_view_keybo
 
 router = Router()
 
-@router.callback_query(F.data == "ui_projects_list")
+@router.callback_query(lambda c: c.data == "ui_projects_list" or c.data.startswith("ui_projects_page_") or c.data.startswith("ui_projects_sub_"))
 async def cb_projects_list(cb: CallbackQuery, state: FSMContext):
     await state.clear()
+    page = 0
+    parent_id = None
+    
+    if cb.data.startswith("ui_projects_page_"):
+        try:
+            parts = cb.data.split("_")
+            page = int(parts[3])
+            if len(parts) > 5 and parts[4] == "sub":
+                parent_id = int(parts[5])
+        except:
+            pass
+    elif cb.data.startswith("ui_projects_sub_"):
+        try:
+            parent_id = int(cb.data.split("_")[3])
+        except:
+            pass
+            
     with SessionLocal() as db:
         user = get_or_create_user(db, cb.from_user.id)
-        projects = db.query(Project).filter(
+        
+        query = db.query(Project).filter(
             Project.user_id == user.id, 
             Project.status == "active"
-        ).all()
+        )
+        if parent_id:
+            query = query.filter(Project.parent_id == parent_id)
+        else:
+            query = query.filter(Project.parent_id == None)
+            
+        projects = query.all()
+        
+        title = "<b>Your Active Projects:</b>"
+        if parent_id:
+            parent = db.query(Project).filter(Project.id == parent_id).first()
+            if parent:
+                import html
+                title = f"<b>📂 Sub-projects of {html.escape(parent.title)}:</b>"
+                
         await cb.message.edit_text(
-            "<b>Your Active Projects:</b>",
+            title,
             parse_mode="HTML",
-            reply_markup=get_projects_list_keyboard(projects)
+            reply_markup=get_projects_list_keyboard(projects, page=page, parent_id=parent_id)
         )
 
 
@@ -41,7 +73,7 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
             kb = []
             for p in projects:
                 kb.append([InlineKeyboardButton(text=f"📦 {p.title}", callback_data=f"ui_proj_{p.id}")])
-            kb.append([InlineKeyboardButton(text="🔙 Back to Active", callback_data="ui_projects_list")])
+            kb.append([InlineKeyboardButton(text="« Back to Active", callback_data="ui_projects_list")])
             await cb.message.edit_text(
                 "<b>Archived Projects:</b>",
                 parse_mode="HTML",
@@ -125,7 +157,13 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
                     prefix = "🎯 " if getattr(t, 'is_focus_today', False) else ""
                     text += f"{i}. {prefix}{t.title}\n"
                 
-            await cb.message.edit_text(text, parse_mode="HTML", reply_markup=get_project_view_keyboard(proj.id, status=proj.status))
+            sub_count = db.query(Project).filter(Project.parent_id == proj.id, Project.status != "deleted").count()
+            parent_id = proj.parent_id
+            if parent_id:
+                parent = db.query(Project).filter(Project.id == parent_id).first()
+                if parent:
+                    text = text.replace(f"📁 <b>{proj.title}</b>", f"📂 <b>{parent.title} ➡ {proj.title}</b>")
+            await cb.message.edit_text(text, parse_mode="HTML", reply_markup=get_project_view_keyboard(proj.id, status=proj.status, sub_count=sub_count, parent_id=parent_id))
             return
             
         action = action_or_id
@@ -188,7 +226,7 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
                 if not getattr(t, 'is_focus_today', False):
                     kb.append([InlineKeyboardButton(text=f"🎯 Set Focus: {t.title}", callback_data=f"ui_proj_setfocus_{t.id}")])
                     
-            kb.append([InlineKeyboardButton(text="🔙 Back to Project", callback_data=f"ui_proj_{proj.id}")])
+            kb.append([InlineKeyboardButton(text="« Back to Project", callback_data=f"ui_proj_{proj.id}")])
             
             await cb.message.edit_text(
                 f"<b>Tasks for {proj.title}</b>\nSelect a task to complete it, or set it as today's focus:",
@@ -409,3 +447,7 @@ async def state_add_project_time(message: Message, state: FSMContext):
     await state.clear()
 
 
+
+@router.callback_query(F.data.startswith("ui_proj_link_"))
+async def cb_proj_link(cb: CallbackQuery, state: FSMContext):
+    await cb.answer("Feature in development! You can update DB directly for now.")

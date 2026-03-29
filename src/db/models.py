@@ -105,6 +105,9 @@ class Project(Base):
     total_completions: Mapped[int] = mapped_column(Integer, default=0)
     # -----------------------------------------------
     
+    # Hierarchy
+    parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("projects.id", ondelete="SET NULL"), nullable=True)
+
     next_action_text: Mapped[Optional[str]] = mapped_column(String, nullable=True) # E.g., "Read pointers chapter"
 
 class Task(Base):
