@@ -40,7 +40,7 @@ class SystemConfigParams(BaseModel):
 
 
 class CreateProjectParams(BaseModel):
-    title: str = Field(description="The name of the new project.")
+    title: str = Field(description="The name of the new project. You can creatively prefix it with a suitable emoji (like '📚 Reading' or '🏋️ Sport') so it looks nice. If it's a generic technical topic, use an abstract emoji. Ensure the emoji is strictly the very first character if used.")
     target_value: int = Field(description="The target estimated effort value. If they specify hours, multiply by 60. Default is 0.", default=0)
     unit: Optional[str] = Field(description="The unit of measurement (e.g. pages, reps, hours, minutes). Default is minutes.", default="minutes")
     parent_project_id: Optional[int] = Field(description="The numeric ID of the parent project if this is created as a sub-project or child. Requires context of existing projects with IDs.", default=None)
