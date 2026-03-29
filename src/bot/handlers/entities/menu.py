@@ -7,7 +7,7 @@ from src.db.models import User, Project
 from src.bot.states import EntityState
 from datetime import datetime, timezone
 from src.bot.texts import Buttons
-from src.bot.keyboards import get_entities_main_keyboard, get_projects_list_keyboard, get_habits_list_keyboard
+from src.bot.keyboards import get_entities_main_keyboard, get_projects_tree_keyboard, get_habits_list_keyboard
 
 router = Router()
 
@@ -25,7 +25,7 @@ async def cmd_projects_menu(message: Message, state: FSMContext):
         await message.answer(
             "<b>Your Active Projects:</b>",
             parse_mode="HTML",
-            reply_markup=get_projects_list_keyboard(projects)
+            reply_markup=get_projects_tree_keyboard(projects)
         )
 
 
