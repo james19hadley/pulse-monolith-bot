@@ -100,14 +100,10 @@ def init_db():
                     pass
                 try:
                     conn.execute(sql_text("ALTER TABLE tasks ADD COLUMN is_focus_today BOOLEAN DEFAULT 0"))
-                try:
-                    conn.execute(sql_text("ALTER TABLE projects ADD COLUMN parent_id INTEGER REFERENCES projects(id) ON DELETE SET NULL"))
                 except Exception:
                     pass
                 try:
                     conn.execute(sql_text("ALTER TABLE projects ADD COLUMN parent_id INTEGER REFERENCES projects(id) ON DELETE SET NULL"))
-                except Exception:
-                    pass
                 except Exception:
                     pass
             else:
