@@ -1,6 +1,6 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from src.bot.texts import Buttons
+from src.bot.texts import Buttons, PROJECT_EMOJIS
 
 def get_main_menu() -> ReplyKeyboardMarkup:
     # Uses true persistent text matching properly routed via decorators
@@ -285,12 +285,15 @@ def get_projects_tree_keyboard(all_projects, page=0, toggled_ids=None) -> Inline
     start = page * items_per_page
     end = start + items_per_page
     
-    EMOJIS = ["🚀", "⚡", "💡", "🧠", "🔥", "✨", "🌟", "🎯", "🏆", "💎", "🎮", "🕹️", "🧩", "🎨", "🎭", "🎬", "🎸", "🎧", "📚", "📖", "🔬", "🔭", "📡", "🧭", "🛠️", "⚙️", "📈", "📉", "📊", "📌", "🖊️", "🪴", "🌿", "🍀", "🍎", "🍏", "🍕", "🍔", "☕", "🍵", "🚗", "⛵", "🚁", "🛸"]
+    EMOJIS = PROJECT_EMOJIS
     
     def get_emoji(p):
         if p.title.startswith("Project 0"):
             return "🗂️"
-        return EMOJIS[p.id % len(EMOJIS)]
+        # If the user put an emoji as the first character, don't generate a random one.
+        if p.title and ord(p.title[0]) > 0x2000 and not p.title[0].isspace():
+            return "" # The title already has an emoji!
+        return EMOJIS[p.id % len(EMOJIS)] + " "
 
     for item in flat_list[start:end]:
         if len(item) == 5:
@@ -307,9 +310,9 @@ def get_projects_tree_keyboard(all_projects, page=0, toggled_ids=None) -> Inline
         
         # Calculate prefix
         if depth == 0:
-            prefix = f"{emoji} "
+            prefix = f"{emoji}"
         else:
-            prefix = "  " * depth + f"└ {emoji} "
+            prefix = "  " * depth + f"└ {emoji}"
             
         tree_indicator = ""
         if has_children:
