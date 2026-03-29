@@ -38,33 +38,15 @@ class SingleConfigParam(BaseModel):
 class SystemConfigParams(BaseModel):
     settings: List[SingleConfigParam] = Field(description="List of settings to change")
 
-class CreateProjectParams(BaseModel):
-    title: str = Field(description="The name of the new project.")
-    target_value: int = Field(description="The target estimated effort value. If they specify hours, multiply by 60. Default is 0.", default=0)
-    unit: Optional[str] = Field(description="The unit of measurement (e.g. pages, pages, reps, hours, minutes). Default is minutes.", default="minutes")
-
-class CreateEntitiesParams(BaseModel):
-    projects: List[CreateProjectParams] = Field(description="List of new projects to create.")
-
 
 class CreateProjectParams(BaseModel):
     title: str = Field(description="The name of the new project.")
     target_value: int = Field(description="The target estimated effort value. If they specify hours, multiply by 60. Default is 0.", default=0)
-    unit: Optional[str] = Field(description="The unit of measurement (e.g. pages, pages, reps, hours, minutes). Default is minutes.", default="minutes")
+    unit: Optional[str] = Field(description="The unit of measurement (e.g. pages, reps, hours, minutes). Default is minutes.", default="minutes")
+    parent_project_id: Optional[int] = Field(description="The numeric ID of the parent project if this is created as a sub-project or child. Requires context of existing projects with IDs.", default=None)
 
 class CreateEntitiesParams(BaseModel):
     projects: List[CreateProjectParams] = Field(description="List of new projects to create.")
-
-
-class CreateProjectParams(BaseModel):
-    title: str = Field(description="The name of the new project.")
-    target_value: int = Field(description="The target estimated effort value. If they specify hours, multiply by 60. Default is 0.", default=0)
-    unit: Optional[str] = Field(description="The unit of measurement (e.g. pages, pages, reps, hours, minutes). Default is minutes.", default="minutes")
-
-class CreateEntitiesParams(BaseModel):
-    projects: List[CreateProjectParams] = Field(description="List of new projects to create.")
-
-
 
 class TaskParam(BaseModel):
     title: str = Field(description="The short actionable title of the task")
@@ -197,8 +179,10 @@ If they don't specify blocks, use the default list."""
         return ReportConfigParams.model_validate_json(response.text), self._get_usage(response)
 
 
-    def extract_create_entities(self, text: str) -> Tuple[Optional[CreateEntitiesParams], dict]:
-        system_prompt = "You are a data extraction tool. The user wants to create one or more projects . Extract their names and any target metrics (like target hours for a project)."
+    def extract_create_entities(self, text: str, active_projects_text: str = "") -> Tuple[Optional[CreateEntitiesParams], dict]:
+        system_prompt = "You are a data extraction tool. The user wants to create one or more projects. Extract their names and target metrics (like target hours for a project). If they specify this project as a child or sub-project of an existing project, use the provided active projects list to find the parent_project_id."
+        if active_projects_text:
+            system_prompt += f"\n\nExisting Projects:\n{active_projects_text}"
         try:
             response = self.client.models.generate_content(
                 model=self.model_id,

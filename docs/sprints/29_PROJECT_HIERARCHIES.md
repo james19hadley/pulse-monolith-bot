@@ -1,6 +1,6 @@
 # Sprint 29: Project Hierarchies (Main Quests & Sub-quests)
 
-**Status:** `Draft / Architecture Approved`
+**Status:** `Completed`
 **Date Proposed:** March 29, 2026
 
 ## 🎯 Motivation: Why do we need this?
@@ -40,8 +40,10 @@ We have selected **Variant 1**. The Parent Project never physically stores the s
 If a Master Project tracks hours, but a Sub-Project tracks "pages", the Master Project simply sums the `duration_minutes` attached to the Sub-Project's TimeLogs. Pages remain isolated logically to the Sub-Project.
 
 ## 📋 Implementation Steps
-- [ ] **DB:** Add `parent_id` to `Project` model and generate Alembic migration.
-- [ ] **Engine:** Write `get_project_tree()` query aggregator.
-- [ ] **UI:** Add `🔗 Link to Master Project` button in Project Settings.
-- [ ] **UI:** Update `generate_daily_report_text` in `utils.py` to draw tree nodes (`├─` and `└─`).
-- [ ] Project 0: Operations should always be displayed first in the projects list/menu.
+- [x] **DB:** Add `parent_id` to `Project` model and generate Alembic migration.
+- [x] **Engine:** Write `get_project_tree()` query aggregator (integrated via AI parameter constraints & utils.py computations).
+- [x] **UI:** Add `🔗 Link to Master Project` button in Project Settings.
+- [x] **UI:** Update `generate_daily_report_text` in `utils.py` to draw tree nodes (`│` and `└─`).
+- [x] Project 0: Operations should always be displayed first in the projects list/menu.
+
+- [x] **UX/AI:** Natural Language processing now extracts existing Project IDs from user conversation, and allows `parent_project_id` matching on the fly.

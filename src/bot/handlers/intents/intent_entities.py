@@ -3,7 +3,11 @@ from src.ai.router import extract_entities, extract_inbox, extract_add_tasks
 from src.bot.handlers.utils import log_tokens
 async def _handle_create_entities(message: Message, db, user, provider_name, api_key):
     from src.db.models import Project
-    extraction, tokens = extract_entities(message.text, provider_name, api_key)
+    
+    active_projs = db.query(Project).filter(Project.user_id == user.id, Project.status == "active").all()
+    active_projects_text = "\n".join([f"[{p.id}] {p.title}" for p in active_projs])
+    
+    extraction, tokens = extract_entities(message.text, provider_name, api_key, active_projects_text)
     
     if tokens:
         log_tokens(db, message.from_user.id, tokens)
@@ -46,6 +50,10 @@ async def _handle_create_entities(message: Message, db, user, provider_name, api
         proj = Project(user_id=user.id, title=p.title, status="active", target_value=getattr(p, 'target_value', 0))
         if hasattr(p, 'unit') and p.unit:
             proj.unit = p.unit
+        if hasattr(p, 'parent_project_id') and p.parent_project_id:
+            parent = db.query(Project).filter(Project.id == p.parent_project_id, Project.user_id == user.id).first()
+            if parent:
+                proj.parent_id = parent.id
         db.add(proj)
         db.flush()
         
@@ -61,6 +69,9 @@ async def _handle_create_entities(message: Message, db, user, provider_name, api
                 msg += f" (Target: {proj.target_value} {proj.unit})"
             else:
                 msg += f" (Target: {proj.target_value / 60:g}h)"
+        if getattr(proj, 'parent_id', None):
+            parent = db.query(Project).filter(Project.id == proj.parent_id).first()
+            msg += f"\n📂 Attached to parent: <b>{parent.title}</b>"
         await message.answer(msg, parse_mode="HTML")
         
     # Log action for SMART UNDO

@@ -263,7 +263,7 @@ def get_projects_list_keyboard(projects, page=0, parent_id=None) -> InlineKeyboa
     
     for p in sorted_projects[start:end]:
         prefix = "📂" if parent_id else "📁"
-        kb.append([InlineKeyboardButton(text=f"{prefix} {p.title}", callback_data=f"ui_proj_{p.id}")])
+        kb.append([InlineKeyboardButton(text=f"{prefix} [{p.id}] {p.title}", callback_data=f"ui_proj_{p.id}")])
         
     if total_pages > 1:
         nav = []
