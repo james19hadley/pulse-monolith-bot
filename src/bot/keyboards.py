@@ -13,7 +13,6 @@ def get_main_menu() -> ReplyKeyboardMarkup:
         [
             KeyboardButton(text=Buttons.INBOX),
             KeyboardButton(text=Buttons.PROJECTS),
-            KeyboardButton(text=Buttons.HABITS),
             KeyboardButton(text=Buttons.SETTINGS)
         ],
         [
@@ -254,9 +253,6 @@ def get_entities_main_keyboard() -> InlineKeyboardMarkup:
     kb = [
         [
             InlineKeyboardButton(text="📁 Manage Projects", callback_data="ui_projects_list")
-        ],
-        [
-            InlineKeyboardButton(text="🎯 Manage Habits", callback_data="ui_habits_list")
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
@@ -267,7 +263,7 @@ def get_projects_list_keyboard(projects) -> InlineKeyboardMarkup:
         kb.append([InlineKeyboardButton(text=f"📁 {p.title}", callback_data=f"ui_proj_{p.id}")])
     kb.append([InlineKeyboardButton(text="➕ New Project", callback_data="ui_proj_new")])
     kb.append([InlineKeyboardButton(text="🗄️ Archive", callback_data="ui_proj_archlist")])
-    kb.append([InlineKeyboardButton(text="�🔙 Back", callback_data="ui_entities_menu")])
+    kb.append([InlineKeyboardButton(text="🔙 Back", callback_data="ui_entities_menu")])
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
 def get_habits_list_keyboard(habits) -> InlineKeyboardMarkup:
