@@ -274,7 +274,7 @@ def get_habits_list_keyboard(habits) -> InlineKeyboardMarkup:
     kb = []
     for h in habits:
         kb.append([InlineKeyboardButton(text=f"🎯 {h.title}", callback_data=f"ui_hab_{h.id}")])
-    kb.append([InlineKeyboardButton(text="➕ New Habit", callback_data="ui_hab_new")])
+    kb.append([InlineKeyboardButton(text="➕ New", callback_data="ui_hab_new")])
     kb.append([InlineKeyboardButton(text="🔙 Back", callback_data="ui_entities_menu")])
     return InlineKeyboardMarkup(inline_keyboard=kb)
 

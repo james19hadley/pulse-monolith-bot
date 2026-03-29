@@ -3,7 +3,7 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.fsm.context import FSMContext
 from src.db.repo import SessionLocal
 from src.bot.handlers.utils import get_or_create_user
-from src.db.models import User, Project, Habit
+from src.db.models import User, Project
 from src.bot.states import EntityState
 from datetime import datetime, timezone
 from src.bot.texts import Buttons
@@ -32,7 +32,7 @@ async def cmd_habits_menu(message: Message, state: FSMContext):
     await state.clear()
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
-        habits = db.query(Habit).filter(Habit.user_id == user.id).all()
+        habits = db.query().filter(.user_id == user.id).all()
         await message.answer(
             "<b>Your Active Habits:</b>",
             parse_mode="HTML",

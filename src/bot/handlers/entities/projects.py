@@ -3,7 +3,7 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.fsm.context import FSMContext
 from src.db.repo import SessionLocal
 from src.bot.handlers.utils import get_or_create_user
-from src.db.models import User, Project, Habit
+from src.db.models import User, Project
 from src.bot.states import EntityState
 from datetime import datetime, timezone
 from src.bot.keyboards import get_projects_list_keyboard, get_project_view_keyboard

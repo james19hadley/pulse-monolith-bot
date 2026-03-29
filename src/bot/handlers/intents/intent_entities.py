@@ -9,7 +9,7 @@ async def _handle_create_entities(message: Message, db, user, provider_name, api
         log_tokens(db, message.from_user.id, tokens)
         
     if not extraction or (not extraction.projects and not extraction.habits):
-        await message.answer("I could not determine the exact details for the project or habit to create.")
+        await message.answer("I could not determine the exact details for the project to create.")
         return
         
     responses = []
@@ -63,24 +63,11 @@ async def _handle_create_entities(message: Message, db, user, provider_name, api
                 msg += f" (Target: {proj.target_value / 60:g}h)"
         await message.answer(msg, parse_mode="HTML")
         
-    for h in extraction.habits:
-        existing = db.query(Habit).filter(Habit.user_id == user.id, func.lower(Habit.title) == h.title.lower()).first()
-        if existing:
-            await message.answer(f"⚠️ Habit already exists: <b>{existing.title}</b>", parse_mode="HTML")
-            continue
-
-        unit = getattr(h, "unit", "times")
-        habit = Habit(user_id=user.id, title=h.title, target_value=h.target_value, unit=unit, type="counter")
-        db.add(habit)
-        db.flush()
-        
-        # Log action for SMART UNDO
+    # Log action for SMART UNDO
         from src.db.models import ActionLog
         import json
-        alog = ActionLog(user_id=user.id, tool_name="create_habit", previous_state_json={}, new_state_json={"habit_id": habit.id})
         db.add(alog)
         
-        await message.answer(f"✅ Habit created: <b>{habit.title}</b>", parse_mode="HTML")
         
     db.commit()
 
@@ -110,75 +97,13 @@ async def _handle_add_inbox(message: Message, db, user, provider_name, api_key):
 
 
 async def _handle_add_tasks(message: Message, db, user, provider_name, api_key):
-    from src.db.models import Project, Task
+    from src.db.models import Project
     
     # 1. Fetch active projects formatting for AI prompt
     projects = db.query(Project).filter(Project.user_id == user.id, Project.status == 'active').all()
-    if not projects:
-        active_projects_text = "User has no active projects yet."
-    else:
-        active_projects_text = "User's active projects:\n" + "\n".join([f"ID: {p.id}, Title: {p.title}" for p in projects])
-
-    extraction, tokens = extract_add_tasks(message.text, provider_name, api_key, active_projects_text)
-    
-    if tokens:
-        log_tokens(db, message.from_user.id, tokens)
-        
-    if not extraction or not extraction.tasks:
-        await message.answer("I could not verify the exact tasks to add.")
-        return
-
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-
-    count = 0
-    msg_lines = []
-    
-    for t in extraction.tasks:
-        project_id = t.project_id
-        if project_id is None and t.unmatched_project_name:
-            # We skip creating standalone tasks if they explicitly meant a project but we missed it. 
-            # Or we could prompt a keyboard. Let's just create it as standalone and notify.
-            pass
-            
-        task = Task(
-            user_id=user.id,
-            project_id=project_id,
-            title=t.title,
-            status='pending'
-        )
-        db.add(task)
-        count += 1
-        
-        proj_name = "(Standalone)"
-        if project_id:
-            proj = next((p for p in projects if p.id == project_id), None)
-            if proj:
-                proj_name = proj.title
-            
-        msg_lines.append(f"• {t.title} 📂 <i>{proj_name}</i>")
-        
-    db.commit()
-    
-    nl = '\n'
-    await message.answer(f"✅ <b>Added {count} task(s):</b>\n{nl.join(msg_lines)}", parse_mode="HTML")
-
-
-
-async def _handle_edit_entities(message: Message, db, user, provider_name, api_key):
-    """Handle entity renaming and property modification"""
-    from src.db.models import Project
-    from src.ai.router import extract_edit_entities
-    from sqlalchemy import func
-    
-    # Fetch all user entities for context
-    projects = db.query(Project).filter(Project.user_id == user.id, Project.status == 'active').all()
-    habits = db.query(Habit).filter(Habit.user_id == user.id).all()
-    
     entities_list = []
     for p in projects:
-        entities_list.append(f"Project: {p.title} (ID: {p.id}, Target: {p.target_value} {p.unit or 'minutes'})")
-    for h in habits:
-        entities_list.append(f"Habit: {h.title} (ID: {h.id}, Target: {h.target_value} {h.unit or 'times'})")
+        entities_list.append(f"Project: {p.title} (ID: {p.id})")
     
     if not entities_list:
         await message.answer("You have no projects or habits to edit yet.")
@@ -256,59 +181,6 @@ async def _handle_edit_entities(message: Message, db, user, provider_name, api_k
                 msg += f" (Target: {proj.target_value} {proj.unit or 'minutes'})"
             responses.append(msg)
         
-        elif entity_type == "habit":
-            habit = None
-            try:
-                entity_id = int(edit.entity_name_or_id)
-                habit = db.query(Habit).filter(Habit.id == entity_id, Habit.user_id == user.id).first()
-            except ValueError:
-                habit = db.query(Habit).filter(
-                    Habit.user_id == user.id,
-                    func.lower(Habit.title) == edit.entity_name_or_id.lower()
-                ).first()
-            
-            if not habit:
-                responses.append(f"⚠️ Habit '{edit.entity_name_or_id}' not found.")
-                continue
-            
-
-            if edit.action == "delete":
-                prev_state = {"title": habit.title, "target_value": habit.target_value, "unit": habit.unit, "status": habit.status}
-                habit.status = "archived" # Soft delete
-                db.flush()
-                alog = ActionLog(
-                    user_id=user.id,
-                    tool_name="delete_habit",
-                    previous_state_json=prev_state,
-                    new_state_json={"id": habit.id, "status": "archived"}
-                )
-                db.add(alog)
-                responses.append(f"🗑 Habit deleted: <b>{habit.title}</b>")
-                continue
-            
-            prev_state = {"title": habit.title, "target_value": habit.target_value, "unit": habit.unit}
-            
-            if edit.new_name:
-                habit.title = edit.new_name
-            if edit.new_target_value is not None:
-                habit.target_value = edit.new_target_value
-            if edit.new_unit:
-                habit.unit = edit.new_unit
-            
-            db.flush()
-            
-            alog = ActionLog(
-                user_id=user.id,
-                tool_name="edit_habit",
-                previous_state_json=prev_state,
-                new_state_json={"id": habit.id, "title": habit.title, "target_value": habit.target_value, "unit": habit.unit}
-            )
-            db.add(alog)
-            
-            msg = f"✅ Habit updated: <b>{habit.title}</b>"
-            if habit.target_value > 1:
-                msg += f" (Target: {habit.target_value} {habit.unit or 'times'})"
-            responses.append(msg)
         else:
             responses.append(f"⚠️ Unknown entity type: {entity_type}")
     

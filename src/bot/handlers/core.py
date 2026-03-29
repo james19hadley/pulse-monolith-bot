@@ -162,14 +162,14 @@ async def handle_undo_callbacks(callback: CallbackQuery):
         # Format: undo_c_hab_{id}
         elif data.startswith("undo_c_hab_"):
             hab_id = int(data.split("_")[3])
-            from src.db.models import Habit
-            hab = db.query(Habit).filter(Habit.id == hab_id, Habit.user_id == user.id).first()
+            
+            hab = db.query().filter(.id == hab_id.user_id == user.id).first()
             if hab:
                 db.delete(hab)
                 db.commit()
-                await callback.message.edit_text(f"↩️ Habit creation undone: <b>{hab.title}</b>", parse_mode="HTML")
+                await callback.message.edit_text(f"↩️ creation undone: <b>{hab.title}</b>", parse_mode="HTML")
             else:
-                await callback.answer("Habit not found or already deleted.")
+                await callback.answer(" not found or already deleted.")
                 
         # Format: undo_work_{log_id}
         elif data.startswith("undo_work_"):
