@@ -333,6 +333,8 @@ async def state_new_project(message: Message, state: FSMContext):
     args_text = message.text
     target_value = 0
     title = args_text
+    
+    # If the user typed a long intent-like string, tell them to use AI next time.
     if "|" in args_text:
         parts = args_text.split("|", 1)
         title = parts[0].strip()
@@ -341,20 +343,30 @@ async def state_new_project(message: Message, state: FSMContext):
         except ValueError:
             pass
 
+    from src.db.models import ActionLog
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
         proj = Project(user_id=user.id, title=title, status="active", target_value=target_value)
         db.add(proj)
+        db.flush() # get id
+        
+        # LOG ACTION FOR UNDO
+        alog = ActionLog(user_id=user.id, tool_name="create_project", previous_state_json={}, new_state_json={"project_id": proj.id})
+        db.add(alog)
         db.commit()
         
-        msg = f"✅ Project created: {proj.title}"
+        msg = f"✅ Project created: <b>{proj.title}</b>"
         if proj.target_value > 0:
             is_time_based = not proj.unit or proj.unit in ['minutes', 'hours']
             if is_time_based:
                 msg += f" (Target: {proj.target_value / 60:g}h)"
             else:
                 msg += f" (Target: {proj.target_value:g} {proj.unit})"
-        await message.answer(msg)
+                
+        if "|" not in args_text and len(args_text.split()) > 3:
+            msg += "\n\n<i>Next time, if you want me to understand natural language details (like 'for 30 days'), make sure you are not in the 'New Project' menu state! Just type it directly in the main chat.</i>"
+            
+        await message.answer(msg, parse_mode="HTML")
     await state.clear()
 
 
