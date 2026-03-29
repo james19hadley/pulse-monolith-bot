@@ -57,4 +57,5 @@ Every new Sprint Markdown file must follow this strict structure to maintain con
 | [Sprint 24](24_OPEN_SESSIONS_AND_RETRO_BILLING.md) | Frictionless Open Sessions & Save-State Rest Mode | 🟢 Completed |
 | [Sprint 25](25_DAILY_PLANNING_AND_GENTLE_LISTS.md) | Daily Planning & Gentle Lists | ⚪ Draft |
 | [Sprint 26](26_PROJECT_ZERO_AND_NLP_EDITING.md) | Project Zero, Sticky Menus & NLP Editing | ⚪ Draft |
-| [Sprint 27](27_REPORT_AND_UI_POLISH.md) | Report Engine Polish & Mathematical Fixes | ⚪ Draft |
+| [Sprint 27](27_THE_GREAT_MIGRATION.md) | The Great Migration (Habits → Projects) | ⚪ Draft |
+| [Sprint 28](28_REPORT_AND_UI_POLISH.md) | Report Engine Polish & Mathematical Fixes | ⚪ Draft |

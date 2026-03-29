@@ -38,3 +38,11 @@ In the Evening Report, the bot will ruthlessly but objectively display this stat
 ## 5. The Rule of the "Kompromat" Report
 The system is built to prevent the user from hiding. 
 If the user starts a day/session but does absolutely nothing and goes silent, the system will not wait indefinitely. At a designated cutoff time (e.g., 03:00 AM), the bot will passively auto-generate the Evening Report based on whatever data it has (even if it's `Focused Time: 0`) and post it to the user's private Telegram channel. You cannot hide from the Monolith.
+
+## 6. Project Unification vs. The "Infinite Habit" Trap
+The human brain, particularly its dopamine-driven reward system, struggles with "infinity". Committing to a daily habit "forever" (e.g., "I will run every day") creates subconscious pressure because the brain never sees a finish line where it can claim the final reward. Once the streak breaks, the user experiences demoralization.
+
+To combat this, the Monolith architecture entirely rejects the concept of "Habits" as an infinite, standalone framework. Instead, **everything is a Project.**
+- Projects possess definitive boundaries (e.g., "Season 1: 50 Days of Portuguese" or "100 km of Running").
+- A project can contain a **Daily Quota** (e.g., "15 minutes per day").
+- When a user pursues a daily action, they are actually carving chunks out of a finite, winnable project. All time is accumulated in an overarching ledger, preserving the user's total investment over their lifetime, rather than wiping it clean on a daily basis. 
