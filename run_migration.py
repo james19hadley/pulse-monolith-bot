@@ -14,13 +14,26 @@ def main():
                 print("No habits table found or already migrated.")
                 return
             
+            # Get columns that actually exist in the habits table
+            cols_res = conn.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name = 'habits'"))
+            existing_columns = [row[0] for row in cols_res.fetchall()]
+
             # Fetch all habits
-            habits_res = conn.execute(text("SELECT id, user_id, title, status, target_value, current_value, unit, type, total_completions, current_streak, last_reset_date FROM habits"))
-            habits = habits_res.fetchall()
+            habits_res = conn.execute(text(f"SELECT * FROM habits"))
+            habits = habits_res.mappings().all()
             
             migrated = 0
             for h in habits:
-                h_id, u_id, title, status, t_val, c_val, unit, h_type, t_comp, c_strk, l_reset = h
+                u_id = h.get("user_id")
+                title = h.get("title", "Untitled Habit")
+                status = h.get("status", "active")
+                t_val = h.get("target_value", 1)
+                c_val = h.get("current_value", 0)
+                unit = h.get("unit", "times")
+                h_type = h.get("type", "counter")
+                t_comp = h.get("total_completions", 0)
+                c_strk = h.get("current_streak", 0)
+                l_reset = h.get("last_reset_date", None)
                 
                 global_current_value = 0
                 if unit in ["minutes", "hours", "times", "pages"]:
