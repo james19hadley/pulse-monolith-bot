@@ -23,11 +23,6 @@ def extract_log_work(user_text: str, provider_name: str, api_key: str, active_pr
             return None, {}
     return None, {}
 
-        except Exception as e:
-            print(f'LLM Extraction Error: {e}')
-            return None, {}
-    return None, {}
-
 def extract_inbox(user_text: str, provider_name: str, api_key: str) -> Tuple[Optional[AddInboxParams], dict]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
