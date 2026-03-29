@@ -16,6 +16,8 @@ async def cmd_projects_menu(message: Message, state: FSMContext):
     await state.clear()
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
+        from src.bot.handlers.utils import get_or_create_project_zero
+        get_or_create_project_zero(db, user.id)
         projects = db.query(Project).filter(
             Project.user_id == user.id, 
             Project.status == "active"

@@ -211,3 +211,9 @@ venv/
 .env
 bots.log
 bot.log
+
+# Ignore root level scripts
+/*.py
+!main.py
+!setup.py
+

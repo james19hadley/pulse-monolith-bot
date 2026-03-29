@@ -95,6 +95,10 @@ def init_db():
                 except Exception:
                     pass
                 try:
+                    conn.execute(sql_text("ALTER TABLE users ADD COLUMN language VARCHAR DEFAULT 'ru'"))
+                except Exception:
+                    pass
+                try:
                     conn.execute(sql_text("ALTER TABLE tasks ADD COLUMN is_focus_today BOOLEAN DEFAULT 0"))
                 except Exception:
                     pass
@@ -102,6 +106,7 @@ def init_db():
                 # PostgreSQL
                 columns_to_add = [
                     ("users", "report_config", "JSON"),
+                    ("users", "language", "VARCHAR DEFAULT 'ru'"),
                     ("projects", "daily_target_value", "INTEGER"),
                     ("projects", "daily_progress", "INTEGER DEFAULT 0"),
                     ("projects", "current_streak", "INTEGER DEFAULT 0"),
