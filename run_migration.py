@@ -13,6 +13,15 @@ def main():
             if not has_habits:
                 print("No habits table found or already migrated.")
                 return
+
+            # Ensure projects table has the new columns
+            print("Adding daily fields to the projects table if they do not exist...")
+            conn.execute(text("ALTER TABLE projects ADD COLUMN IF NOT EXISTS daily_target_value INTEGER;"))
+            conn.execute(text("ALTER TABLE projects ADD COLUMN IF NOT EXISTS daily_progress INTEGER DEFAULT 0;"))
+            conn.execute(text("ALTER TABLE projects ADD COLUMN IF NOT EXISTS current_streak INTEGER DEFAULT 0;"))
+            conn.execute(text("ALTER TABLE projects ADD COLUMN IF NOT EXISTS last_completed_date DATE;"))
+            conn.execute(text("ALTER TABLE projects ADD COLUMN IF NOT EXISTS total_completions INTEGER DEFAULT 0;"))
+            conn.commit()
             
             # Get columns that actually exist in the habits table
             cols_res = conn.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name = 'habits'"))
