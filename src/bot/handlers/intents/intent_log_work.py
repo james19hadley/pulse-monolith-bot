@@ -1,9 +1,9 @@
 from aiogram.types import Message
-from src.db.models import TokenUsage, Project, TimeLog, Habit, Session
+from src.db.models import TokenUsage, Project, TimeLog, Session
 from src.bot.texts import Prompts
 from src.bot.handlers.utils import log_tokens
 from src.bot.handlers.utils import get_or_create_user
-from src.ai.router import extract_log_work, extract_log_habit, extract_session_control
+from src.ai.router import extract_log_work, extract_session_control
 from datetime import datetime, timezone
 
 async def _handle_log_work(message: Message, db, user, provider_name, api_key):
@@ -67,8 +67,18 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
         project.current_value = (project.current_value or 0.0) + extraction.duration_minutes
 
             
+
+    # Update Daily target if applicable
+    if project.daily_target_value is not None:
+        amount_to_add = logged_progress if logged_progress is not None else extraction.duration_minutes
+        if amount_to_add > 0:
+            project.daily_progress = (project.daily_progress or 0) + amount_to_add
+            # For immediate user feedback in msg
+            msg_lines.append(f"🔥 Daily target progress: {project.daily_progress:g} / {project.daily_target_value:g} {project.unit or 'minutes'}")
+
     db.commit()
     db.refresh(log_entry)
+
 
     import html
     desc = html.escape(extraction.description) if extraction.description else ""

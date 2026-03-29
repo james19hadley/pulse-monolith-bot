@@ -95,6 +95,15 @@ class Project(Base):
     target_value: Mapped[int] = mapped_column(Integer, default=0)
     current_value: Mapped[int] = mapped_column(Integer, default=0)
     unit: Mapped[Optional[str]] = mapped_column(String, default="minutes")
+    
+    # --- Great Migration: Daily Quotas & Streaks ---
+    daily_target_value: Mapped[Optional[int]] = mapped_column(Integer, nullable=True) # E.g., 15 (minutes or times)
+    daily_progress: Mapped[int] = mapped_column(Integer, default=0)
+    current_streak: Mapped[int] = mapped_column(Integer, default=0)
+    last_completed_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    total_completions: Mapped[int] = mapped_column(Integer, default=0)
+    # -----------------------------------------------
+    
     next_action_text: Mapped[Optional[str]] = mapped_column(String, nullable=True) # E.g., "Read pointers chapter"
 
 class Task(Base):
@@ -108,26 +117,6 @@ class Task(Base):
     is_focus_today: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-
-class Habit(Base):
-    __tablename__ = "habits"
-    
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
-    title: Mapped[str] = mapped_column(String)
-    status: Mapped[str] = mapped_column(String, default="active")
-    target_value: Mapped[int] = mapped_column(Integer, default=1)
-    current_value: Mapped[int] = mapped_column(Integer, default=0)
-    type: Mapped[str] = mapped_column(String, default="counter") # 'counter' or 'boolean'
-    unit: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    last_reset_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
-    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    total_completions: Mapped[int] = mapped_column(Integer, default=0)
-    current_streak: Mapped[int] = mapped_column(Integer, default=0)
-    periodicity_days: Mapped[int] = mapped_column(Integer, default=1)
-    nudge_threshold_days: Mapped[int] = mapped_column(Integer, default=2)
 
 class TimeLog(Base):
     """The Ledger: Tracks actual focused work blocks"""

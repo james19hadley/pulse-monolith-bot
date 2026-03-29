@@ -38,8 +38,8 @@ Long-term, cumulative goals. Only `active` projects are injected into the LLM co
 *   `total_minutes_spent` (Integer. Cumulative sum of all time logs for this project)
 *   `next_action_text` (String. The granular step used for pings, e.g., "Read pointers chapter")
 
-### 2.4. `Habits` Table (Daily Routine)
-Unlike projects, habits do not accumulate infinitely. They reset daily.
+### 2.4. `Projects` Table (Daily Routine)
+Unlike projects, projects do not accumulate infinitely. They reset daily.
 *   `id` (PK)
 *   `user_id` (FK -> `Users`, Indexed)
 *   `title` (String, e.g., "Pushups")
@@ -88,7 +88,7 @@ Standard databases reset at 00:00 UTC. This project relies on the user's local t
 *   If `Current_Local_Time >= day_cutoff_time` and the user's day hasn't been closed:
     1. Force-close any `active` session.
     2. Generate and send the Evening Report ("Kompromat").
-    3. Reset all `Habits.current_value` to 0.
+    3. Reset all `Projects.current_value` to 0.
 
 ### 3.3. The Undo Execution (Reversing Transactions)
 If the AI Router detects an `UNDO` intent:

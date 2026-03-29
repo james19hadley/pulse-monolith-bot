@@ -30,15 +30,12 @@ Talk to me naturally, but if the AI is slow or offline, use these slash commands
 /start_session - Begin a new tracking session
 /end_session - End current session and summarize
 /log &lt;min&gt; [desc] - Quick log (e.g. /log 30 reading)
-/habit &lt;id/name&gt; [val] - Mark habit (e.g. /habit workout 1)
 /inbox &lt;text&gt; - Fast idea dump
-/undo - Revert the last time log or habit log
+/undo - Revert the last time log
 
 <b>Data & Config</b>
 /projects - List active projects and IDs
-/habits - List active habits and IDs
 /new_project &lt;name&gt; | [target_hours] - Create a new project
-/new_habit &lt;name&gt; - Create a new habit
 /settings - View or change your configurations
 /persona - View or change your AI Persona
 /tokens - View AI Token usage & API costs
@@ -94,7 +91,7 @@ async def cmd_faq(message: Message):
 @router.message(Command("undo"))
 @router.message(lambda msg: msg.text == "↩️ Undo")
 async def cmd_undo(message: Message, state: FSMContext):
-    from src.db.models import ActionLog, Habit, Project, TimeLog
+    from src.db.models import ActionLog, Project, TimeLog
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
         
@@ -115,14 +112,6 @@ async def cmd_undo(message: Message, state: FSMContext):
                     db.delete(p)
                     await message.answer(f"↩️ Project creation undone: <b>{title}</b>", parse_mode="HTML")
                     
-            elif tool == "create_habit":
-                hid = action.new_state_json.get("habit_id")
-                h = db.query(Habit).filter(Habit.id == hid).first()
-                if h:
-                    title = h.title
-                    db.delete(h)
-                    await message.answer(f"↩️ Habit creation undone: <b>{title}</b>", parse_mode="HTML")
-                    
             elif tool == "log_work":
                 lid = action.new_state_json.get("log_id")
                 pid = action.new_state_json.get("project_id")
@@ -139,22 +128,6 @@ async def cmd_undo(message: Message, state: FSMContext):
                         else:
                             p.current_value = max(0, (p.current_value or 0) - mins)
                     await message.answer("↩️ Time log successfully undone.", parse_mode="HTML")
-                    
-            elif tool == "delete_habit":
-                title = action.previous_state_json.get("title")
-                target_value = action.previous_state_json.get("target_value")
-                current_value = action.previous_state_json.get("current_value")
-                h = Habit(user_id=action.user_id, title=title, target_value=target_value, current_value=current_value)
-                db.add(h)
-                await message.answer(f"↩️ Habit deletion undone: <b>{title}</b>", parse_mode="HTML")
-
-            elif tool == "log_habit":
-                hid = action.new_state_json.get("habit_id")
-                amt = action.previous_state_json.get("amount", 0)
-                h = db.query(Habit).filter(Habit.id == hid).first()
-                if h:
-                    h.current_value = max(0, h.current_value - amt)
-                    await message.answer(f"↩️ Habit log undone. (Reverted {amt} for <b>{h.title}</b>)", parse_mode="HTML")
             
             # Clean up the log so we don't undo it twice
             db.delete(action)
@@ -211,17 +184,5 @@ async def handle_undo_callbacks(callback: CallbackQuery):
                 await callback.answer("Log not found or already undone.")
                 
         # Format: undo_habit_{habit_id}_{amount}
-        elif data.startswith("undo_habit_"):
-            parts = data.split("_")
-            hab_id = int(parts[2])
-            amount = int(parts[3])
-            from src.db.models import Habit
-            hab = db.query(Habit).filter(Habit.id == hab_id, Habit.user_id == user.id).first()
-            if hab:
-                hab.current_value = max(0, hab.current_value - amount)
-                db.commit()
-                await callback.message.edit_text(f"↩️ Habit log undone. Value reverted for <b>{hab.title}</b>.", parse_mode="HTML")
-            else:
-                await callback.answer("Habit not found or already deleted.")
         
     await callback.answer()

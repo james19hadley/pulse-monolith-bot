@@ -2,7 +2,7 @@ from aiogram.types import Message
 from src.ai.router import extract_entities, extract_inbox, extract_add_tasks
 from src.bot.handlers.utils import log_tokens
 async def _handle_create_entities(message: Message, db, user, provider_name, api_key):
-    from src.db.models import Project, Habit
+    from src.db.models import Project
     extraction, tokens = extract_entities(message.text, provider_name, api_key)
     
     if tokens:
@@ -166,7 +166,7 @@ async def _handle_add_tasks(message: Message, db, user, provider_name, api_key):
 
 async def _handle_edit_entities(message: Message, db, user, provider_name, api_key):
     """Handle entity renaming and property modification"""
-    from src.db.models import Project, Habit
+    from src.db.models import Project
     from src.ai.router import extract_edit_entities
     from sqlalchemy import func
     

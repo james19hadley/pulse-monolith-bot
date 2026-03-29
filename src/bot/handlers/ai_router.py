@@ -14,9 +14,7 @@ from src.ai.providers import GoogleProvider
 from src.bot.handlers.intents.intent_core import _handle_chat, _handle_config_update, _handle_config_report, _handle_undo
 from src.bot.handlers.intents.intent_entities import _handle_create_entities, _handle_add_inbox, _handle_add_tasks, _handle_edit_entities
 from src.bot.handlers.intents.intent_log_work import _handle_log_work
-from src.bot.handlers.intents.intent_log_habit import _handle_log_habit
 from src.bot.handlers.intents.intent_session import _handle_session_control
-# _handle_log_work, _handle_log_habit, _handle_session_control
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -24,7 +22,6 @@ logger = logging.getLogger(__name__)
 INTENT_HANDLERS = {
     IntentType.CHAT_OR_UNKNOWN: _handle_chat,
     IntentType.LOG_WORK: _handle_log_work,
-    IntentType.LOG_HABIT: _handle_log_habit,
     IntentType.SESSION_CONTROL: _handle_session_control,
     
     IntentType.CREATE_ENTITIES: _handle_create_entities,

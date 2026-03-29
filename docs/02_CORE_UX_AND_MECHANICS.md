@@ -33,7 +33,7 @@ This is the core pro-active feature of the bot. It is designed to nudge the user
 The user interacts via natural language. There are no UI buttons or strict `/log` formats required for daily use.
 
 *   **Input:** User types: *"I coded for 40 minutes and then did 10 pushups."*
-*   **Processing:** The bot's AI Router identifies the intents (`LOG_TIME` and `LOG_HABIT`). It silently updates the database via Tool Calling (updating Project time by +40, updating Habit counter by +10).
+*   **Processing:** The bot's AI Router identifies the intents (`LOG_TIME` and `LOG_HABIT`). It silently updates the database via Tool Calling (updating Project time by +40, updating Project counter by +10).
 *   **Output:** The bot does not generate conversational fluff (e.g., "Great job! You are doing amazing!"). It responds with a factual confirmation: *"Logged: 40m to C++. Logged: 10 Pushups."* 
 
 ## 4. The Evening Report (The "Kompromat" & Channel Publishing)
@@ -60,7 +60,7 @@ The report is strictly standardized, markdown-formatted, and completely devoid o
 * C++ Text RPG: +2h 00m -> [Total: 8h / 30h] 🟩🟩⬜⬜⬜
 * Infrastructure Setup: +2h 15m -> [Total: 5h / 10h] 🟩🟩🟩⬜⬜
 
-**Daily Routine (Habits):**
+**Daily Routine (Projects):**
 * Pushups: 10/10 ✅
 * Read 10 Pages: 0/10 ❌
 ```

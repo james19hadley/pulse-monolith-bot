@@ -4,7 +4,7 @@ from aiogram.types import Message
 from sqlalchemy import func
 
 from src.db.repo import SessionLocal
-from src.db.models import User, Project, Habit, Inbox
+from src.db.models import Project, TimeLog
 from src.bot.handlers.utils import get_or_create_user
 
 router = Router()
@@ -32,8 +32,8 @@ async def cmd_projects(message: Message):
             
         await message.answer("\n".join(lines), parse_mode="HTML")
 
-@router.message(Command("habits"))
-async def cmd_habits(message: Message):
+
+async def cmd_habits_removed(message: Message):
     """List all tracked habits."""
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
@@ -80,8 +80,8 @@ async def cmd_new_project(message: Message, command: CommandObject):
             msg += f" (Target: {proj.target_value / 60:g}h)"
         await message.answer(msg)
 
-@router.message(Command("new_habit"))
-async def cmd_new_habit(message: Message, command: CommandObject):
+
+async def cmd_new_habit_removed(message: Message, command: CommandObject):
     if not command.args:
         await message.answer("Usage: <code>/new_habit &lt;name&gt; [target_value]</code>", parse_mode="HTML")
         return

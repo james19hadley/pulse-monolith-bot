@@ -3,7 +3,7 @@
 
 def welcome_message(has_key: bool = False) -> str:
     msg = "👋 <b>Welcome to Pulse Monolith</b>\n"
-    msg += "I am your personal AI accountability partner, designed to track time, build habits, and destroy procrastination.\n\n"
+    msg += "I am your personal AI accountability partner, designed to track time, build projects, and destroy procrastination.\n\n"
     
     msg += "🌍 <b>I speak all languages.</b>\n"
     msg += "<i>Feel free to message me in English, Russian, Spanish, or any other natural language. You don't need to memorize strict commands!</i>\n\n"
@@ -92,12 +92,6 @@ def settings_list_message(settings_list: list) -> str:
         msg += f"<b>{s['name']}</b>:\n<code>{s['val']}</code> {s['desc']}\nChange: <code>/settings {s['key']} &lt;value&gt;</code>\n\n"
     return msg
 
-# Habit
-def habit_created_message(h_id: int, title: str, target: int) -> str:
-    return f"✅ Created Habit: <code>[{h_id}]</code> {title} (Target: {target})"
-
-def habit_updated_message(title: str, current: int, target: int) -> str:
-    return f"📈 Habit <code>{title}</code> updated: {current}/{target}"
 
 # Inbox
 def inbox_saved_message(content: str) -> str:
@@ -123,12 +117,12 @@ def stale_session_closed_message() -> str:
 # Accountability Reports (Lego Builder)
 def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str:
     style = config.get("style", "emoji")
-    blocks = config.get("blocks", ["focus", "habits", "inbox", "void"])
+    blocks = config.get("blocks", ["focus", "projects_daily", "inbox", "void"])
     
     # Emojis dictionary
     e = {
         "focus": "⏱" if style != "strict" else "",
-        "habits": "📈" if style != "strict" else "",
+        "projects_daily": "📈" if style != "strict" else "",
         "inbox": "📥" if style != "strict" else "",
         "void": "🕳" if style != "strict" else "",
         "header": "📊" if style != "strict" else ""
@@ -172,10 +166,10 @@ def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str
                         import html
                         parts.append(f"  └ <i>{html.escape(str(p))}</i>: <b>{p_h}h {p_m}m</b>")
         
-        elif block == "habits":
-            habits = stats.get('habits', [])
+        elif block == "projects_daily":
+            habits = stats.get('projects_daily', [])
             if habits:
-                parts.append(f"\n{e['habits']} <b>Habits:</b>")
+                parts.append(f"\n{e['projects_daily']} <b>Daily Targets:</b>")
                 for h in habits:
                     import html
                     done = "✅" if h['current'] >= h['target'] else "⏳"

@@ -1,5 +1,5 @@
 from aiogram.types import Message
-from src.db.models import TokenUsage, Project, TimeLog, Habit, Session
+from src.db.models import TokenUsage, Project, TimeLog, Session
 from src.bot.texts import Prompts
 from src.bot.handlers.utils import get_or_create_user
 from src.ai.router import extract_log_work, extract_log_habit, extract_session_control

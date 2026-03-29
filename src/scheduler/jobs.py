@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, time
 from sqlalchemy.orm import Session as DBSession
 from sqlalchemy import func
 from src.db.repo import SessionLocal
-from src.db.models import User, Session as AppSession, TimeLog, Habit, Inbox, Project, Task, Task
+from src.db.models import User, Session as AppSession, TimeLog, Inbox, Project, Task, Task
 from aiogram import Bot
 
 from src.bot.views import catalyst_ping_message, stale_session_closed_message
@@ -173,7 +173,7 @@ def daily_accountability_job():
 @shared_task(name="job_evening_nudge")
 def evening_nudge_job():
     """
-    Runs periodically. Checks for habits that haven't been logged in over their nudge_threshold_days.
+    Runs periodically. Checks for projects that haven't been logged in over their nudge_threshold_days.
     Sends a warm coach message to remind them, a few hours before day_cutoff_time.
     """
     now = datetime.utcnow()
@@ -186,30 +186,29 @@ def evening_nudge_job():
             if now.hour == target_hour and 0 <= now.minute < 60:
                 target_chat_id = user.target_channel_id or user.telegram_id
                 
-                # Find lagging habits
-                habits = db.query(Habit).filter(Habit.user_id == user.id, Habit.nudge_threshold_days > 0).all()
-                lagging_habits = []
-                for h in habits:
-                    last_update = h.updated_at if h.updated_at else h.created_at
+                # Find lagging projects that act as routines
+                projects = db.query(Project).filter(Project.user_id == user.id, Project.daily_target_value != None).all()
+                lagging_projects = []
+                for p in projects:
+                    last_update = p.last_completed_date if p.last_completed_date else (p.updated_at.date() if p.updated_at else p.created_at.date())
                     if last_update:
-                        last_update = last_update.replace(tzinfo=None) # naive comparison
-                        since_update = (now - last_update).days
-                        if since_update >= h.nudge_threshold_days:
-                            lagging_habits.append(h.title)
+                        since_update = (now.date() - last_update).days
+                        if since_update >= 3: # default nudge threshold 3 days
+                            lagging_projects.append(p.name)
                 
-                if not lagging_habits:
+                if not lagging_projects:
                     continue
                 
-                msg_text = "It looks like you've fallen behind on these habits: " + ", ".join(lagging_habits) + "\nPlease remember why you started."
+                msg_text = "It looks like you've fallen behind on these projects: " + ", ".join(lagging_projects) + "\nPlease remember why you started."
                 
                 if user.encrypted_google_api_key:
                     try:
                         api_key = decrypt_key(user.encrypted_google_api_key)
                         ai = GoogleProvider(api_key=api_key)
-                        prompt = f"The user has fallen behind on these habits for several days: {', '.join(lagging_habits)}. Write a brief, supportive, and pedagogical evening nudge (1-2 sentences) encouraging them to restart without feeling guilty. No markdown."
+                        prompt = f"The user has fallen behind on these projects for several days: {', '.join(lagging_projects)}. Write a brief, supportive, and pedagogical evening nudge (1-2 sentences) encouraging them to restart without feeling guilty. No markdown."
                         msg_text = run_async(ai.generate_text(prompt))
                     except Exception as e:
-                        print(f"Failed to generate AI habit nudge: {e}")
+                        print(f"Failed to generate AI project nudge: {e}")
                 
                 try:
                     if bot:
@@ -268,3 +267,28 @@ def morning_planner_job():
                     run_async(bot.send_message(chat_id=target_chat_id, text=msg_text, parse_mode="HTML"))
             except Exception as e:
                 print(f"Failed to send morning planner to {user.telegram_id}: {e}")
+
+@shared_task(name="job_midnight_reset")
+def midnight_reset_job():
+    """
+    Runs at midnight. Inspects all Projects with a daily_target_value.
+    Calculates if daily_progress >= daily_target_value. If yes, bump total_completions.
+    If no, break current_streak = 0.
+    Finally, reset project.daily_progress = 0.
+    """
+    now = datetime.utcnow()
+    with SessionLocal() as db:
+        users = db.query(User).all()
+        for user in users:
+            # Assumes cutoff checked hourly, but for simplicity let's assume this strictly runs when now.hour == user.day_cutoff_time.hour
+            if now.hour == user.day_cutoff_time.hour and 0 <= now.minute < 60:
+                projects = db.query(Project).filter(Project.user_id == user.id, Project.daily_target_value != None).all()
+                for p in projects:
+                    if p.daily_progress >= p.daily_target_value:
+                        p.total_completions = (p.total_completions or 0) + 1
+                        # We don't increment streak here because that might be done instantly on log, or we do it here. 
+                        # Actually, keeping streak intact if they hit it.
+                    else:
+                        p.current_streak = 0
+                    p.daily_progress = 0
+                db.commit()

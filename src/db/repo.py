@@ -47,19 +47,47 @@ def init_db():
             # Check for PostgreSQL or SQLite
             if "sqlite" in DATABASE_URL:
                 try:
-                    conn.execute(sql_text("ALTER TABLE habits ADD COLUMN type VARCHAR DEFAULT 'counter'"))
+                    conn.execute(sql_text("ALTER TABLE projects ADD COLUMN daily_target_value INTEGER"))
                 except Exception:
                     pass
                 try:
-                    conn.execute(sql_text("ALTER TABLE habits ADD COLUMN unit VARCHAR"))
+                    conn.execute(sql_text("ALTER TABLE projects ADD COLUMN daily_progress INTEGER DEFAULT 0"))
                 except Exception:
                     pass
                 try:
-                    conn.execute(sql_text("ALTER TABLE habits ADD COLUMN last_reset_date DATE"))
+                    conn.execute(sql_text("ALTER TABLE projects ADD COLUMN current_streak INTEGER DEFAULT 0"))
+                except Exception:
+                    pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE projects ADD COLUMN last_completed_date DATE"))
+                except Exception:
+                    pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE projects ADD COLUMN total_completions INTEGER DEFAULT 0"))
                 except Exception:
                     pass
                 try:
                     conn.execute(sql_text("ALTER TABLE sessions ADD COLUMN rest_start_time TIMESTAMP"))
+                except Exception:
+                    pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE projects ADD COLUMN daily_target_value INTEGER"))
+                except Exception:
+                    pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE projects ADD COLUMN daily_progress INTEGER DEFAULT 0"))
+                except Exception:
+                    pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE projects ADD COLUMN current_streak INTEGER DEFAULT 0"))
+                except Exception:
+                    pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE projects ADD COLUMN last_completed_date DATE"))
+                except Exception:
+                    pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE projects ADD COLUMN total_completions INTEGER DEFAULT 0"))
                 except Exception:
                     pass
                 try:
@@ -73,13 +101,12 @@ def init_db():
             else:
                 # PostgreSQL
                 columns_to_add = [
-                    ("habits", "type", "VARCHAR DEFAULT 'counter'"),
-                    ("habits", "unit", "VARCHAR"),
-                    ("habits", "last_reset_date", "DATE"),
-                    ("habits", "updated_at", "TIMESTAMP WITH TIME ZONE DEFAULT NOW()"),
-                    ("habits", "periodicity_days", "INTEGER DEFAULT 1"),
-                    ("habits", "nudge_threshold_days", "INTEGER DEFAULT 2"),
                     ("users", "report_config", "JSON"),
+                    ("projects", "daily_target_value", "INTEGER"),
+                    ("projects", "daily_progress", "INTEGER DEFAULT 0"),
+                    ("projects", "current_streak", "INTEGER DEFAULT 0"),
+                    ("projects", "last_completed_date", "DATE"),
+                    ("projects", "total_completions", "INTEGER DEFAULT 0"),
                     ("projects", "unit", "VARCHAR"),
                     ("projects", "next_action_text", "VARCHAR"),
                     ("time_logs", "progress_amount", "FLOAT"),

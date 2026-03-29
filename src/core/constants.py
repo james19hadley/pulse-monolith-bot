@@ -2,7 +2,6 @@ from enum import Enum
 
 class IntentType(str, Enum):
     LOG_WORK = "LOG_WORK"
-    LOG_HABIT = "LOG_HABIT"
     CREATE_ENTITIES = "CREATE_ENTITIES"
     ADD_INBOX = "ADD_INBOX"
     ADD_TASKS = "ADD_TASKS"

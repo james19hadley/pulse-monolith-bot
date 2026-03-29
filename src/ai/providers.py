@@ -18,10 +18,7 @@ class LogWorkParams(BaseModel):
     unmatched_project_name: Optional[str] = Field(description="If no project matches, provide the inferred name of the project here", default=None)
     description: Optional[str] = Field(description="A brief 1-5 word summary of what was done.", default=None)
 
-class LogHabitParams(BaseModel):
-    habit_id: Optional[int] = Field(description="The integer ID of the matching habit. Null if no habit matches.", default=None)
     amount_completed: int = Field(description="The numeric amount completed. If user just says 'did pushups', default to 1 unless specified.", default=1)
-    unmatched_habit_name: Optional[str] = Field(description="If no habit matches, provide the inferred name of the new habit here (e.g. 'Drink water').", default=None)
     description: Optional[str] = Field(description="A brief description or comment if the user provided one.", default=None)
 
 class AddInboxParams(BaseModel):
@@ -32,7 +29,7 @@ class SessionControlParams(BaseModel):
     context: Optional[str] = Field(description="If action is 'REST', this captures what they were just working on as a save-state context. e.g., 'fixing the SQL query'.", default=None)
 
 class ReportConfigParams(BaseModel):
-    blocks: List[str] = Field(description="Blocks to include in the report. Allowed values: 'focus', 'habits', 'inbox', 'void'. Output in the order requested by user.", default=["focus", "habits", "inbox", "void"])
+    blocks: List[str] = Field(description="Blocks to include in the report. Allowed values: 'focus', 'projects', 'inbox', 'void'. Output in the order requested by user.", default=["focus", "projects", "inbox", "void"])
     style: str = Field(description="Stylistic theme: 'strict', 'emoji', 'casual', or user's custom style.", default="emoji")
 
 class SingleConfigParam(BaseModel):
@@ -47,42 +44,18 @@ class CreateProjectParams(BaseModel):
     target_value: int = Field(description="The target estimated effort value. If they specify hours, multiply by 60. Default is 0.", default=0)
     unit: Optional[str] = Field(description="The unit of measurement (e.g. pages, pages, reps, hours, minutes). Default is minutes.", default="minutes")
 
-class CreateHabitParams(BaseModel):
-    title: str = Field(description="The short concise name of the new habit. e.g. instead of 'делать для фулл планша уражнения' use 'фулл планш'")
-    target_value: int = Field(description="The target numeric value for the habit per cycle, e.g. minutes, reps. Default is 1.", default=1)
-    unit: str = Field(description="The unit of the habit calculation, e.g. 'minutes', 'pages', 'times'. Default is 'times'", default="times")
-
-class CreateEntitiesParams(BaseModel):
-    projects: List[CreateProjectParams] = Field(description="List of new projects to create.")
-    habits: List[CreateHabitParams] = Field(description="List of new habits to create.")
 
 class CreateProjectParams(BaseModel):
     title: str = Field(description="The name of the new project.")
     target_value: int = Field(description="The target estimated effort value. If they specify hours, multiply by 60. Default is 0.", default=0)
     unit: Optional[str] = Field(description="The unit of measurement (e.g. pages, pages, reps, hours, minutes). Default is minutes.", default="minutes")
 
-class CreateHabitParams(BaseModel):
-    title: str = Field(description="The short concise name of the new habit. e.g. instead of 'делать для фулл планша уражнения' use 'фулл планш'")
-    target_value: int = Field(description="The target numeric value for the habit per cycle, e.g. minutes, reps. Default is 1.", default=1)
-    unit: str = Field(description="The unit of the habit calculation, e.g. 'minutes', 'pages', 'times'. Default is 'times'", default="times")
-
-class CreateEntitiesParams(BaseModel):
-    projects: List[CreateProjectParams] = Field(description="List of new projects to create.")
-    habits: List[CreateHabitParams] = Field(description="List of new habits to create.")
 
 class CreateProjectParams(BaseModel):
     title: str = Field(description="The name of the new project.")
     target_value: int = Field(description="The target estimated effort value. If they specify hours, multiply by 60. Default is 0.", default=0)
     unit: Optional[str] = Field(description="The unit of measurement (e.g. pages, pages, reps, hours, minutes). Default is minutes.", default="minutes")
 
-class CreateHabitParams(BaseModel):
-    title: str = Field(description="The short concise name of the new habit. e.g. instead of 'делать для фулл планша уражнения' use 'фулл планш'")
-    target_value: int = Field(description="The target numeric value for the habit per cycle, e.g. minutes, reps. Default is 1.", default=1)
-    unit: str = Field(description="The unit of the habit calculation, e.g. 'minutes', 'pages', 'times'. Default is 'times'", default="times")
-
-class CreateEntitiesParams(BaseModel):
-    projects: List[CreateProjectParams] = Field(description="List of new projects to create.")
-    habits: List[CreateHabitParams] = Field(description="List of new habits to create.")
 
 
 class TaskParam(BaseModel):
@@ -95,7 +68,7 @@ class AddTasksParams(BaseModel):
 
 
 class EditEntitiesParam(BaseModel):
-    entity_type: str = Field(description="Strictly 'project' or 'habit' - what kind of entity to edit")
+    entity_type: str = Field(description="Strictly 'project' - what kind of entity to edit")
     action: str = Field(description="Strictly 'edit' or 'delete'", default="edit")
     entity_name_or_id: str = Field(description="The name or ID of the existing entity to edit or delete")
     new_name: Optional[str] = Field(description="The new name for the entity, if renaming", default=None)
@@ -154,25 +127,6 @@ CURRENT ACTIVE PROJECTS:
         )
         return LogWorkParams.model_validate_json(response.text), self._get_usage(response)
 
-    def extract_habit_parameters(self, text: str, active_habits_text: str) -> Tuple[Optional[LogHabitParams], dict]:
-        system_prompt = f"""You are a precise data extraction tool.
-The user is logging a habit. Extract the habit ID and the amount completed.
-If no habit matches, return null for habit_id.
-
-CURRENT HABITS:
-{active_habits_text}
-"""
-        response = self.client.models.generate_content(
-            model=self.model_id,
-            contents=text,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-                response_mime_type='application/json',
-                response_schema=LogHabitParams,
-                temperature=0.0
-            ),
-        )
-        return LogHabitParams.model_validate_json(response.text), self._get_usage(response)
 
     def extract_inbox_parameters(self, text: str) -> Tuple[Optional[AddInboxParams], dict]:
         response = self.client.models.generate_content(
@@ -219,7 +173,7 @@ CURRENT HABITS:
         system_prompt = """You are a configuration parser.
 The user is describing how they want their daily accountability report to look.
 Extract their preferred visual style (e.g. strict, emoji, casual) and the blocks they want included (and in what order).
-Available blocks: 'focus', 'habits', 'inbox', 'void'.
+Available blocks: 'focus', 'projects', 'inbox', 'void'.
 If you are unsure of the style, default to 'emoji'.
 If they don't specify blocks, use the default list."""
         response = self.client.models.generate_content(
@@ -236,7 +190,7 @@ If they don't specify blocks, use the default list."""
 
 
     def extract_create_entities(self, text: str) -> Tuple[Optional[CreateEntitiesParams], dict]:
-        system_prompt = "You are a data extraction tool. The user wants to create one or more projects and/or habits. Extract their names and any target metrics (like target hours for a project)."
+        system_prompt = "You are a data extraction tool. The user wants to create one or more projects . Extract their names and any target metrics (like target hours for a project)."
         try:
             response = self.client.models.generate_content(
                 model=self.model_id,
@@ -255,7 +209,7 @@ If they don't specify blocks, use the default list."""
             return None, {}
 
     def extract_create_entities(self, text: str) -> Tuple[Optional[CreateEntitiesParams], dict]:
-        system_prompt = "You are a data extraction tool. The user wants to create one or more projects and/or habits. Extract their names and any target metrics (like target hours for a project)."
+        system_prompt = "You are a data extraction tool. The user wants to create one or more projects . Extract their names and any target metrics (like target hours for a project)."
         try:
             response = self.client.models.generate_content(
                 model=self.model_id,
@@ -278,7 +232,7 @@ If they don't specify blocks, use the default list."""
         """Extract entity edit requests from user text"""
         system_prompt = f"""You are a data extraction tool.
 The user wants to edit (rename, change target value) one or more existing entities.
-Extract the entity type (project or habit), the current name or identifier, and the changes requested.
+Extract the entity type (project), the current name or identifier, and the changes requested.
 
 CURRENT ENTITIES:
 {entities_text}

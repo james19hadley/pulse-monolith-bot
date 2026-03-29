@@ -24,8 +24,8 @@ If we send the user's entire history to the LLM, the token count will explode, c
 1.  **Block A: System Persona:** "You are the Pulse Monolith. You are dry, factual, and strictly map user input to tools."
 2.  **Block B: Active Quests (Projects):** ONLY projects with `status='active'`. Completed or paused projects are excluded to save tokens.
     *   *Format:* `[Project ID: 12] C++ Text RPG | Next Action: Pointers (60m)`
-3.  **Block C: Daily Habits:** Today's routine and current counters.
-    *   *Format:* `[Habit ID: 5] Pushups | Current: 0/10`
+3.  **Block C: Daily Projects:** Today's routine and current counters.
+    *   *Format:* `[Project ID: 5] Pushups | Current: 0/10`
 4.  **Block D: Short-Term Working Memory:** The last 3 to 5 interactions in the current session. This allows the user to say *"I coded for 40 mins"* and then follow up with *"and 20 more just now"* without losing context.
 5.  **Block E: Temporal Awareness:** Injected strictly by Python.
     *   *Format:* `Current Time: Monday, 15:30 (Europe/Berlin). Session is ACTIVE.`
@@ -59,7 +59,7 @@ Large Language Models are notoriously bad at math, time zones, and calculating r
 To prevent database fragmentation (e.g., creating duplicate projects for "coding", "programming", "coded"), the system strictly adheres to the following principles:
 
 ### 3.1 Strict Mapping (No Hallucinated Entities)
-The LLM cannot create `Projects` or `Habits` on the fly as a side effect of logging time. 
+The LLM cannot create `Projects` or `Projects` on the fly as a side effect of logging time. 
 *   Before parsing a `LOG_WORK` intent, the system fetches all of the user's `active` projects (with their database `ID`s) and injects them into the prompt prompt.
 *   The LLM maps the user's text to an existing `ID`. If no match is found, the time is logged against `project_id = Null` (useful time, but unassigned to a quest).
 

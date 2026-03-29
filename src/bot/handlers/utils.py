@@ -30,7 +30,7 @@ def log_tokens(db: DBSession, telegram_id: int, usage_data: dict):
         print(f"Error logging tokens: {e}")
 
 import datetime
-from src.db.models import Project, TimeLog, Habit, Inbox
+from src.db.models import Project, TimeLog, Inbox
 from src.bot.views import build_daily_report
 from src.core.security import decrypt_key
 from src.ai.providers import GoogleProvider
@@ -90,7 +90,7 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
         except Exception:
             config = None
     if not config:
-        config = {"blocks": ["focus", "habits", "inbox", "void"], "style": "emoji"}
+        config = {"blocks": ["focus", "projects", "inbox", "void"], "style": "emoji"}
         
     user_logs = db.query(TimeLog).filter(TimeLog.user_id == user.id, TimeLog.created_at >= start_bound, TimeLog.created_at < end_bound).all()
     focus_time = sum(l.duration_minutes for l in user_logs if l.project_id is not None)
@@ -111,8 +111,8 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
                 if log.progress_amount:
                     proj_stats[proj.title]["progress"] += log.progress_amount
     
-    user_habits = db.query(Habit).filter(Habit.user_id == user.id).all()
-    habits_data = [{"title": h.title, "current": h.current_value, "target": h.target_value, "unit": h.unit or ""} for h in user_habits]
+    user_habits = db.query(Project).filter(Project.user_id == user.id, Project.daily_target_value != None).all()
+    habits_data = [{"title": h.title, "current": h.daily_progress or 0, "target": h.daily_target_value, "unit": h.unit or ""} for h in user_habits]
     
     inbox_items = db.query(Inbox).filter(Inbox.user_id == user.id, Inbox.status == "pending").count()
     
@@ -123,7 +123,7 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
         "focus_minutes": focus_time,
         "void_minutes": void_time,
         "projects": proj_stats,
-        "habits": habits_data,
+        "projects_daily": habits_data,
         "inbox_count": inbox_items
     }
     
