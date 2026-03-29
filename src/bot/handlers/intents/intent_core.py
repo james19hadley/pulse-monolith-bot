@@ -107,3 +107,10 @@ async def _handle_config_report(message: Message, db, user, provider_name, api_k
     blocks_str = ", ".join(extraction.blocks)
     await message.answer(f"✅ Report configuration updated!\n<b>Blocks:</b> {blocks_str}\n<b>Style:</b> {extraction.style}", parse_mode="HTML")
 
+
+
+async def _handle_undo(message: Message, db, user, provider_name, api_key):
+    from src.bot.handlers.core import cmd_undo
+    # Since cmd_undo uses SessionLocal anyway, we can just call it
+    # We pass None for state since it handles it
+    await cmd_undo(message, state=None)

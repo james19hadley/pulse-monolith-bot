@@ -76,9 +76,8 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
     desc = html.escape(extraction.description) if extraction.description else ""
     append_desc = f"\n💬 <i>{desc}</i>" if desc else ""
     
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="↩️ Undo", callback_data=f"undo_work_{log_entry.id}")
-    ]])
+    from src.bot.keyboards import get_main_menu
+    keyboard = get_main_menu()
     
     msg_lines = []
     

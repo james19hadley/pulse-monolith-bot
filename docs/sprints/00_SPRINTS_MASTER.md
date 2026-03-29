@@ -39,7 +39,9 @@ Every new Sprint Markdown file must follow this strict structure to maintain con
 | [Sprint 06](06_AUTONOMY_AND_HABITS.md) | Autonomy & AI Completeness | 🟢 Completed |
 | [Sprint 07](07_CONFIG_FINOPS_PERSONA.md) | Configuration, FinOps & Persona | 🟢 Completed |
 | [Sprint 08](08_ACCOUNTABILITY_ENGINE.md) | Accountability Engine & Daily Reports | 🟢 Completed |
-| [Sprint 09](09_CLI_FALLBACK.md) | The CLI Fallback (Zero-AI Mode) | � Completed || [Sprint 10](10_AI_SETTINGS_ROUTER.md) | Deep Customization & AI Settings Router | � Completed || [Sprint 11](11_PROJECT_CREATION_ENTITIES.md) | AI Project & Habit Creation | 🟢 Completed |
+| [Sprint 09](09_CLI_FALLBACK.md) | The CLI Fallback (Zero-AI Mode) | 🟢 Completed |
+| [Sprint 10](10_AI_SETTINGS_ROUTER.md) | Deep Customization & AI Settings Router | 🟢 Completed |
+| [Sprint 11](11_PROJECT_CREATION_ENTITIES.md) | AI Project & Habit Creation | 🟢 Completed |
 | [Sprint 12](12_CONVERSATIONAL_PERSONA.md) | Conversational MVP & Persona | 🟢 Completed |
 | [Sprint 13](13_SAAS_INFRASTRUCTURE.md) | Phase 2: SaaS Infrastructure | 🟢 Completed |
 | [Sprint 14](14_PRODUCTION_DEPLOYMENT.md) | Deployment to VPS | 🟢 Completed |
@@ -49,11 +51,10 @@ Every new Sprint Markdown file must follow this strict structure to maintain con
 | [Sprint 18](18_UI_ARCHITECTURE_AND_PROGRESS.md) | UI Architecture & Project Progress Unification | 🟢 Completed |
 | [Sprint 19](19_REPORTING_ENGINE.md) | Reporting Engine & Timezone Accuracy | 🟢 Completed |
 | [Sprint 20](20_ENTITY_MANAGEMENT_UI.md) | Entity Management UI (Inline Panels) | 🟢 Completed |
-
 | [Sprint 21](21_SMART_UNDO_REPORTING_UI.md) | Smart Undo & Reporting Redesign | 🟢 Completed |
-| [Sprint 22](22_DAILY_PROGRESS_AND_ABSOLUTE_VALUES.md) | Daily Progress Tracking and Absolute Values | 🟡 Active |
-| [Sprint 23](23_PROACTIVE_NUDGING_AND_TASKS.md) | Proactive Nudging and Spoon-fed Tasks | ⚪ Draft |
-
-| [Sprint 22](22_DAILY_PROGRESS_AND_ABSOLUTE_VALUES.md) | Daily Progress Tracking and Absolute Values | 🟡 Active |
-| [Sprint 23](23_PROACTIVE_NUDGING_AND_TASKS.md) | Proactive Nudging and Spoon-fed Tasks | ⚪ Draft |
-| [Sprint 24](24_OPEN_SESSIONS_AND_RETRO_BILLING.md) | Frictionless Open Sessions & Save-State Rest Mode | ⚪ Draft |
+| [Sprint 22](22_DAILY_PROGRESS_AND_ABSOLUTE_VALUES.md) | Daily Progress Tracking and Absolute Values | 🟢 Completed |
+| [Sprint 23](23_PROACTIVE_NUDGING_AND_TASKS.md) | Proactive Nudging and Spoon-fed Tasks | 🟢 Completed |
+| [Sprint 24](24_OPEN_SESSIONS_AND_RETRO_BILLING.md) | Frictionless Open Sessions & Save-State Rest Mode | 🟢 Completed |
+| [Sprint 25](25_DAILY_PLANNING_AND_GENTLE_LISTS.md) | Daily Planning & Gentle Lists | ⚪ Draft |
+| [Sprint 26](26_PROJECT_ZERO_AND_NLP_EDITING.md) | Project Zero, Sticky Menus & NLP Editing | ⚪ Draft |
+| [Sprint 27](27_REPORT_AND_UI_POLISH.md) | Report Engine Polish & Mathematical Fixes | ⚪ Draft |

@@ -11,7 +11,7 @@ from src.ai.router import IntentType, get_intent
 from src.ai.providers import GoogleProvider
 
 # --- NEW DISPATCHER IMPORTS ---
-from src.bot.handlers.intents.intent_core import _handle_chat, _handle_config_update, _handle_config_report
+from src.bot.handlers.intents.intent_core import _handle_chat, _handle_config_update, _handle_config_report, _handle_undo
 from src.bot.handlers.intents.intent_entities import _handle_create_entities, _handle_add_inbox, _handle_add_tasks
 from src.bot.handlers.intents.intent_log_work import _handle_log_work
 from src.bot.handlers.intents.intent_log_habit import _handle_log_habit
@@ -32,6 +32,7 @@ INTENT_HANDLERS = {
     IntentType.ADD_TASKS: _handle_add_tasks,
     IntentType.SYSTEM_CONFIG: _handle_config_update,
     IntentType.CONFIG_REPORT: _handle_config_report,
+    IntentType.UNDO: _handle_undo,
 }
 
 @router.message()
@@ -87,10 +88,7 @@ async def ai_message_router(message: Message):
             # --- NEW DISPATCH ROUTER ---
             handler = INTENT_HANDLERS.get(intent)
             if handler:
-                if intent == IntentType.UNDO:
-                    pass # Handled via callbacks usually, but if typed it would go to a special function
-                else:
-                    await handler(message, db, user, provider_name, api_key)
+                await handler(message, db, user, provider_name, api_key)
             else:
                 await message.answer(Prompts.UNKNOWN_COMMAND.format(text=message.text))
                 
