@@ -384,8 +384,7 @@ def get_project_view_keyboard(proj_id, status="active", sub_count=0, parent_id=N
             InlineKeyboardButton(text="📊 Add Progress", callback_data=f"ui_proj_add_{proj_id}")
         ],
         [
-            InlineKeyboardButton(text="🔥 Edit Daily Target", callback_data=f"ui_proj_editdaily_{proj_id}"),
-            InlineKeyboardButton(text="🔗 Link", callback_data=f"ui_proj_link_{proj_id}")
+            InlineKeyboardButton(text="🔥 Edit Daily Target", callback_data=f"ui_proj_editdaily_{proj_id}")
         ],
         [
             InlineKeyboardButton(text="📦 Archive", callback_data=f"ui_proj_arch_{proj_id}"),
