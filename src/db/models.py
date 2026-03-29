@@ -115,6 +115,7 @@ class Habit(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     title: Mapped[str] = mapped_column(String)
+    status: Mapped[str] = mapped_column(String, default="active")
     target_value: Mapped[int] = mapped_column(Integer, default=1)
     current_value: Mapped[int] = mapped_column(Integer, default=0)
     type: Mapped[str] = mapped_column(String, default="counter") # 'counter' or 'boolean'
