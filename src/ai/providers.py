@@ -44,17 +44,26 @@ class CreateProjectParams(BaseModel):
     target_value: int = Field(description="The target estimated effort value. If they specify hours, multiply by 60. Default is 0.", default=0)
     unit: Optional[str] = Field(description="The unit of measurement (e.g. pages, pages, reps, hours, minutes). Default is minutes.", default="minutes")
 
-
-class CreateProjectParams(BaseModel):
-    title: str = Field(description="The name of the new project.")
-    target_value: int = Field(description="The target estimated effort value. If they specify hours, multiply by 60. Default is 0.", default=0)
-    unit: Optional[str] = Field(description="The unit of measurement (e.g. pages, pages, reps, hours, minutes). Default is minutes.", default="minutes")
+class CreateEntitiesParams(BaseModel):
+    projects: List[CreateProjectParams] = Field(description="List of new projects to create.")
 
 
 class CreateProjectParams(BaseModel):
     title: str = Field(description="The name of the new project.")
     target_value: int = Field(description="The target estimated effort value. If they specify hours, multiply by 60. Default is 0.", default=0)
     unit: Optional[str] = Field(description="The unit of measurement (e.g. pages, pages, reps, hours, minutes). Default is minutes.", default="minutes")
+
+class CreateEntitiesParams(BaseModel):
+    projects: List[CreateProjectParams] = Field(description="List of new projects to create.")
+
+
+class CreateProjectParams(BaseModel):
+    title: str = Field(description="The name of the new project.")
+    target_value: int = Field(description="The target estimated effort value. If they specify hours, multiply by 60. Default is 0.", default=0)
+    unit: Optional[str] = Field(description="The unit of measurement (e.g. pages, pages, reps, hours, minutes). Default is minutes.", default="minutes")
+
+class CreateEntitiesParams(BaseModel):
+    projects: List[CreateProjectParams] = Field(description="List of new projects to create.")
 
 
 
@@ -188,25 +197,6 @@ If they don't specify blocks, use the default list."""
         )
         return ReportConfigParams.model_validate_json(response.text), self._get_usage(response)
 
-
-    def extract_create_entities(self, text: str) -> Tuple[Optional[CreateEntitiesParams], dict]:
-        system_prompt = "You are a data extraction tool. The user wants to create one or more projects . Extract their names and any target metrics (like target hours for a project)."
-        try:
-            response = self.client.models.generate_content(
-                model=self.model_id,
-                contents=text,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_prompt,
-                    response_mime_type='application/json',
-                    response_schema=CreateEntitiesParams,
-                    temperature=0.0
-                ),
-            )
-            data = json.loads(response.text)
-            return CreateEntitiesParams(**data), self._get_usage(response)
-        except Exception as e:
-            print(f"Extraction error: {e}")
-            return None, {}
 
     def extract_create_entities(self, text: str) -> Tuple[Optional[CreateEntitiesParams], dict]:
         system_prompt = "You are a data extraction tool. The user wants to create one or more projects . Extract their names and any target metrics (like target hours for a project)."
