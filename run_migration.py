@@ -1,9 +1,9 @@
 import os
 from sqlalchemy import create_engine, text
-from src.core.config import settings
 
 def main():
-    engine = create_engine(settings.DATABASE_URL)
+    database_url = os.getenv("DATABASE_URL", "postgresql://pulse:pulse@db:5432/pulse")
+    engine = create_engine(database_url)
     with engine.connect() as conn:
         try:
             # Check if habits table exists
