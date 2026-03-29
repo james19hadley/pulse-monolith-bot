@@ -21,7 +21,7 @@ async def _handle_chat(message: Message, db, user, provider_name, api_key):
                 session.status = "closed"
                 user.active_session_id = None
                 db.commit()
-                response_text += "\n\n<i>✅ Session closed. (Void time acknowledged)</i>"
+                response_text += "\n\n<i>✅ Session closed. (Routine time acknowledged)</i>"
 
         try:
             # We instructed the LLM to use strict HTML tags. 

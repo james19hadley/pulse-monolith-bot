@@ -32,3 +32,6 @@
 ## 🏁 Completion Criteria
 - User logs +15 pages, and the report shows `15/114 pages [█░░░░░░░] 13%`.
 - The final AI summary is written in native Russian matching the personality.
+
+### 4. Deprecation of "The Void" Concept
+- [x] Completely eliminate all mentions and calculations of "The Void" codebase-wide. Unlogged explicit time is now strictly routed to "Project 0: Operations" and tracked directly.

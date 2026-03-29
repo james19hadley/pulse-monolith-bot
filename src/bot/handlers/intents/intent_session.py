@@ -11,7 +11,13 @@ async def _handle_session_control(message: Message, db, user, provider_name, api
     from datetime import datetime
     
 
-    params, tokens = extract_session_control(message.text, provider_name, api_key)
+    projects = db.query(Project).filter(Project.user_id == user.id, Project.status == 'active').all()
+    if not projects:
+        active_projects_text = "User has no active projects yet."
+    else:
+        active_projects_text = "User's active projects:\n" + "\n".join([f"ID: {p.id}, Title: {p.title}" for p in projects])
+
+    params, tokens = extract_session_control(message.text, provider_name, api_key, active_projects_text)
     if tokens:
         from src.bot.handlers.utils import log_tokens
         log_tokens(db, user.id, tokens)
@@ -35,7 +41,16 @@ async def _handle_session_control(message: Message, db, user, provider_name, api
         
         user.active_session_id = new_session.id
         db.commit()
-        await message.answer("🔥 Сессия начата. Не отвлекайся. Когда закончишь, просто скажи.")
+        
+        # Determine if we started contextually with a project
+        if params.project_id:
+            project = db.query(Project).filter_by(id=params.project_id, user_id=user.id).first()
+            if project:
+                await message.answer(f"🔥 Сессия начата для: <b>{project.title}</b>. Не отвлекайся. Когда закончишь, просто скажи.", parse_mode="HTML")
+            else:
+                await message.answer("🔥 Сессия начата. (Не смог найти указанный проект). Не отвлекайся. Когда закончишь, просто скажи.")
+        else:
+            await message.answer("🔥 Сессия начата. Не отвлекайся. Когда закончишь, просто скажи.")
         
     elif action == "REST":
         if not active_session_id:
@@ -89,7 +104,7 @@ async def _handle_session_control(message: Message, db, user, provider_name, api
             
             db.commit()
             await message.answer(f"🛑 **Finished**. Total time elapsed: {hrs}h {mins}m.\n\n"
-                                 f"Как разделим чек? Сколько из этого была реальная работа (Deep Work), а сколько списать в Void (отвлекся)?",
+                                 f"Как разделим чек? Сколько из этого была реальная работа (Deep Work), а сколько списать на рутину (Project 0) (отвлекся)?",
                                  parse_mode="Markdown")
 
 

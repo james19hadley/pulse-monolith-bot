@@ -151,7 +151,7 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
             session.status = "closed"
             user.active_session_id = None
             db.commit()
-            msg_lines.append("\n✅ <i>Session closed. The rest of the time is written off to The Void.</i>")
+            msg_lines.append("\n✅ <i>Session closed. The rest of the time is written off to Project 0.</i>")
 
     await message.answer(
         "\n".join(msg_lines),

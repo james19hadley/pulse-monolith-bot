@@ -36,16 +36,14 @@ def session_already_active_message() -> str:
 def no_active_session_message() -> str:
     return "\nError: No active session found to close."
 
-def session_ended_message(total_minutes: int, focus_minutes: int, void_minutes: int) -> str:
+def session_ended_message(total_minutes: int, focus_minutes: int) -> str:
     t_h, t_m = divmod(total_minutes, 60)
     f_h, f_m = divmod(focus_minutes, 60)
-    v_h, v_m = divmod(void_minutes, 60)
-    
+        
     msg = f"Session closed.\n\n"
     msg += f"<b>Total Time:</b> {t_h}h {t_m}m\n"
     msg += f"<b>Focused:</b> {f_h}h {f_m}m\n"
-    msg += f"<b>The Void (Lost):</b> {v_h}h {v_m}m\n"
-    return msg
+        return msg
 
 def build_progress_bar(current: int, target: int, length: int = 10) -> str:
     if target <= 0:
@@ -109,22 +107,21 @@ def nothing_to_undo_message() -> str:
 
 # Scheduler (Jobs)
 def catalyst_ping_message(hours_idle: float) -> str:
-    return f"The Void expands. You have not logged focus for {hours_idle} hour(s)."
+    return f"No unassigned project. You have not logged focus for {hours_idle} hour(s)."
 
 def stale_session_closed_message() -> str:
-    return "\n🌙 Active session auto-closed retroactively to avoid tracking empty void."
+    return "\n🌙 Active session auto-closed retroactively to avoid tracking empty unassigned time."
 
 # Accountability Reports (Lego Builder)
 def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str:
     style = config.get("style", "emoji")
-    blocks = config.get("blocks", ["focus", "projects_daily", "inbox", "void"])
+    blocks = config.get("blocks", ["focus", "projects_daily", "inbox"])
     
     # Emojis dictionary
     e = {
         "focus": "⏱" if style != "strict" else "",
         "projects_daily": "📈" if style != "strict" else "",
         "inbox": "📥" if style != "strict" else "",
-        "void": "🕳" if style != "strict" else "",
         "header": "📊" if style != "strict" else ""
     }
     
@@ -180,9 +177,7 @@ def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str
             if inbox > 0:
                 parts.append(f"\n{e['inbox']} <b>Inbox Captured:</b> {inbox} items")
                 
-        elif block == "void":
-            v_h, v_m = divmod(stats.get('void_minutes', 0), 60)
-            parts.append(f"\n{e['void']} <b>Void (Lost Time):</b> {v_h}h {v_m}m")
+
 
     # Clean up empty lines and join
     report = "\n".join([p for p in parts if p]).strip()

@@ -12,11 +12,11 @@ Instead, the bot uses **Work Sessions**. The user's life outside a session is co
 ### 1.2. Ending a Session
 *   **Action:** The user sends `/end_session` or says "I'm done for now."
 *   **System Response:** The bot calculates the total duration of the session. It sums up all the "focused work" logged during this specific window. 
-*   **The Math of "The Void":** 
+*   **The Math of Project 0 (Unassigned Work):** 
     *   `Total Session Duration` = `end_time` - `start_time`.
     *   `Focused Time` = Sum of all logged micro-reports (e.g., 40 mins on Project A + 20 mins on reading).
-    *   `The Void (Lost Time)` = `Total Session Duration` - `Focused Time`.
-*   **Output:** The bot replies locally in the chat with a summary of the session: *"Session closed. Total time: 4h. Focused: 2h 30m. The Void: 1h 30m."*
+    *   `Project 0 Time` = `Total Session Duration` - `Focused Target Time`. (Note: implicitly unassigned time during a session is mapped to Project 0)
+*   **Output:** The bot replies locally in the chat with a summary of the session: *"Session closed. Total time: 4h. Focused: 2h 30m. Project 0: 1h 30m."*
 
 ## 2. The Soft Ping (The Catalyst Mechanism)
 This is the core pro-active feature of the bot. It is designed to nudge the user without becoming a spammy "graveyard of notifications."
@@ -54,7 +54,7 @@ The report is strictly standardized, markdown-formatted, and completely devoid o
 **Time Metrics:**
 * Total Session Time: 6h 00m
 * 🟩 Focused Time: 4h 15m
-* ⬛ The Void (Lost Time): 1h 45m
+* 📁 Project 0 (Operations): 1h 45m
 
 **Active Quests (Projects):**
 * C++ Text RPG: +2h 00m -> [Total: 8h / 30h] 🟩🟩⬜⬜⬜

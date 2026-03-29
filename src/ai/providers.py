@@ -24,10 +24,11 @@ class AddInboxParams(BaseModel):
 
 class SessionControlParams(BaseModel):
     action: str = Field(description="Strictly 'START', 'END', 'REST', or 'RESUME' depending on whether they are starting a session, finishing one, taking a break, or coming back from a break.")
+    project_id: Optional[int] = Field(description="If they mention a specific project id they are starting to work on, extract it here.", default=None)
     context: Optional[str] = Field(description="If action is 'REST', this captures what they were just working on as a save-state context. e.g., 'fixing the SQL query'.", default=None)
 
 class ReportConfigParams(BaseModel):
-    blocks: List[str] = Field(description="Blocks to include in the report. Allowed values: 'focus', 'projects', 'inbox', 'void'. Output in the order requested by user.", default=["focus", "projects", "inbox", "void"])
+    blocks: List[str] = Field(description="Blocks to include in the report. Allowed values: 'focus', 'projects', 'inbox'. Output in the order requested by user.", default=["focus", "projects", "inbox"])
     style: str = Field(description="Stylistic theme: 'strict', 'emoji', 'casual', or user's custom style.", default="emoji")
 
 class SingleConfigParam(BaseModel):
@@ -148,12 +149,12 @@ CURRENT ACTIVE PROJECTS:
         )
         return AddInboxParams.model_validate_json(response.text), self._get_usage(response)
 
-    def extract_session_control(self, text: str) -> Tuple[Optional[SessionControlParams], dict]:
+    def extract_session_control(self, text: str, active_projects_text: str = "") -> Tuple[Optional[SessionControlParams], dict]:
         response = self.client.models.generate_content(
             model=self.model_id,
             contents=text,
             config=types.GenerateContentConfig(
-                system_instruction="Determine if the user is starting, ending, pausing (rest/break), or resuming a work session.",
+                system_instruction=f"Determine if the user is starting, ending, pausing (rest/break), or resuming a work session. If starting, extract the project ID if mentioned.\nCURRENT ACTIVE PROJECTS:\n{active_projects_text}",
                 response_mime_type='application/json',
                 response_schema=SessionControlParams,
                 temperature=0.0

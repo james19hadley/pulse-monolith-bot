@@ -90,11 +90,10 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
         except Exception:
             config = None
     if not config:
-        config = {"blocks": ["focus", "projects", "inbox", "void"], "style": "emoji"}
+        config = {"blocks": ["focus", "projects", "inbox"], "style": "emoji"}
         
     user_logs = db.query(TimeLog).filter(TimeLog.user_id == user.id, TimeLog.created_at >= start_bound, TimeLog.created_at < end_bound).all()
     focus_time = sum(l.duration_minutes for l in user_logs if l.project_id is not None)
-    void_time = sum(l.duration_minutes for l in user_logs if l.project_id is None)
     
     proj_stats = {}
     for log in user_logs:
@@ -121,7 +120,6 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
     stats = {
         "date": date_str,
         "focus_minutes": focus_time,
-        "void_minutes": void_time,
         "projects": proj_stats,
         "projects_daily": habits_data,
         "inbox_count": inbox_items

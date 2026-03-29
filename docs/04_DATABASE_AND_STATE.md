@@ -21,7 +21,7 @@ Stores user preferences, SaaS state, and LLM configurations.
 
 
 ### 2.2. `Sessions` Table (The Boundaries of Time)
-Crucial for calculating "The Void". A user's day consists of one or multiple sessions.
+Crucial for calculating Project 0 / unassigned time. A user's day consists of one or multiple sessions.
 *   `id` (PK)
 *   `user_id` (FK -> `Users`, Indexed)
 *   `start_time` (DateTime, UTC)
@@ -75,7 +75,7 @@ Records state changes initiated by the LLM Tool Calling to allow the user to rev
 
 ## 3. State Management & Lifecycle Rules
 
-### 3.1. Calculating "The Void" (SQL Logic)
+### 3.1. Calculating Project 0 / Unassigned Time (SQL Logic)
 When a session is closed, the Python backend executes the following logic (Pseudocode for the AI coder):
 1. `session_duration` = `session.end_time` - `session.start_time`
 2. `focused_time` = `SUM(duration_minutes)` from `Time_Logs` where `session_id == current_session.id`

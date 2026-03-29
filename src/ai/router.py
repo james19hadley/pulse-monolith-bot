@@ -33,11 +33,11 @@ def extract_inbox(user_text: str, provider_name: str, api_key: str) -> Tuple[Opt
             return None, {}
     return None, {}
 
-def extract_session_control(user_text: str, provider_name: str, api_key: str) -> Tuple[Optional[SessionControlParams], dict]:
+def extract_session_control(user_text: str, provider_name: str, api_key: str, active_projects_text: str = "") -> Tuple[Optional[SessionControlParams], dict]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
-            return provider.extract_session_control(user_text)
+            return provider.extract_session_control(user_text, active_projects_text)
         except Exception as e:
             print(f'LLM Extraction Error: {e}')
             return None, {}

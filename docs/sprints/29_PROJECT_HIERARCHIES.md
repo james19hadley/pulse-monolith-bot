@@ -44,3 +44,4 @@ If a Master Project tracks hours, but a Sub-Project tracks "pages", the Master P
 - [ ] **Engine:** Write `get_project_tree()` query aggregator.
 - [ ] **UI:** Add `🔗 Link to Master Project` button in Project Settings.
 - [ ] **UI:** Update `generate_daily_report_text` in `utils.py` to draw tree nodes (`├─` and `└─`).
+- [ ] Project 0: Operations should always be displayed first in the projects list/menu.

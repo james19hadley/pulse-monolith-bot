@@ -25,15 +25,15 @@ To solve this, the architecture must separate data *storage* from data *presenta
 2.  **The Quest (Sub-project):** e.g., "Write a text-based RPG" (30 hours). **This is the primary operational layer.** The user actively works on this. The daily report shows progress specifically for this manageable chunk (e.g., `5 hrs / 30 hrs [🟩🟩⬜⬜⬜]`).
 3.  **The Next Action (Step):** e.g., "Read the chapter on Pointers" (1 hour). This is the granular action the bot uses to nudge the user during the day (*"Are you ready to spend 1 hour reading about pointers?"*).
 
-## 4. Absolute Honesty and "The Void" (Lost Time)
+## 4. Absolute Honesty and Project 0 (Routine / Operations)
 The bot must track the difference between *pretending* to work and *actually* working. 
 The system operates on the concept of **Sessions**. 
 *   If the user starts a session that lasts 8 hours...
 *   But the user only reports 3 hours of actual, focused work on projects...
 *   The system mathematically calculates the remaining 5 hours.
-*   These 5 hours are strictly labeled as **"The Void" (Uncategorized / Lost Time)**.
+*   These hours are strictly labeled as **"Project 0" (Operations / Routine)** or simply ignored if not explicitly tracked.
 
-In the Evening Report, the bot will ruthlessly but objectively display this statistic: `Focused Time: 3h. Lost Time: 5h.` This acts as "kompromat" (compromising material)—a mirror reflecting the truth. It is not an insult; it is pure data to motivate the user to do better the next day.
+In the Evening Report, the bot will ruthlessly but objectively display this statistic: `Focused: 3h. Project 0: 5h.` This acts as "kompromat" (compromising material)—a mirror reflecting the truth. It is not an insult; it is pure data to motivate the user to do better the next day.
 
 ## 5. The Rule of the "Kompromat" Report
 The system is built to prevent the user from hiding. 
