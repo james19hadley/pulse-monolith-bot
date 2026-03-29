@@ -106,15 +106,6 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
             if is_time_based:
                 hours = proj.target_value / 60 if proj.target_value > 0 else 0
                 text = f"📁 <b>{proj.title}</b>\n\nTarget Hours: {hours:g}h\nTotal Tracked: {total_hours:g}h\nToday Tracked: {today_hours:g}h\n🕒 Last active: {last_active_str}\n{progress_bar}\nStatus: {proj.status}"
-
-            if getattr(proj, 'daily_target_value', None) is not None:
-                streak = getattr(proj, 'current_streak', 0)
-                daily_prog = getattr(proj, 'daily_progress', 0)
-                emoji = "🔥" if streak > 0 else "🎯"
-                text += f"
-{emoji} Daily Target: {daily_prog:g} / {proj.daily_target_value:g} {proj.unit or 'min'}"
-                if streak > 0:
-                    text += f" (Streak: {streak} days)"
             else:
                 text = f"📁 <b>{proj.title}</b>\n\nTarget: {proj.target_value:g} {proj.unit}\nTotal Progress: {total_progress:g} {proj.unit}\nToday Progress: {today_progress:g} {proj.unit}\n🕒 Last active: {last_active_str}\n{progress_bar}\nStatus: {proj.status}"
 
@@ -122,24 +113,10 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
                 streak = getattr(proj, 'current_streak', 0)
                 daily_prog = getattr(proj, 'daily_progress', 0)
                 emoji = "🔥" if streak > 0 else "🎯"
-                text += f"
-{emoji} Daily Target: {daily_prog:g} / {proj.daily_target_value:g} {proj.unit or 'min'}"
-                if streak > 0:
-                    text += f" (Streak: {streak} days)"
-                text += f"
-⏳ Time Tracked: {total_hours:g}h"
-
-            if getattr(proj, 'daily_target_value', None) is not None:
-                streak = getattr(proj, 'current_streak', 0)
-                daily_prog = getattr(proj, 'daily_progress', 0)
-                emoji = "🔥" if streak > 0 else "🎯"
-                text += f"
-{emoji} Daily Target: {daily_prog:g} / {proj.daily_target_value:g} {proj.unit or 'min'}"
+                text += f"\n{emoji} Daily Target: {daily_prog:g} / {proj.daily_target_value:g} {proj.unit or 'min'}"
                 if streak > 0:
                     text += f" (Streak: {streak} days)"
 
-
-                
             from src.db.models import Task
             pending_tasks = db.query(Task).filter(Task.project_id == proj.id, Task.status == 'pending').limit(5).all()
             if pending_tasks:

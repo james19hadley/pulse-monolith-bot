@@ -30,14 +30,7 @@ async def cmd_projects_menu(message: Message, state: FSMContext):
 @router.message(lambda msg: msg.text == getattr(Buttons, "HABITS", "🎯 Habits"))
 async def cmd_habits_menu(message: Message, state: FSMContext):
     await state.clear()
-    with SessionLocal() as db:
-        user = get_or_create_user(db, message.from_user.id)
-        habits = db.query().filter(.user_id == user.id).all()
-        await message.answer(
-            "<b>Your Active Habits:</b>",
-            parse_mode="HTML",
-            reply_markup=get_habits_list_keyboard(habits)
-        )
+    await message.answer("Habits have been migrated to 🗂️ Projects. Click Projects to view them.")
 
 
 @router.callback_query(F.data == "ui_entities_menu")
