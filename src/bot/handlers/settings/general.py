@@ -5,7 +5,7 @@ from aiogram.filters import Command, CommandObject
 from src.db.repo import SessionLocal
 from src.bot.handlers.utils import get_or_create_user
 from src.db.models import User
-from src.bot.keyboards import get_settings_keyboard, get_back_settings_keyboard
+from src.bot.keyboards import get_settings_keyboard, get_api_keys_manage_keyboard, get_back_settings_keyboard
 
 router = Router()
 
