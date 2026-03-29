@@ -96,7 +96,8 @@ class AddTasksParams(BaseModel):
 
 class EditEntitiesParam(BaseModel):
     entity_type: str = Field(description="Strictly 'project' or 'habit' - what kind of entity to edit")
-    entity_name_or_id: str = Field(description="The name or ID of the existing entity to edit")
+    action: str = Field(description="Strictly 'edit' or 'delete'", default="edit")
+    entity_name_or_id: str = Field(description="The name or ID of the existing entity to edit or delete")
     new_name: Optional[str] = Field(description="The new name for the entity, if renaming", default=None)
     new_target_value: Optional[int] = Field(description="The new target value for the entity", default=None)
     new_unit: Optional[str] = Field(description="The new unit for measurement", default=None)

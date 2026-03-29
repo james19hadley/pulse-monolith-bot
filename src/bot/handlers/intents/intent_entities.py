@@ -217,6 +217,21 @@ async def _handle_edit_entities(message: Message, db, user, provider_name, api_k
                 responses.append(f"⚠️ Project '{edit.entity_name_or_id}' not found.")
                 continue
             
+
+            if edit.action == "delete":
+                prev_state = {"title": proj.title, "target_value": proj.target_value, "unit": proj.unit, "status": proj.status}
+                proj.status = "archived" # Soft delete
+                db.flush()
+                alog = ActionLog(
+                    user_id=user.id,
+                    tool_name="delete_project",
+                    previous_state_json=prev_state,
+                    new_state_json={"id": proj.id, "status": "archived"}
+                )
+                db.add(alog)
+                responses.append(f"🗑 Project deleted: <b>{proj.title}</b>")
+                continue
+            
             prev_state = {"title": proj.title, "target_value": proj.target_value, "unit": proj.unit}
             
             if edit.new_name:
@@ -254,6 +269,21 @@ async def _handle_edit_entities(message: Message, db, user, provider_name, api_k
             
             if not habit:
                 responses.append(f"⚠️ Habit '{edit.entity_name_or_id}' not found.")
+                continue
+            
+
+            if edit.action == "delete":
+                prev_state = {"title": habit.title, "target_value": habit.target_value, "unit": habit.unit, "status": habit.status}
+                habit.status = "archived" # Soft delete
+                db.flush()
+                alog = ActionLog(
+                    user_id=user.id,
+                    tool_name="delete_habit",
+                    previous_state_json=prev_state,
+                    new_state_json={"id": habit.id, "status": "archived"}
+                )
+                db.add(alog)
+                responses.append(f"🗑 Habit deleted: <b>{habit.title}</b>")
                 continue
             
             prev_state = {"title": habit.title, "target_value": habit.target_value, "unit": habit.unit}
