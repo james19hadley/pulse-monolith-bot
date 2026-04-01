@@ -298,6 +298,14 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]])
             )
             
+        elif action == "resetdaily":
+            proj.daily_progress = 0
+            db.commit()
+            await cb.answer("🧹 Daily Progress Reset to 0")
+            # Return to project view
+            cb = cb.model_copy(update={"data": f"ui_proj_{proj.id}"})
+            await cb_project_action(cb, state)
+            
         elif action == "editdaily":
             await state.update_data(eid=proj.id)
             await state.set_state(EntityState.waiting_for_edit_project_daily_target)
