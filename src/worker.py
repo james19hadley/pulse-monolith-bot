@@ -40,6 +40,10 @@ celery_app.conf.update(
         "morning-planner-every-hour": {
             "task": "job_morning_planner",
             "schedule": 3600.0,
+        },
+        "midnight-reset-every-hour": {
+            "task": "job_midnight_reset",
+            "schedule": 3600.0,
         }
     }
 )

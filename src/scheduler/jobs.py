@@ -139,19 +139,23 @@ def daily_accountability_job():
     Runs periodically (e.g. every hour) to build and post daily accountability reports
     for users whose day_cutoff_time has just passed.
     """
-    now = datetime.utcnow()
+    import zoneinfo
+    from datetime import timezone
+    now_utc = datetime.utcnow().replace(tzinfo=timezone.utc)
     with SessionLocal() as db:
         users = db.query(User).all()
         for user in users:
-            # We assume bot runs in UTC and user day_cutoff_time is also assumed to be matched against UTC for simplicity in this MVP.
-            # In a real app we'd convert `now` to user.timezone and compare against user.day_cutoff_time.
-            # Let's say we check if current hour/minute matches cutoff time
-            # Check if auto-report was already pre-empted manually today
+            try:
+                user_tz = zoneinfo.ZoneInfo(user.timezone)
+            except Exception:
+                user_tz = zoneinfo.ZoneInfo("UTC")
+            local_time = now_utc.astimezone(user_tz)
+
             already_done = False
-            if user.last_manual_report_date and user.last_manual_report_date == now.date():
+            if user.last_manual_report_date and user.last_manual_report_date == local_time.date():
                 already_done = True
                 
-            if now.hour == user.day_cutoff_time.hour and 0 <= now.minute < 60 and not already_done: # Runs once an hour roughly
+            if local_time.hour == getattr(user, 'day_cutoff_time', time(23, 0)).hour and not already_done: # Runs once an hour roughly
                 
                 target_chat_id = user.target_channel_id or user.telegram_id
                 
@@ -176,14 +180,22 @@ def evening_nudge_job():
     Runs periodically. Checks for projects that haven't been logged in over their nudge_threshold_days.
     Sends a warm coach message to remind them, a few hours before day_cutoff_time.
     """
-    now = datetime.utcnow()
+    import zoneinfo
+    from datetime import timezone
+    now_utc = datetime.utcnow().replace(tzinfo=timezone.utc)
     with SessionLocal() as db:
         users = db.query(User).all()
         for user in users:
+            try:
+                user_tz = zoneinfo.ZoneInfo(user.timezone)
+            except Exception:
+                user_tz = zoneinfo.ZoneInfo("UTC")
+            local_time = now_utc.astimezone(user_tz)
+
             # Trigger about 3 hours before cutoff time (e.g. 20:00 if cutoff is 23:00)
             target_hour = (getattr(user, 'day_cutoff_time', time(23, 0)).hour - 3) % 24
             
-            if now.hour == target_hour and 0 <= now.minute < 60:
+            if local_time.hour == target_hour:
                 target_chat_id = user.target_channel_id or user.telegram_id
                 
                 # Find lagging projects that act as routines
@@ -192,7 +204,7 @@ def evening_nudge_job():
                 for p in projects:
                     last_update = p.last_completed_date if p.last_completed_date else (p.updated_at.date() if p.updated_at else p.created_at.date())
                     if last_update:
-                        since_update = (now.date() - last_update).days
+                        since_update = (local_time.date() - last_update).days
                         if since_update >= 3: # default nudge threshold 3 days
                             lagging_projects.append(p.name)
                 
@@ -223,17 +235,18 @@ def morning_planner_job():
     Reviews all pending tasks, selects the most impactful 1-3, and sends a gentle
     "Good morning" note encouraging the user to pick one.
     """
-    now = datetime.utcnow()
+    import zoneinfo
+    from datetime import timezone
+    now_utc = datetime.utcnow().replace(tzinfo=timezone.utc)
     with SessionLocal() as db:
         users = db.query(User).all()
         for user in users:
-            import zoneinfo
             try:
                 user_tz = zoneinfo.ZoneInfo(user.timezone)
             except Exception:
                 user_tz = zoneinfo.ZoneInfo("UTC")
             
-            local_time = now.astimezone(user_tz)
+            local_time = now_utc.astimezone(user_tz)
             if local_time.hour != 9:
                 continue
                 
@@ -276,12 +289,20 @@ def midnight_reset_job():
     If no, break current_streak = 0.
     Finally, reset project.daily_progress = 0.
     """
-    now = datetime.utcnow()
+    import zoneinfo
+    from datetime import timezone
+    now_utc = datetime.utcnow().replace(tzinfo=timezone.utc)
     with SessionLocal() as db:
         users = db.query(User).all()
         for user in users:
-            # Assumes cutoff checked hourly, but for simplicity let's assume this strictly runs when now.hour == user.day_cutoff_time.hour
-            if now.hour == user.day_cutoff_time.hour and 0 <= now.minute < 60:
+            try:
+                user_tz = zoneinfo.ZoneInfo(user.timezone)
+            except Exception:
+                user_tz = zoneinfo.ZoneInfo("UTC")
+            local_time = now_utc.astimezone(user_tz)
+
+            cutoff_hour = getattr(user, 'day_cutoff_time', time(23, 0)).hour
+            if local_time.hour == cutoff_hour:
                 projects = db.query(Project).filter(Project.user_id == user.id, Project.daily_target_value != None).all()
                 for p in projects:
                     if p.daily_progress >= p.daily_target_value:
