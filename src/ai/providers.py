@@ -10,8 +10,8 @@ class IntentResponse(BaseModel):
     intent: IntentType
 
 class LogWorkParams(BaseModel):
-    duration_minutes: int = Field(description="The total time spent, strictly converted to minutes. E.g., '1.5 hours' becomes 90.")
-    progress_amount: Optional[int] = Field(description="The numeric amount of progress made, e.g. 50 if user says 50 pages. Output only the number.", default=None)
+    duration_minutes: int = Field(description="The total time spent, strictly converted to minutes. Can be negative for subtraction. E.g., '1.5 hours' -> 90, 'remove 10 mins' -> -10.")
+    progress_amount: Optional[int] = Field(description="The numeric amount of progress made, e.g. 50 if user says 50 pages. Can be negative.", default=None)
     is_absolute_progress: Optional[bool] = Field(description="True if the user specifies an absolute completion point like 'I am on page 40' or 'Set progress to 50'. False if they are adding to it like 'I did 20 pages'.", default=False)
     progress_unit: Optional[str] = Field(description="The unit of the progress made if specified, e.g. pages, km, tasks, chapters. Do not include time-based units like hours or minutes.", default=None)
     project_id: Optional[int] = Field(description="The integer ID of the matching project. Null if no project matches.", default=None)
