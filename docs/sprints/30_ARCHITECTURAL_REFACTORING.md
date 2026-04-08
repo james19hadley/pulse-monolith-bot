@@ -1,6 +1,6 @@
 # Sprint 30: Architectural Refactoring & Modularization
 
-**Status:** `Not Started`
+**Status:** `Completed`
 **Date Proposed:** March 29, 2026
 
 ## 🎯 Motivation: Why do we need this?
@@ -44,8 +44,8 @@ Convert `src/bot/keyboards.py` into a package:
 Move the heavy text-formatting functions out of `jobs.py` and `utils.py` into a dedicated `src/services/reporting.py`. The Celery job should just say `ReportingService.generate_evening_report(user_id)`.
 
 ## 📋 Implementation Steps
-- [ ] **Phase 1 (Keyboards):** Convert `keyboards.py` to a directory module (`src/bot/keyboards/`). Fix all cross-file imports globally.
-- [ ] **Phase 2 (Services Layer):** Create `src/services/projects.py`. Move creation, editing, and DB commits inside an abstracted service class.
-- [ ] **Phase 3 (Controllers):** Break down `entities/projects.py` into `list`, `actions`, and `create` files, bridging them via routers.
-- [ ] **Phase 4 (Reports):** Extract string generation from `jobs.py` into a dedicated reporting service.
-- [ ] **Integration Test:** Run a full manual regression test (creating a project, completing a task, `/undo`, changing settings) to ensure the newly modularized system behaves exactly identically to Sprint 29.
+- [x] **Phase 1 (Keyboards):** Convert `keyboards.py` to a directory module (`src/bot/keyboards/`). Fix all cross-file imports globally.
+- [x] **Phase 2 (Services Layer):** Create `src/services/projects.py`. Move creation, editing, and DB commits inside an abstracted service class.
+- [x] **Phase 3 (Controllers):** Break down `entities/projects.py` into `list`, `actions`, and `create` files, bridging them via routers.
+- [x] **Phase 4 (Reports):** Extract string generation from `jobs.py` into a dedicated reporting service.
+- [x] **Integration Test:** Run a full manual regression test (creating a project, completing a task, `/undo`, changing settings) to ensure the newly modularized system behaves exactly identically to Sprint 29.d system behaves exactly identically to Sprint 29.

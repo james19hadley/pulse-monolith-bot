@@ -47,7 +47,7 @@ def session_ended_message(total_minutes: int, focus_minutes: int) -> str:
 
 def build_progress_bar(current: int, target: int, length: int = 10) -> str:
     if target <= 0:
-        return "\n"
+        return ""
     ratio = min(max(current / target, 0.0), 1.0)
     filled = int(round(ratio * length))
     empty = length - filled

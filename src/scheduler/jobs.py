@@ -196,7 +196,8 @@ def evening_nudge_job():
             target_hour = (getattr(user, 'day_cutoff_time', time(23, 0)).hour - 3) % 24
             
             if local_time.hour == target_hour:
-                target_chat_id = user.target_channel_id or user.telegram_id
+                # Private nudge always goes to DM, not the public linked channel
+                target_chat_id = user.telegram_id
                 
                 # Find lagging projects that act as routines
                 projects = db.query(Project).filter(Project.user_id == user.id, Project.daily_target_value != None).all()
@@ -249,8 +250,8 @@ def morning_planner_job():
             local_time = now_utc.astimezone(user_tz)
             if local_time.hour != 9:
                 continue
-                
-            target_chat_id = user.target_channel_id or user.telegram_id
+            # Morning planner is a private coach, send strictly to DM
+            target_chat_id = user.telegram_id
             
             # Fetch pending tasks
             pending_tasks = db.query(Task).filter(Task.user_id == user.id, Task.status == 'pending').all()
@@ -305,11 +306,7 @@ def midnight_reset_job():
             if local_time.hour == cutoff_hour:
                 projects = db.query(Project).filter(Project.user_id == user.id, Project.daily_target_value != None).all()
                 for p in projects:
-                    if p.daily_progress >= p.daily_target_value:
-                        p.total_completions = (p.total_completions or 0) + 1
-                        # We don't increment streak here because that might be done instantly on log, or we do it here. 
-                        # Actually, keeping streak intact if they hit it.
-                    else:
+                    if p.daily_progress < p.daily_target_value:
                         p.current_streak = 0
                     p.daily_progress = 0
                 db.commit()

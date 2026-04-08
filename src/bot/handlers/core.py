@@ -48,17 +48,6 @@ Talk to me naturally, but if the AI is slow or offline, use these slash commands
 """
     await message.answer(help_text, parse_mode="HTML")
 
-@router.message(F.forward_from_chat)
-async def cmd_bind_channel_via_forward(message: Message):
-    if message.forward_from_chat.type == "channel":
-        channel_id = message.forward_from_chat.id
-        channel_title = message.forward_from_chat.title
-        with SessionLocal() as db:
-            user = get_or_create_user(db, message.from_user.id)
-            user.target_channel_id = channel_id
-            db.commit()
-        await message.answer(f"✅ Awesome! I have bound your accountability reports to the channel: <b>{channel_title}</b>", parse_mode="HTML")
-
 @router.my_chat_member()
 async def on_my_chat_member(event: ChatMemberUpdated):
     if event.chat.type == "channel":
@@ -123,11 +112,19 @@ async def cmd_undo(message: Message, state: FSMContext):
                     db.delete(log_entry)
                     p = db.query(Project).filter(Project.id == pid).first()
                     if p:
-                        if prog:
-                            p.current_value = max(0, (p.current_value or 0) - prog)
-                        else:
-                            p.current_value = max(0, (p.current_value or 0) - mins)
-                    await message.answer("↩️ Time log successfully undone.", parse_mode="HTML")
+                        delta = prog if prog else mins
+                        p.current_value = max(0, (p.current_value or 0) - delta)
+                        
+                        if p.daily_target_value is not None:
+                            was_complete = (p.daily_progress or 0) >= p.daily_target_value
+                            p.daily_progress = max(0, (p.daily_progress or 0) - delta)
+                            is_complete = p.daily_progress >= p.daily_target_value
+                            
+                            if was_complete and not is_complete:
+                                p.total_completions = max(0, (p.total_completions or 0) - 1)
+                                p.current_streak = max(0, (p.current_streak or 0) - 1)
+                                
+                    await message.answer(f"↩️ Time log successfully undone.", parse_mode="HTML")
             
             # Clean up the log so we don't undo it twice
             db.delete(action)

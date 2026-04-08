@@ -1,5 +1,6 @@
 import os
 from celery import Celery
+from celery.schedules import crontab
 
 # 1. Initialize the Celery application
 # We read the REDIS_URL from the environment (defaulting to a local instance if not found)
@@ -27,23 +28,23 @@ celery_app.conf.update(
         },
         "stale-session-killer-every-hour": {
             "task": "job_stale_session_killer",
-            "schedule": 3600.0,
+            "schedule": crontab(minute=0),
         },
         "daily-accountability-every-hour": {
             "task": "job_daily_accountability",
-            "schedule": 3600.0, # Will internally skip if it's not the right hour
+            "schedule": crontab(minute=0), # Top of every hour
         },
         "evening-nudge-every-hour": {
             "task": "job_evening_nudge",
-            "schedule": 3600.0,
+            "schedule": crontab(minute=0),
         },
         "morning-planner-every-hour": {
             "task": "job_morning_planner",
-            "schedule": 3600.0,
+            "schedule": crontab(minute=0),
         },
         "midnight-reset-every-hour": {
             "task": "job_midnight_reset",
-            "schedule": 3600.0,
+            "schedule": crontab(minute=0),
         }
     }
 )

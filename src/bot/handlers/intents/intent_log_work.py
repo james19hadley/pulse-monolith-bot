@@ -73,8 +73,10 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
     else:
         # If no explicit progress, fallback to time
         if extraction.duration_minutes != 0:
+            amount_to_add = extraction.duration_minutes
             if is_time_based:
                 project.current_value = max(0.0, (project.current_value or 0.0) + extraction.duration_minutes)
+                
     # 2. AUTO-FILL logic: If the user just said "did my habit" (0 mins, 0 progress extracted)
     if amount_to_add == 0 and project.daily_target_value is not None:
         remains = project.daily_target_value - (project.daily_progress or 0)
@@ -90,9 +92,16 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
     # 3. Update Daily target if applicable
     daily_msg = ""
     if project.daily_target_value is not None:
-            project.daily_progress = max(0, (project.daily_progress or 0) + amount_to_add)
-            # For immediate user feedback in msg
-            daily_msg = f"🔥 Daily target progress: {project.daily_progress:g} / {project.daily_target_value:g} {project.unit or 'minutes'}"
+            old_daily = project.daily_progress or 0
+            new_daily = max(0, old_daily + amount_to_add)
+            project.daily_progress = new_daily
+            
+            if old_daily < project.daily_target_value and new_daily >= project.daily_target_value:
+                project.total_completions = (project.total_completions or 0) + 1
+                project.current_streak = (project.current_streak or 0) + 1
+                daily_msg = f"🔥 Target Completed! ({new_daily:g} / {project.daily_target_value:g} {project.unit or 'minutes'}) 🏆 Streak: {project.current_streak}"
+            else:
+                daily_msg = f"🔥 Daily target progress: {new_daily:g} / {project.daily_target_value:g} {project.unit or 'minutes'}"
 
     db.commit()
     db.refresh(log_entry)

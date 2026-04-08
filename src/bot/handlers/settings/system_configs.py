@@ -130,6 +130,7 @@ async def cq_set_channel_action(callback: CallbackQuery, state: FSMContext):
             user = get_or_create_user(db, callback.from_user.id)
             user.target_channel_id = None
             db.commit()
+        await callback.answer("Channel Untied!")
         text, markup = get_control_panel_data(callback.from_user.id)
         await callback.message.edit_text(text, reply_markup=markup, parse_mode="HTML")
         return
@@ -146,7 +147,11 @@ async def cq_set_channel_action(callback: CallbackQuery, state: FSMContext):
 @router.message(SettingsState.waiting_for_channel)
 async def process_channel_text(message: Message, state: FSMContext):
     try:
-        channel_id = int(message.text.strip())
+        if message.forward_from_chat:
+            channel_id = message.forward_from_chat.id
+        else:
+            channel_id = int(message.text.strip() if message.text else 0)
+        
         with SessionLocal() as db:
             user = get_or_create_user(db, message.from_user.id)
             user.target_channel_id = channel_id
@@ -155,8 +160,8 @@ async def process_channel_text(message: Message, state: FSMContext):
         
         text, markup = get_control_panel_data(message.from_user.id)
         await message.answer(f"✅ Channel updated.\n\n{text}", reply_markup=markup, parse_mode="HTML")
-    except ValueError:
-        await message.answer("Please send a valid ID.")
+    except (ValueError, TypeError):
+        await message.answer("Please send a valid ID or forward a message from your channel.")
 
 
 @router.callback_query(F.data == "settings_pulse")
