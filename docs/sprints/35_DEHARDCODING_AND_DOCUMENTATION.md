@@ -1,4 +1,4 @@
-# Sprint 34: De-hardcoding, Texts, & Documentation
+# Sprint 35: De-hardcoding, Texts, & Documentation
 
 **Status:** `Draft`
 **Date Proposed:** April 8, 2026

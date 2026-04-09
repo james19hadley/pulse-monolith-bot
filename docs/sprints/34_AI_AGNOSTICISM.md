@@ -1,4 +1,4 @@
-# Sprint 33: AI Agnosticism & Multiple Providers
+# Sprint 34: AI Agnosticism & Multiple Providers
 
 **Status:** `Active`
 **Date Proposed:** April 8, 2026
