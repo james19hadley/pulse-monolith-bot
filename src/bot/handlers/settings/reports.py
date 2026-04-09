@@ -1,3 +1,9 @@
+"""
+Handlers for configuring evening report formats (e.g. toggling zeros).
+
+@Architecture-Map: [HND-SET-REPORTS]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext

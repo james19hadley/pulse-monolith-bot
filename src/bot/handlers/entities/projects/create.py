@@ -1,3 +1,9 @@
+"""
+FSM telegram handler that asks the user for the project name and calls the [SRV-PROJ-CREATE] service.
+
+@Architecture-Map: [HND-PROJ-CREATE]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton

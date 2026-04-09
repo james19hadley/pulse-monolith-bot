@@ -1,3 +1,9 @@
+"""
+FSM (Finite State Machine) classes for multi-step telegram interactions (e.g. creating a project).
+
+@Architecture-Map: [HND-STATES]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 from aiogram.fsm.state import State, StatesGroup
 
 class AddKeyState(StatesGroup):

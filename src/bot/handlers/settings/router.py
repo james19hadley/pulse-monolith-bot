@@ -1,3 +1,9 @@
+"""
+Aggregates all settings router files into a single branch.
+
+@Architecture-Map: [HND-SET-ROUTER]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 from aiogram import Router
 from .general import router as general_router
 from .api_keys import router as api_keys_router

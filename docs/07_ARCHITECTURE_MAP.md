@@ -29,3 +29,43 @@ This document contains a registry of unique identifiers (UIDs) used directly ins
 ## 📁 6. Database Layer (`src/db/`)
 - **`[DB-MODELS-SCHEMA]`**: `src/db/models.py` - Defines exactly the tables and relationships the whole app uses.
 - **`[DB-CORE-SESSION]`**: `src/db/repo.py` - Database engines, scoped sessions (SessionLocal), and initial migration script.
+
+## 📁 7. Application & Bot Entry (`src/main.py`, `src/worker.py`)
+- **`[APP-MAIN-ENTRY]`**: `src/main.py` - Main entry point for the FastAPI webhook server and Telegram Bot polling fallback.
+- **`[APP-CELERY-WORKER]`**: `src/worker.py` - Celery worker entry point for asynchronous background jobs.
+
+## 📁 8. Bot Handlers: Intent Classifiers (`src/bot/handlers/intents/`)
+- **`[HND-INTENT-CORE]`**: `src/bot/handlers/intents/intent_core.py` - Execution mapping for NLP intents.
+- **`[HND-INTENT-ENT]`**: `src/bot/handlers/intents/intent_entities.py` - Processes entity creation intents.
+- **`[HND-INTENT-WORK]`**: `src/bot/handlers/intents/intent_log_work.py` - Processes work-logging intents.
+- **`[HND-INTENT-SESS]`**: `src/bot/handlers/intents/intent_session.py` - Processes NLP session commands.
+
+## 📁 9. Bot Handlers: Entities & Menus (`src/bot/handlers/entities/`, `src/bot/handlers/`)
+- **`[HND-AI-ROUTER]`**: `src/bot/handlers/ai_router.py` - Intercepts all unhandled raw text and forwards it to Intent Router.
+- **`[HND-BOT-CORE]`**: `src/bot/handlers/core.py` - Root structural commands like /start or main menu fallbacks.
+- **`[HND-SESSIONS]`**: `src/bot/handlers/sessions.py` - Start/Stop/Pause logic for focus timers.
+- **`[HND-UTILS]`**: `src/bot/handlers/utils.py` - Universal helper components (e.g. deleting previous messages on prompt answers).
+- **`[HND-ENT-CMDS]`**: `src/bot/handlers/entities/commands.py` - Specific textual commands like /new or /stats.
+- **`[HND-ENT-MENU]`**: `src/bot/handlers/entities/menu.py` - Entry points to entity sub-menus.
+- **`[HND-ENT-ROUTER]`**: `src/bot/handlers/entities/router.py` - Glues all entity routes together into 'entities_router'.
+- **`[HND-PROJ-ACTIONS]`**: `src/bot/handlers/entities/projects/actions.py` - Interaction buttons for specific Projects (delete, start tracking).
+- **`[HND-PROJ-CREATE]`**: `src/bot/handlers/entities/projects/create.py` - Registration state machine for a new project.
+- **`[HND-PROJ-LIST]`**: `src/bot/handlers/entities/projects/list.py` - Displays a scrollable list of entities.
+- **`[HND-STATES]`**: `src/bot/states.py` - Stores Python classes defining Aiogram Finite State Machines.
+
+## 📁 10. Bot Handlers: Settings (`src/bot/handlers/settings/`)
+- **`[HND-SET-APIKEYS]`**: `src/bot/handlers/settings/api_keys.py` - Handles user uploading their own Provider API Keys.
+- **`[HND-SET-GENERAL]`**: `src/bot/handlers/settings/general.py` - Settings main menu.
+- **`[HND-SET-PERSONA]`**: `src/bot/handlers/settings/persona_tz.py` - Controls Timezone overrides and Bot Tone.
+- **`[HND-SET-REPORTS]`**: `src/bot/handlers/settings/reports.py` - Toggles evening report preferences.
+- **`[HND-SET-ROUTER]`**: `src/bot/handlers/settings/router.py` - Glues all settings options together.
+- **`[HND-SET-SYSCONF]`**: `src/bot/handlers/settings/system_configs.py` - Advanced logic configuration menus.
+
+## 📁 11. Presentation Layer (Keyboards & Texts)
+- **`[UI-KEY-CORE]`**: `src/bot/keyboards/core.py` - Pagination, structural grids, arrows.
+- **`[UI-KEY-ENT]`**: `src/bot/keyboards/entities.py` - Grids customized to handle db entities like rendering a project card inline menu.
+- **`[UI-KEY-SET]`**: `src/bot/keyboards/settings.py` - Toggle boards for configuration edits.
+- **`[UI-TEXTS]`**: `src/bot/texts.py` - Universal dictionary (or set of constants) defining strings bot replies with.
+
+## 📁 12. Asynchronous Tasks (`src/scheduler/`)
+- **`[JOB-CELERY-MOD]`**: `src/scheduler/tasks.py` - Setup mapping connecting Python functions in 'jobs.py' to cron-like Celery behaviors.

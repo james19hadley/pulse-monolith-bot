@@ -1,3 +1,9 @@
+"""
+Keyboards for toggling Settings, persona changes, and report rendering options.
+
+@Architecture-Map: [UI-KEY-SET]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 

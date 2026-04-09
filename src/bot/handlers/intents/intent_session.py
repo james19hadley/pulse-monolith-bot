@@ -1,3 +1,9 @@
+"""
+Processing NLP session commands (Start, Stop, Pause).
+
+@Architecture-Map: [HND-INTENT-SESS]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 from aiogram.types import Message
 from src.db.models import TokenUsage, Project, TimeLog, Session
 from src.bot.texts import Prompts

@@ -1,3 +1,9 @@
+"""
+Handlers for project actions like tracking manual progress, deleting, and archiving.
+
+@Architecture-Map: [HND-PROJ-ACTIONS]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton

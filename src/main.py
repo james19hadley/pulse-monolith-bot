@@ -1,3 +1,9 @@
+"""
+Main entry point for the FastAPI webhook server and Telegram Bot polling fallback.
+
+@Architecture-Map: [APP-MAIN-ENTRY]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 import asyncio
 import logging
 from aiogram import Bot, Dispatcher

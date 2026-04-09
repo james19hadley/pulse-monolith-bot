@@ -1,3 +1,9 @@
+"""
+Basic UI inline keyboards (Pagination loops, Yes/No, Back, and Home).
+
+@Architecture-Map: [UI-KEY-CORE]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from src.bot.texts import Buttons
 

@@ -1,3 +1,9 @@
+"""
+Keyboards specifically for Projects, Quests and Tasks CRUD operations.
+
+@Architecture-Map: [UI-KEY-ENT]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from src.bot.texts import PROJECT_EMOJIS
 

@@ -1,3 +1,9 @@
+"""
+The root celery task declarations module which imports core jobs.
+
+@Architecture-Map: [JOB-CELERY-MOD]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 import os
 import asyncio
 from celery import shared_task

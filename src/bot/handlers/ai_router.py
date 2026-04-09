@@ -1,3 +1,9 @@
+"""
+Telegram handler that catches raw text messages and forwards them to the AI Intent Router.
+
+@Architecture-Map: [HND-AI-ROUTER]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 import json
 import logging
 from datetime import datetime

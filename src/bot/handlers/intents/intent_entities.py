@@ -1,3 +1,9 @@
+"""
+Processing AI-parsed entity creation intents (Project, Quest, Habit).
+
+@Architecture-Map: [HND-INTENT-ENT]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 from aiogram.types import Message
 from src.ai.router import extract_entities, extract_inbox, extract_add_tasks, extract_edit_entities
 from src.bot.handlers.utils import log_tokens

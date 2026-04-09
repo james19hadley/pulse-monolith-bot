@@ -1,3 +1,9 @@
+"""
+Centralized hub for all static non-AI bot copy (messages) for localization / quick edits.
+
+@Architecture-Map: [UI-TEXTS]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 # Global Text and Button Registry
 # This file serves as the Single Source of Truth (SSOT) for all strings and button labels.
 

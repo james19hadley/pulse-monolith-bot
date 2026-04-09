@@ -1,3 +1,9 @@
+"""
+Handlers for configuring bot attitude/persona and Timezone cutoff.
+
+@Architecture-Map: [HND-SET-PERSONA]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext

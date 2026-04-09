@@ -1,3 +1,9 @@
+"""
+Telegram handlers for starting, pausing, and ending work sessions.
+
+@Architecture-Map: [HND-SESSIONS]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 import datetime
 from aiogram import Router, F
 from aiogram.filters import Command, CommandObject
