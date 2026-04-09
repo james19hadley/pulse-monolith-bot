@@ -1,3 +1,9 @@
+"""
+Admin Dashboard for monitoring bot performance and basic stats via web interface.
+
+@Architecture-Map: [CORE-ADMIN-DASH]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 from aiohttp import web
 import base64
 from src.core.config import ADMIN_LOGIN, ADMIN_PASSWORD

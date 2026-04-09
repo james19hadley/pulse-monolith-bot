@@ -16,6 +16,12 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 class Base(DeclarativeBase):
+    """
+    Base class for all SQLAlchemy declarative models. Defines the global DB schema.
+    
+    @Architecture-Map: [DB-MODELS-SCHEMA]
+    @Docs: docs/07_ARCHITECTURE_MAP.md
+    """
     pass
 
 class User(Base):

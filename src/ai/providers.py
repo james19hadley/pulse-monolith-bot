@@ -1,3 +1,9 @@
+"""
+LLM Provider implementations (Google Gemini, OpenAI). Handles API connections and payload parsing.
+
+@Architecture-Map: [CORE-AI-PROVIDERS]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 from pydantic import BaseModel, Field
 from typing import Optional, List, Tuple
 import json

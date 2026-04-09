@@ -12,17 +12,17 @@
 ## 📋 Tasks
 
 ### AI / Core / DB Layer
-- [ ] `src/admin_dashboard.py`
-- [ ] `src/ai/providers.py`
-- [ ] `src/ai/router.py`
-- [ ] `src/ai/tools.py`
-- [ ] `src/core/config.py`
-- [ ] `src/core/constants.py`
-- [ ] `src/core/personas.py`
-- [ ] `src/core/prompts.py`
-- [ ] `src/core/security.py`
-- [ ] `src/db/models.py`
-- [ ] `src/db/repo.py`
+- [x] `src/admin_dashboard.py`
+- [x] `src/ai/providers.py`
+- [x] `src/ai/router.py`
+- [x] `src/ai/tools.py`
+- [x] `src/core/config.py`
+- [x] `src/core/constants.py`
+- [x] `src/core/personas.py`
+- [x] `src/core/prompts.py`
+- [x] `src/core/security.py`
+- [x] `src/db/models.py`
+- [x] `src/db/repo.py`
 
 ### Services Layer
 - [x] `src/services/projects.py` (Completed)

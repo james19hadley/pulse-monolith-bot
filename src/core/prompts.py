@@ -1,3 +1,9 @@
+"""
+Global registry of AI prompts used for routing and NLP intent classification.
+
+@Architecture-Map: [CORE-AI-PROMPTS]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 INTENT_ROUTER_SYSTEM_PROMPT = """
 You are the internal Intent Router for the Pulse Monolith Bot.
 Your ONLY job is to read the user's natural language message and classify it into an exact operational intent.

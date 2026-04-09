@@ -35,6 +35,9 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 def init_db():
     """
     Creates all tables in the database based on the models defined in metadata.
+    
+    @Architecture-Map: [DB-CORE-SESSION]
+    @Docs: docs/07_ARCHITECTURE_MAP.md
     """
 
     print(f"Initializing database at {DATABASE_URL}...")

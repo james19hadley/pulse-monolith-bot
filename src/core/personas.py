@@ -1,3 +1,9 @@
+"""
+Definitions for bot conversational styles and attitudes (monolith, sarcastic, gentle).
+
+@Architecture-Map: [CORE-SYS-PERSONAS]
+@Docs: docs/07_ARCHITECTURE_MAP.md
+"""
 import json
 
 DEFAULT_PERSONAS = {
