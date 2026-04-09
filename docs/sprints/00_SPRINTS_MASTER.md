@@ -56,7 +56,7 @@ Every new Sprint Markdown file must follow this strict structure to maintain con
 | [Sprint 23](23_PROACTIVE_NUDGING_AND_TASKS.md) | Proactive Nudging and Spoon-fed Tasks | 🟢 Completed |
 | [Sprint 24](24_OPEN_SESSIONS_AND_RETRO_BILLING.md) | Frictionless Open Sessions & Save-State Rest Mode | 🟢 Completed |
 | [Sprint 25](25_DAILY_PLANNING_AND_GENTLE_LISTS.md) | Daily Planning & Gentle Lists | 🟢 Completed |
-| [Sprint 26](26_PROJECT_ZERO_AND_NLP_EDITING.md) | Project Zero, Sticky Menus & NLP Editing | 🟡 Active |
+| [Sprint 26](26_PROJECT_ZERO_AND_NLP_EDITING.md) | Project Zero, Sticky Menus & NLP Editing | 🟢 Completed |
 | [Sprint 27](27_THE_GREAT_MIGRATION.md) | The Great Migration (Habits → Projects) | 🟢 Completed |
 | [Sprint 28](28_REPORT_AND_UI_POLISH.md) | Report Engine Polish & Mathematical Fixes | 🟢 Completed |
 | [Sprint 29](29_PROJECT_HIERARCHIES.md) | Project Hierarchies & Task Trees | 🟢 Completed |

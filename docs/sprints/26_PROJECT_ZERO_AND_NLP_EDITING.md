@@ -1,7 +1,7 @@
 # Sprint 26: Project Zero, Sticky Menus & NLP Editing
 
-**Status:** `Draft`
-**Date Proposed:** March 29, 2026
+**Status:** `Completed`
+**Date Updated:** April 9, 2026
 **Objective:** Eliminate friction for floating time logs (Project 0), centralize the Undo logic, fix sticky menus in Telegram, and allow NLP entity editing.
 
 ## 🎯 Goals
@@ -22,8 +22,11 @@
 - [x] Ensure the main menu has a universal "Undo" option.
 
 ### 3. NLP Entity Editing Intent
-- [x] Create a new intent `EDIT_ENTITIES`.
-- [x] Implement AI extraction (entity type, target name, new name/value).
+- [x] Create a new intent `EDIT_ENTITIES` (exists in prompts and constants).
+- [x] Create Pydantic schema `EditEntitiesParams` in `src/ai/providers.py` to enforce strict typed JSON from AI.
+- [x] Implement AI extraction method returning the parsed parameters.
+- [x] Implement `_handle_edit_entities` handler to update project title or target.
+- [x] Route the parsing and handler in `intent_entities.py` and `router.py`.
 - [x] Route properly and respond gracefully if the user asks for something unsupported.
 
 ### 4. Sprint 24 Debt: Session Control Bugfix

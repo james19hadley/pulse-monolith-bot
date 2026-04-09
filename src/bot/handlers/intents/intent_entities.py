@@ -5,6 +5,7 @@ Processing AI-parsed entity creation intents (Project, Quest, Habit).
 @Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 from aiogram.types import Message
+from sqlalchemy import func
 from src.ai.router import extract_entities, extract_inbox, extract_add_tasks, extract_edit_entities
 from src.bot.handlers.utils import log_tokens
 async def _handle_create_entities(message: Message, db, user, provider_name, api_key):
