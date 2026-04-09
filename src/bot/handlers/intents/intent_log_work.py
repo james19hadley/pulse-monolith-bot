@@ -178,6 +178,11 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
                 msg_lines.append(f"📉 Total Progress: {project.current_value or 0:g} / {project.target_value:g} {project.unit}\n{bar}")
             else:
                 msg_lines.append(f"📉 Total Progress: {project.current_value or 0:g} {project.unit}")
+            
+            from sqlalchemy import func
+            total_mins = db.query(func.sum(TimeLog.duration_minutes)).filter(TimeLog.project_id == project.id).scalar() or 0
+            if total_mins > 0:
+                msg_lines.append(f"⏱ Total Time Tracked: {total_mins / 60:g} hours")
     
         if append_desc:
             msg_lines.append(append_desc)
