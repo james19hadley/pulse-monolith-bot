@@ -6,6 +6,7 @@ Telegram handlers for starting, pausing, and ending work sessions.
 """
 import datetime
 from aiogram import Router, F
+from aiogram.types import CallbackQuery
 from aiogram.filters import Command, CommandObject
 from aiogram.types import Message
 
@@ -244,7 +245,7 @@ Here is your report anyway:
 
 <i>Tip: Bind a channel to post this automatically by forwarding a message from it!</i>""", parse_mode="HTML")
 @router.callback_query(F.data == "nudge_working")
-async def handle_nudge_working_callback(callback_query: types.CallbackQuery):
+async def handle_nudge_working_callback(callback_query: CallbackQuery):
     """
     User clicked 'I am still working' on a nudge message.
     Edit the message to a green checkmark and secretly bump the session notes so the scheduler resets the idle timer.
@@ -276,7 +277,7 @@ async def handle_nudge_working_callback(callback_query: types.CallbackQuery):
             db.commit()
 
 @router.callback_query(F.data == "nudge_finish")
-async def handle_nudge_finish_callback(callback_query: types.CallbackQuery):
+async def handle_nudge_finish_callback(callback_query: CallbackQuery):
     """
     User clicked 'Finish session' on a nudge message. 
     Redirect to standard session end flow.
