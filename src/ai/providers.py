@@ -75,8 +75,11 @@ class EditEntitiesParam(BaseModel):
 class EditEntitiesParams(BaseModel):
     edits: List[EditEntitiesParam] = Field(description="List of entity edits requested by user")
 
-class GoogleProvider:
-    def __init__(self, api_key: str):
+from src.ai.base_provider import BaseLLMProvider
+
+class GoogleProvider(BaseLLMProvider):
+    def __init__(self, api_key: str, model_id: str = "gemini-3-flash-preview"):
+        super().__init__(api_key, model_id)
         self.client = genai.Client(api_key=api_key)
         self.model_id = 'gemini-3-flash-preview'
 

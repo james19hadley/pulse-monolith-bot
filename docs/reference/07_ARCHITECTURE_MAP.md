@@ -20,6 +20,8 @@ This document contains a registry of unique identifiers (UIDs) used directly ins
 - **`[CORE-SEC-AUTH]`**: `src/core/security.py` - Encrypts and decrypts user API keys for database storage.
 - **`[CORE-AI-PROMPTS]`**: `src/core/prompts.py` - Global registry of AI prompts used for routing.
 - **`[CORE-ADMIN-DASH]`**: `src/admin_dashboard.py` - Admin Dashboard for monitoring bot performance.
+- **`[CORE-AI-BASE-PROV]`**: `src/ai/base_provider.py` - Abstract Base Class for LLM API integration.
+- **`[CORE-AI-MODELS]`**: `src/ai/models_registry.py` - LLM configuration specifying cost-efficient models for standard parsing.
 - **`[CORE-AI-PROVIDERS]`**: `src/ai/providers.py` - LLM Provider implementations (API connections and parsing).
 - **`[CORE-AI-ROUTER]`**: `src/ai/router.py` - The central NLP router.
 - **`[CORE-AI-TOOLS]`**: `src/ai/tools.py` - Function-calling schemas representing intents.
@@ -27,7 +29,7 @@ This document contains a registry of unique identifiers (UIDs) used directly ins
 - **`[CORE-SYS-PERSONAS]`**: `src/core/personas.py` - Bot conversational styles.
 
 ## 📁 6. Database Layer (`src/db/`)
-- **`[DB-MODELS-SCHEMA]`**: `src/db/models.py` - Defines exactly the tables and relationships the whole app uses.
+- **`[DB-MODELS-SCHEMA]`**: `src/db/models.py` - SQLAlchemy ORM definitions mapping tables.
 - **`[DB-CORE-SESSION]`**: `src/db/repo.py` - Database engines, scoped sessions (SessionLocal), and initial migration script.
 
 ## 📁 7. Application & Bot Entry (`src/main.py`, `src/worker.py`)
