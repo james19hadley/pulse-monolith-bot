@@ -91,6 +91,7 @@ class Session(Base):
     # Save-State Rest Mode
     rest_start_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     save_state_context: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    project_id: Mapped[Optional[int]] = mapped_column(ForeignKey("projects.id"), nullable=True)
 
 class Project(Base):
     __tablename__ = "projects"

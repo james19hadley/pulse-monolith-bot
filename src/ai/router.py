@@ -5,7 +5,7 @@ The central NLP router that passes user messages to the Intent classifier to fig
 @Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 from typing import Optional, Tuple, Union
-from src.ai.providers import GoogleProvider, LogWorkParams, AddInboxParams, SessionControlParams, ReportConfigParams, SystemConfigParams, CreateEntitiesParams, AddTasksParams, EditEntitiesParams
+from src.ai.providers import GoogleProvider, LogWorkMultiParams, AddInboxParams, SessionControlParams, ReportConfigParams, SystemConfigParams, CreateEntitiesParams, AddTasksParams, EditEntitiesParams
 from src.core.constants import IntentType
 
 def get_intent(user_text: str, provider_name: str, api_key: str) -> Tuple[IntentType, dict, Optional[str]]:
@@ -19,7 +19,7 @@ def get_intent(user_text: str, provider_name: str, api_key: str) -> Tuple[Intent
             return IntentType.ERROR, {}, str(e)
     return IntentType.UNKNOWN_PROVIDER, {}, "Unknown provider"
 
-def extract_log_work(user_text: str, provider_name: str, api_key: str, active_projects_text: str) -> Tuple[Optional[LogWorkParams], dict]:
+def extract_log_work(user_text: str, provider_name: str, api_key: str, active_projects_text: str) -> Tuple[Optional[LogWorkMultiParams], dict]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:

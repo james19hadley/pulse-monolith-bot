@@ -10,7 +10,7 @@ Your ONLY job is to read the user's natural language message and classify it int
 Return strictly valid JSON and nothing else. Do NOT include markdown code blocks (e.g. ```json).
 
 Categorize the user's input into one of the following exact intents:
-- LOG_WORK: The user is reporting time spent working or progressing on a project/quest, or assigning a split part of time. (e.g. "I coded for 40 mins", "Did 2 hours of writing", "all to project 1", "half to admin").
+- LOG_WORK: The user is reporting time spent working or progressing on a project/quest, or assigning a split part of time, or transferring time between projects. (e.g. "I coded for 40 mins", "Did 2 hours of writing", "subtract 10 from A and add 10 to B", "all to project 1", "half to admin").
 - ADD_TASKS: The user is adding actionable to-do items, steps, or tasks to a plan/project (e.g. "Add tasks: buy milk, call Bob", "For Frontend project I need to design UI and fix bugs").
 - ADD_INBOX: The user is dumping a random raw idea, thought, or note to save for later (e.g. "Idea: add stripe later", "Don't forget to buy milk").
 - CREATE_ENTITIES: The user wants to create a new project (possibly with a target number of hours/minutes) (e.g. "Create a project 'Write Book' with a 50h goal", "создай проект Х").

@@ -24,6 +24,9 @@ class LogWorkParams(BaseModel):
     unmatched_project_name: Optional[str] = Field(description="If no project matches, provide the inferred name of the project here", default=None)
     description: Optional[str] = Field(description="A brief 1-5 word summary of what was done.", default=None)
 
+class LogWorkMultiParams(BaseModel):
+    logs: List[LogWorkParams] = Field(description="A list of work logs to record. Usually just one, but can be multiple if the user mentions moving or transferring time between multiple projects.")
+
 
 class AddInboxParams(BaseModel):
     raw_content: str = Field(description="The actual idea, note, or thought, omitting conversational filler like 'save this idea' or 'remind me to'")
@@ -106,9 +109,10 @@ class GoogleProvider(BaseLLMProvider):
         data = json.loads(response.text)
         return IntentType(data.get('intent', IntentType.CHAT_OR_UNKNOWN)), self._get_usage(response)
 
-    def extract_log_work_parameters(self, text: str, active_projects_text: str) -> Tuple[Optional[LogWorkParams], dict]:
+    def extract_log_work_parameters(self, text: str, active_projects_text: str) -> Tuple[Optional[LogWorkMultiParams], dict]:
         system_prompt = f"""You are a precise data extraction tool.
 The user is logging work time. Extract the duration in minutes, the project ID, and a short description.
+If the user specifies moving time (e.g. 'subtract X from Y and add X to Z'), generate multiple log entries (one negative, one positive).
 If no project matches the text, return project_id as null.
 Always convert hours to minutes (e.g. 1 hour = 60 mins).
 
@@ -121,11 +125,11 @@ CURRENT ACTIVE PROJECTS:
             config=types.GenerateContentConfig(
                 system_instruction=system_prompt,
                 response_mime_type='application/json',
-                response_schema=LogWorkParams,
+                response_schema=LogWorkMultiParams,
                 temperature=0.0
             ),
         )
-        return LogWorkParams.model_validate_json(response.text), self._get_usage(response)
+        return LogWorkMultiParams.model_validate_json(response.text), self._get_usage(response)
 
 
     def extract_inbox_parameters(self, text: str) -> Tuple[Optional[AddInboxParams], dict]:

@@ -41,7 +41,15 @@ async def _handle_session_control(message: Message, db, user, provider_name, api
             await message.answer("🚨 У тебя уже есть активная сессия! Сначала заверши её.")
             return
             
-        new_session = Session(user_id=user.id)
+        if params.project_id:
+            project = db.query(Project).filter_by(id=params.project_id, user_id=user.id).first()
+            if project:
+                new_session = Session(user_id=user.id, project_id=project.id)
+            else:
+                new_session = Session(user_id=user.id)
+        else:
+            new_session = Session(user_id=user.id)
+            
         db.add(new_session)
         db.commit()
         
@@ -103,6 +111,12 @@ async def _handle_session_control(message: Message, db, user, provider_name, api
             session.end_time = datetime.utcnow()
             session.status = "pending_split"
             
+            project_title = "Неизвестный проект"
+            if session.project_id:
+                proj = db.query(Project).filter_by(id=session.project_id).first()
+                if proj:
+                    project_title = proj.title
+
             total_elapsed = session.end_time - session.start_time
             minutes = total_elapsed.total_seconds() / 60
             hrs = int(minutes // 60)
@@ -110,7 +124,7 @@ async def _handle_session_control(message: Message, db, user, provider_name, api
             
             db.commit()
             await message.answer(f"🛑 **Finished**. Total time elapsed: {hrs}h {mins}m.\n\n"
-                                 f"Как разделим чек? Сколько из этого была реальная работа (Deep Work), а сколько списать на рутину (Project 0) (отвлекся)?",
+                                 f"Как разделим чек? Сколько из этого была реальная работа над **{project_title}**, а сколько списать на рутину (Project 0) (отвлекся)?",
                                  parse_mode="Markdown")
 
 
