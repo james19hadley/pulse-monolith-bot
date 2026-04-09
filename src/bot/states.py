@@ -16,6 +16,8 @@ class EntityState(StatesGroup):
     waiting_for_project_name = State()
     waiting_for_project_target = State()
     
+    waiting_for_task_name = State()
+    
     waiting_for_habit_name = State()
     waiting_for_habit_target = State()
     

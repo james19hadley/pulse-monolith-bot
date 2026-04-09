@@ -141,3 +141,35 @@ async def state_add_project_time(message: Message, state: FSMContext):
     await state.clear()
 
 
+
+@router.message(EntityState.waiting_for_task_name)
+async def state_new_task(message: Message, state: FSMContext):
+    data = await state.get_data()
+    pid = data.get("task_project_id")
+    if not pid:
+        await message.answer("Error: Lost project context.")
+        await state.clear()
+        return
+        
+    task_name = message.text.strip()
+    
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        proj = db.query(Project).filter(Project.id == pid, Project.user_id == user.id).first()
+        if not proj:
+            await message.answer("Project not found.")
+            await state.clear()
+            return
+
+        from src.db.models import Task
+        new_task = Task(project_id=proj.id, title=task_name, status="pending")
+        db.add(new_task)
+        db.commit()
+        
+        kb = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🔙 Back to Tasks", callback_data=f"ui_proj_tasks_{proj.id}")]
+        ])
+        
+        await message.answer(f"✅ Created task: <b>{task_name}</b> for {proj.title}", parse_mode="HTML", reply_markup=kb)
+        
+    await state.clear()

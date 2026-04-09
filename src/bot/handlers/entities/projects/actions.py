@@ -165,32 +165,49 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
             else:
                 await cb_projects_list(cb, state)
             
+        elif action == "addtask":
+            await state.set_state(EntityState.waiting_for_task_name)
+            await state.update_data(task_project_id=proj.id)
+            await cb.message.edit_text(
+                f"Enter the name of the new task for <b>{proj.title}</b>:\n\n(Keep it actionable, like 'Write introduction chapter')",
+                parse_mode="HTML",
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data=f"ui_proj_tasks_{proj.id}")]])
+            )
+            
         elif action == "tasks":
             from src.db.models import Task
             pending_tasks = db.query(Task).filter(Task.project_id == proj.id, Task.status == 'pending').limit(10).all()
             
-            if not pending_tasks:
-                await cb.answer("No pending tasks for this project.", show_alert=True)
-                return
-            
             kb = []
+            kb.append([InlineKeyboardButton(text="➕ Add Task", callback_data=f"ui_proj_addtask_{proj.id}")])
+            
             for t in pending_tasks:
                 prefix = "🎯 " if getattr(t, 'is_focus_today', False) else ""
-                kb.append([InlineKeyboardButton(text=f"✅ {prefix}{t.title}", callback_data=f"ui_proj_comptask_{t.id}")])
+                row = [
+                    InlineKeyboardButton(text=f"✅ {prefix}{t.title}", callback_data=f"ui_proj_comptask_{proj.id}_{t.id}"),
+                    InlineKeyboardButton(text="🗑", callback_data=f"ui_proj_deltask_{proj.id}_{t.id}")
+                ]
+                kb.append(row)
                 if not getattr(t, 'is_focus_today', False):
-                    kb.append([InlineKeyboardButton(text=f"🎯 Set Focus: {t.title}", callback_data=f"ui_proj_setfocus_{t.id}")])
+                    kb.append([InlineKeyboardButton(text=f"🎯 Set Focus: {t.title}", callback_data=f"ui_proj_setfocus_{proj.id}_{t.id}")])
                     
             kb.append([InlineKeyboardButton(text="🔙 Back to Project", callback_data=f"ui_proj_{proj.id}")])
             
+            msg_text = f"<b>Tasks for {proj.title}</b>"
+            if pending_tasks:
+                msg_text += "\nSelect a task to complete it, or set it as today's focus:"
+            else:
+                msg_text += "\nNo pending tasks. Add one to clear your mind!"
+                
             await cb.message.edit_text(
-                f"<b>Tasks for {proj.title}</b>\nSelect a task to complete it, or set it as today's focus:",
+                msg_text,
                 parse_mode="HTML",
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=kb)
             )
 
         elif action == "comptask":
             from src.db.models import Task
-            task_id = int(data[1])
+            task_id = int(data[2])
             task = db.query(Task).filter(Task.id == task_id).first()
             if task:
                 task.status = "completed"
@@ -225,24 +242,22 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
             else:
                 await cb.answer("Task not found.")
 
-        elif action == "setfocus":
+        elif action == "deltask":
             from src.db.models import Task
-            task_id = int(data[1])
+            task_id = int(data[2])
             task = db.query(Task).filter(Task.id == task_id).first()
             if task:
-                task.is_focus_today = True
+                task.status = "deleted"
                 db.commit()
-                await cb.answer(f"Set '{task.title}' as Focus!")
+                await cb.answer(f"Deleted task '{task.title}'")
                 cb = cb.model_copy(update={"data": f"ui_proj_tasks_{task.project_id}"})
                 await cb_project_action(cb, state)
             else:
                 await cb.answer("Task not found.")
 
-        
-
         elif action == "setfocus":
             from src.db.models import Task
-            task_id = int(data[1])
+            task_id = int(data[2])
             task = db.query(Task).filter(Task.id == task_id).first()
             if task:
                 task.is_focus_today = True

@@ -1,6 +1,6 @@
 # Sprint 33: AI Agnosticism & Multiple Providers
 
-**Status:** `Draft`
+**Status:** `Active`
 **Date Proposed:** April 8, 2026
 **Objective:** Decouple the bot from Google Gemini and allow seamless swapping of LLM providers dynamically (from the DB), ensuring fallback and customized experiences.
 

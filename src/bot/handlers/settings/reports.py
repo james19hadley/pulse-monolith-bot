@@ -92,3 +92,42 @@ async def cq_test_report(callback: CallbackQuery):
         await callback.answer()
 
 
+
+from src.bot.keyboards.settings import get_report_format_keyboard
+
+@router.callback_query(F.data == "settings_report_format")
+async def cq_report_format(callback: CallbackQuery):
+    with SessionLocal() as db:
+        user = get_or_create_user(db, callback.from_user.id)
+        config = user.report_config or {}
+        if isinstance(config, str):
+            import json
+            try: config = json.loads(config)
+            except: config = {}
+        await callback.message.edit_text("⚙️ Configure your Daily Report:", reply_markup=get_report_format_keyboard(config))
+
+@router.callback_query(F.data.startswith("repfmt_"))
+async def cq_report_format_toggle(callback: CallbackQuery):
+    key = callback.data.replace("repfmt_", "")
+    with SessionLocal() as db:
+        user = get_or_create_user(db, callback.from_user.id)
+        config = user.report_config or {}
+        if isinstance(config, str):
+            import json
+            try: config = json.loads(config)
+            except: config = {}
+            
+        current_val = config.get(key)
+        # default logic
+        if current_val is None:
+            if key == "show_zeros": current_val = True
+            elif key == "hide_exact_hours": current_val = False
+            elif key == "show_subtasks": current_val = True
+            else: current_val = False
+            
+        config[key] = not current_val
+        user.report_config = config
+        db.commit()
+        db.refresh(user)
+        
+        await callback.message.edit_reply_markup(reply_markup=get_report_format_keyboard(config))

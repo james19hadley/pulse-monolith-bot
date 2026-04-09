@@ -270,7 +270,9 @@ def morning_planner_job():
                     api_key = decrypt_key(user.api_key_encrypted)
                     ai = GoogleProvider(api_key=api_key)
                     prompt = f"The user has these pending tasks:\\n{tasks_list_str}\\n\\nDon't list all of them. Act as a gentle productivity sherpa. Welcome them to a new day. Pick the top 1 or 2 most impactful tasks from the list to suggest as the 'Priority for today'. Keep it conversational, short, and not overwhelming. Ask if they want to start one of those."
-                    msg_text = run_async(ai.generate_text(prompt))
+                    res, _ = ai.generate_chat_response(prompt, persona_prompt="You are a gentle productivity coach.")
+                    if res:
+                        msg_text = res
                 except Exception as e:
                     print(f"Failed to generate morning AI planner: {e}")
             

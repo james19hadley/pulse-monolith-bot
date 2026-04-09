@@ -74,11 +74,30 @@ def get_reports_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="❌ Disable", callback_data="set_report_none")
         ],
         [
-            InlineKeyboardButton(text="🧪 Test Report", callback_data="settings_test_report"),
+            InlineKeyboardButton(text="⚙️ Report Format", callback_data="settings_report_format"),
+            InlineKeyboardButton(text="🧪 Test Report", callback_data="settings_test_report")
+        ],
+        [
             InlineKeyboardButton(text="🔙 Back", callback_data="settings_back")
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def get_report_format_keyboard(config: dict) -> InlineKeyboardMarkup:
+    show_zeros = config.get("show_zeros", True)
+    hide_exact_hours = config.get("hide_exact_hours", False)
+    show_subtasks = config.get("show_subtasks", True)
+    
+    def cbx(val): return "✅ " if val else "❌ "
+    
+    kb = [
+        [InlineKeyboardButton(text=f"{cbx(show_zeros)}Show Zeros", callback_data="repfmt_show_zeros")],
+        [InlineKeyboardButton(text=f"{cbx(hide_exact_hours)}Hide Exact Hours", callback_data="repfmt_hide_exact_hours")],
+        [InlineKeyboardButton(text=f"{cbx(show_subtasks)}Show Sub-tasks", callback_data="repfmt_show_subtasks")],
+        [InlineKeyboardButton(text="🔙 Back", callback_data="settings_reports")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)
+
 
 
 def get_back_settings_keyboard() -> InlineKeyboardMarkup:
