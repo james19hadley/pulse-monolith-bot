@@ -24,6 +24,7 @@ WEBHOOK_DOMAIN = os.getenv("WEBHOOK_DOMAIN")
 WEBHOOK_PATH = os.getenv("WEBHOOK_PATH", "/webhook")
 WEBAPP_HOST = os.getenv("WEBAPP_HOST", "0.0.0.0")
 WEBAPP_PORT = int(os.getenv("WEBAPP_PORT", "8080"))
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET")
 
 if not TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN == "your_telegram_bot_token_here":
     raise ValueError("TELEGRAM_BOT_TOKEN is not set in the .env file. Please configure it.")
@@ -91,4 +92,6 @@ USER_SETTINGS_REGISTRY = {
 }
 
 ADMIN_LOGIN = os.getenv("ADMIN_LOGIN", "admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "changeme")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
+if not ADMIN_PASSWORD or ADMIN_PASSWORD == "changeme":
+    raise ValueError("ADMIN_PASSWORD must be configured in .env and cannot be \"changeme\".")

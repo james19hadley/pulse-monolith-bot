@@ -13,7 +13,7 @@ from typing import Any, Awaitable, Callable, Dict
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
 
-from src.core.config import TELEGRAM_BOT_TOKEN, WEBHOOK_DOMAIN, WEBHOOK_PATH, WEBAPP_HOST, WEBAPP_PORT
+from src.core.config import TELEGRAM_BOT_TOKEN, WEBHOOK_SECRET, WEBHOOK_DOMAIN, WEBHOOK_PATH, WEBAPP_HOST, WEBAPP_PORT
 from src.bot import routers
 from src.admin_dashboard import dashboard_handler, logs_handler
 
@@ -111,6 +111,7 @@ async def main():
     if WEBHOOK_DOMAIN:
         app = web.Application()
         webhook_requests_handler = SimpleRequestHandler(
+            secret_token=WEBHOOK_SECRET,
             dispatcher=dp,
             bot=bot,
         )
@@ -125,6 +126,7 @@ async def main():
         # Explicitly ask Telegram to send all update types we setup
         await bot.set_webhook(
             webhook_url,
+            secret_token=WEBHOOK_SECRET,
             allowed_updates=["message", "callback_query", "inline_query", "my_chat_member"]
         )
         
