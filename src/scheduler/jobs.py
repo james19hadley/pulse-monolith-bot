@@ -232,6 +232,12 @@ def evening_nudge_job():
 @shared_task(name="job_morning_planner")
 def morning_planner_job():
     """
+    Pulls pending DB tasks and spoon-feeds priority items to the AI for a curated morning message.
+    
+    @Architecture-Map: [JOB-MORN-PLAN]
+    @Docs: docs/07_ARCHITECTURE_MAP.md
+    """
+    """
     Runs periodically. Triggers around 9 AM user time.
     Reviews all pending tasks, selects the most impactful 1-3, and sends a gentle
     "Good morning" note encouraging the user to pick one.

@@ -27,3 +27,11 @@ The system is built to not depend entirely on one corporation (Google, OpenAI, A
 
 *   **Strict Sprint Scope:** We strictly adhere to the current Sprint objectives. If we discover technical debt or architectural improvements (e.g., refactoring magic strings to Enums) during a sprint, we **do not bloat** the current sprint.
 *   **Just-in-Time Planning:** Instead of fixing non-critical debt immediately, we log it as the **first task** of the *next* sprint. This ensures forward momentum while maintaining a clear, transparent record of what needs to be fixed without derailing the current feature delivery.
+
+## 5. Codebase Traceability & Semantic Anchors (Engineering Docs)
+To ensure AI agents and human developers can navigate the monolithic elements and logical files, we use **Bidirectional Traceability** via **Plain-Text Semantic Anchors**. 
+- We do not rely on line numbers, which break during refactoring.
+- We use a standardized UID format: `[LAYER-DOMAIN-ACTION]`. 
+  - Layers: `SRV` (services database ops), `HND` (aiogram handlers), `UI` (bot views and keyboards), `JOB` (celery/async scheduler), `CORE` (ai and config).
+- **Rule for Code:** Key architectural functions must include `@Architecture-Map: [UID]` in their Python `docstring`.
+- **Rule for Docs:** The UID must be registered in `docs/07_ARCHITECTURE_MAP.md` along with a human-readable explanation of why the component exists and what it connects to.

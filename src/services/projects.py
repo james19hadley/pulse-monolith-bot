@@ -8,6 +8,12 @@ import json
 class ProjectService:
     @staticmethod
     def create_project(user_id: int, title: str, target_value: int) -> Project:
+        """
+        Creates a new project entity in the database.
+        
+        @Architecture-Map: [SRV-PROJ-CREATE]
+        @Docs: docs/07_ARCHITECTURE_MAP.md
+        """
         with SessionLocal() as db:
             proj = Project(user_id=user_id, title=title, status="active", target_value=target_value)
             db.add(proj)
