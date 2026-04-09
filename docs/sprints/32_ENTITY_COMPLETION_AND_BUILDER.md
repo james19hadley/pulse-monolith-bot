@@ -20,17 +20,17 @@ We are **NOT** building a Jira backlog or a GTD to-do list. Standard to-do lists
 ## 📋 Tasks
 
 ### 1. Task Management UI
-- [ ] Add explicit "📋 Tasks" button handling in `projects.py` to open a list of pending tasks for a project.
-- [ ] Implement Add/Complete/Delete inline buttons for individual tasks.
-- [ ] Teach the AI Intent Router to extract task creation (e.g., "Add buy milk to Project X tasks").
+- [x] Add explicit "📋 Tasks" button handling in `projects.py` to open a list of pending tasks for a project.
+- [x] Implement Add/Complete/Delete inline buttons for individual tasks.
+- [x] Teach the AI Intent Router to extract task creation (e.g., "Add buy milk to Project X tasks").
 
 ### 2. Morning Planner Integration
-- [ ] Refactor `job_morning_planner` to grab 1-3 pending Tasks from the DB and pass them to the LLM for a curated morning message.
+- [x] Refactor `job_morning_planner` to grab 1-3 pending Tasks from the DB and pass them to the LLM for a curated morning message.
 
 ### 3. Dynamic Report Builder
-- [ ] Add `📊 Report Format` button to master settings.
-- [ ] Create an interactive toggler keyboard (e.g., `[x] Show zeros`, `[ ] Hide exact hours`, `[x] Show Sub-tasks`).
-- [ ] Update `views.py` `build_daily_report` to conditionally render text blocks based on the `user.report_config` JSON.
+- [x] Add `📊 Report Format` button to master settings.
+- [x] Create an interactive toggler keyboard (e.g., `[x] Show zeros`, `[x] Hide exact hours`, `[x] Show Sub-tasks`).
+- [x] Update `views.py` `build_daily_report` to conditionally render text blocks based on the `user.report_config` JSON.
 
 ## 🔒 Security & Architecture Notes
 - `report_config` should be validated as a Pydantic model before saving into the JSONB DB column to prevent rendering crashes.
