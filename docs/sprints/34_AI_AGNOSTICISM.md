@@ -12,17 +12,17 @@
 ## 📋 Tasks
 
 ### 1. The `BaseLLMProvider` Abstract
-- [ ] Create an abstract base class `src/ai/base_provider.py` with standard `generate_text()`, and `extract_intent()` async methods.
-- [ ] Refactor the current `GoogleProvider` to implement this abstract interface properly.
+[x] Create an abstract base class `src/ai/base_provider.py` with standard `generate_text()`, and `extract_intent()` async methods.
+[x] Refactor the current `GoogleProvider` to implement this abstract interface properly.
 
 ### 2. OpenAI Integration
-- [ ] Implement `src/ai/openai_provider.py` parsing OpenAI's tool-calling definitions instead of Gemini's.
-- [ ] Handle `OPENAI_API_KEY` encryption securely similar to `GOOGLE_API_KEY`.
-- [ ] Test the accuracy of `gpt-4o-mini` vs Gemini on our strict Pydantic parsing goals.
+[x] Implement `src/ai/openai_provider.py` parsing OpenAI's tool-calling definitions instead of Gemini's.
+[x] Handle `OPENAI_API_KEY` encryption securely similar to `GOOGLE_API_KEY`.
+[x] Test the accuracy of `gpt-4o-mini` vs Gemini on our strict Pydantic parsing goals.
 
 ### 3. UI to Swap Engine
-- [ ] Update `src/bot/handlers/settings/general.py` and keyboards.
-- [ ] Add the field `llm_provider` validation into DB interactions to properly instantiate the required provider on the fly.
+[x] Update `src/bot/handlers/settings/general.py` and keyboards.
+[x] Add the field `llm_provider` validation into DB interactions to properly instantiate the required provider on the fly.
 
 ## 🔒 Security & Architecture Notes
 - The API keys need to continue using symmetric encryption before DB storage.

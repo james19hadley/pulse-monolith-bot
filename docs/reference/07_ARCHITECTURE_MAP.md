@@ -65,6 +65,7 @@ This document contains a registry of unique identifiers (UIDs) used directly ins
 
 ## 📁 11. Presentation Layer (Keyboards & Texts)
 - **`[UI-KEY-CORE]`**: `src/bot/keyboards/core.py` - Pagination, structural grids, arrows.
+- **`[UI-KEY-NUDGE]`**: `src/bot/keyboards/nudge.py` - Inline buttons for proactive session reminders.
 - **`[UI-KEY-ENT]`**: `src/bot/keyboards/entities.py` - Grids customized to handle db entities like rendering a project card inline menu.
 - **`[UI-KEY-SET]`**: `src/bot/keyboards/settings.py` - Toggle boards for configuration edits.
 - **`[UI-TEXTS]`**: `src/bot/texts.py` - Universal dictionary (or set of constants) defining strings bot replies with.

@@ -243,3 +243,50 @@ Here is your report anyway:
 {report_text}
 
 <i>Tip: Bind a channel to post this automatically by forwarding a message from it!</i>""", parse_mode="HTML")
+@router.callback_query(F.data == "nudge_working")
+async def handle_nudge_working_callback(callback_query: types.CallbackQuery):
+    """
+    User clicked 'I am still working' on a nudge message.
+    Edit the message to a green checkmark and secretly bump the session notes so the scheduler resets the idle timer.
+    """
+    await callback_query.answer("✅")
+    await callback_query.message.edit_text("✅")
+    
+    with SessionLocal() as db:
+        user = db.query(User).filter(User.telegram_id == callback_query.from_user.id).first()
+        if not user: return
+        
+        session = db.query(AgentSession).filter(
+            AgentSession.user_id == user.id,
+            AgentSession.status.in_(["active", "rest"])
+        ).order_by(AgentSession.created_at.desc()).first()
+        
+        if session:
+            # Append a silent log so the latest worklog checks are reset
+            from src.db.models import WorkLog
+            from datetime import timezone
+            log = WorkLog(
+                session_id=session.id,
+                duration_minutes=0,
+                description="✅ Checked in (Acknowledged Nudge)",
+                timestamp=datetime.now(timezone.utc),
+                source="nudge"
+            )
+            db.add(log)
+            db.commit()
+
+@router.callback_query(F.data == "nudge_finish")
+async def handle_nudge_finish_callback(callback_query: types.CallbackQuery):
+    """
+    User clicked 'Finish session' on a nudge message. 
+    Redirect to standard session end flow.
+    """
+    await callback_query.answer()
+    
+    # Clean the keyboard
+    try:
+        await callback_query.message.edit_reply_markup(reply_markup=None)
+    except Exception:
+        pass
+        
+    await handle_end_session(callback_query.message)

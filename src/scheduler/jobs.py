@@ -1,4 +1,6 @@
 import os
+from src.bot.keyboards.nudge import get_nudge_keyboard
+from src.bot.texts import Prompts
 import asyncio
 from datetime import datetime, timedelta, time
 from sqlalchemy.orm import Session as DBSession
@@ -57,7 +59,7 @@ def catalyst_heartbeat():
                     # Active session idling
                     hours_idle = round((now - idle_since).total_seconds() / 3600, 1)
                     is_ping_due = True
-                    ping_text = f"⏳ Слышишь, ты уже в контексте сессии {hours_idle} часа(ов) без логов. Всё еще в потоке, или пора завершить сессию?"
+                    ping_text = Prompts.NUDGE_ACTIVE_SESSION.format(hours_idle=hours_idle)
             elif session.status == "rest":
                 # Rest mode for > 30 minutes
                 if session.rest_start_time and (now - session.rest_start_time > timedelta(minutes=30)):
@@ -65,7 +67,7 @@ def catalyst_heartbeat():
                     is_ping_due = True
                     # Let's not annoy them every 5 mins. Use `last_ping_timestamps` to throttle.
                     ctx_text = f" Твой Save-State: «{session.save_state_context}»." if session.save_state_context else ""
-                    ping_text = f"⏸️ Перерыв затянулся: меня не было {mins_rested} минут.{ctx_text} Возвращаемся или заканчиваем на сегодня?"
+                    ping_text = Prompts.NUDGE_REST_SESSION.format(mins_rested=mins_rested, ctx_text=ctx_text)
 
             if is_ping_due:
                 last_ping_time = last_ping_timestamps.get(telegram_id)
@@ -92,7 +94,7 @@ def catalyst_heartbeat():
                     if bot:
                         msg = run_async(bot.send_message(
                             chat_id=telegram_id, 
-                            text=ping_text
+                            text=ping_text, reply_markup=get_nudge_keyboard()
                         ))
                         last_ping_message_ids[telegram_id] = msg.message_id
                         last_ping_timestamps[telegram_id] = now
