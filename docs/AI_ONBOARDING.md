@@ -27,6 +27,10 @@ Pulse Monolith is not a standard Jira/GTD to-do list. It is an AI accountability
 For understanding JSON fields like `report_config` or how nested projects work:
 👉 **`docs/reference/04_DATABASE_AND_STATE.md`**
 
+## ☁️ 6. How is the Bot Deployed and Logged?
+If you need to debug a server crash, fetch logs, or understand where the bot actually runs (VPS, Docker, CI/CD):
+👉 **`docs/reference/05_INFRASTRUCTURE.md`**
+
 ---
 
 ### 🚨 Your First Action After Reading This:

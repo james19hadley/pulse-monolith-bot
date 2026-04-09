@@ -11,4 +11,4 @@ Originally planned as an embedded web dashboard, this sprint was reprioritized t
 - [x] Fix database import issues (SQLAlchemy `func` import).
 - [x] Resolve file bloat by cleaning up loose `fix_*.py` and legacy scripts from the project root.
 - [x] Fix container startup crash loop by restoring missing definitions in `keyboards.py`.
-- [x] Document infrastructure topology in `05_INFRASTRUCTURE_ROADMAP.md`.
+- [x] Document infrastructure topology in `05_INFRASTRUCTURE.md`.
