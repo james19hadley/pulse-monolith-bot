@@ -2,7 +2,7 @@
 Execution mapping for NLP intents classified by AI (links intents to actual functions).
 
 @Architecture-Map: [HND-INTENT-CORE]
-@Docs: docs/07_ARCHITECTURE_MAP.md
+@Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 from src.core.config import USER_SETTINGS_REGISTRY
 from src.core.personas import get_persona_prompt

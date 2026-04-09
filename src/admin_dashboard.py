@@ -2,7 +2,7 @@
 Admin Dashboard for monitoring bot performance and basic stats via web interface.
 
 @Architecture-Map: [CORE-ADMIN-DASH]
-@Docs: docs/07_ARCHITECTURE_MAP.md
+@Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 from aiohttp import web
 import base64

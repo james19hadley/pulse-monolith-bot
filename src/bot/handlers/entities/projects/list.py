@@ -2,7 +2,7 @@
 Handlers for paginated output of all user projects.
 
 @Architecture-Map: [HND-PROJ-LIST]
-@Docs: docs/07_ARCHITECTURE_MAP.md
+@Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 
 from aiogram import Router, F

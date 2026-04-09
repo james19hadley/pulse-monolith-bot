@@ -2,7 +2,7 @@
 Contains all environment variables and the central USER_SETTINGS_REGISTRY.
 
 @Architecture-Map: [CORE-SYS-CONFIG]
-@Docs: docs/07_ARCHITECTURE_MAP.md
+@Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 import os
 import datetime

@@ -2,7 +2,7 @@
 Hardcoded system constants, limits, and magic numbers.
 
 @Architecture-Map: [CORE-SYS-CONSTANTS]
-@Docs: docs/07_ARCHITECTURE_MAP.md
+@Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 from enum import Enum
 

@@ -20,7 +20,7 @@ class Base(DeclarativeBase):
     Base class for all SQLAlchemy declarative models. Defines the global DB schema.
     
     @Architecture-Map: [DB-MODELS-SCHEMA]
-    @Docs: docs/07_ARCHITECTURE_MAP.md
+    @Docs: docs/reference/07_ARCHITECTURE_MAP.md
     """
     pass
 

@@ -2,7 +2,7 @@
 Router registry that aggregates all entity-related handlers (projects, menus).
 
 @Architecture-Map: [HND-ENT-ROUTER]
-@Docs: docs/07_ARCHITECTURE_MAP.md
+@Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 from aiogram import Router
 from .menu import router as menu_router

@@ -2,7 +2,7 @@
 Celery worker entry point for asynchronous background jobs (like Morning Planner).
 
 @Architecture-Map: [APP-CELERY-WORKER]
-@Docs: docs/07_ARCHITECTURE_MAP.md
+@Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 import os
 from celery import Celery

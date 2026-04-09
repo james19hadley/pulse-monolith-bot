@@ -2,7 +2,7 @@
 The central NLP router that passes user messages to the Intent classifier to figure out which handler to invoke.
 
 @Architecture-Map: [CORE-AI-ROUTER]
-@Docs: docs/07_ARCHITECTURE_MAP.md
+@Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 from typing import Optional, Tuple, Union
 from src.ai.providers import GoogleProvider, LogWorkParams, AddInboxParams, SessionControlParams, ReportConfigParams, SystemConfigParams, CreateEntitiesParams, AddTasksParams, EditEntitiesParams

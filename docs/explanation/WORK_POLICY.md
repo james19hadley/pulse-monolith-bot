@@ -34,4 +34,4 @@ To ensure AI agents and human developers can navigate the monolithic elements an
 - We use a standardized UID format: `[LAYER-DOMAIN-ACTION]`. 
   - Layers: `SRV` (services database ops), `HND` (aiogram handlers), `UI` (bot views and keyboards), `JOB` (celery/async scheduler), `CORE` (ai and config).
 - **Rule for Code:** Key architectural functions must include `@Architecture-Map: [UID]` in their Python `docstring`.
-- **Rule for Docs:** The UID must be registered in `docs/07_ARCHITECTURE_MAP.md` along with a human-readable explanation of why the component exists and what it connects to.
+- **Rule for Docs:** The UID must be registered in `docs/reference/07_ARCHITECTURE_MAP.md` along with a human-readable explanation of why the component exists and what it connects to.

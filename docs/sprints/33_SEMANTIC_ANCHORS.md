@@ -2,11 +2,11 @@
 
 **Status:** `Completed`
 **Date Proposed:** April 9, 2026
-**Objective:** Propagate the new Bidirectional Traceability standard (Plain-Text Semantic Anchors) strictly defined in WORK_POLICY.md to every single Python file in the repository. Provide robust navigational links for AI context.
+**Objective:** Propagate the new Bidirectional Traceability standard (Plain-Text Semantic Anchors) strictly defined in docs/explanation/WORK_POLICY.md to every single Python file in the repository. Provide robust navigational links for AI context.
 
 ## 🎯 Goals
 - Identify the primary architectural footprint of every functional file.
-- Register all new UIDs in `docs/07_ARCHITECTURE_MAP.md`.
+- Register all new UIDs in `docs/reference/07_ARCHITECTURE_MAP.md`.
 - Add `@Architecture-Map: [UID]` to docstrings throughout the codebase.
 
 ## 📋 Tasks
@@ -66,7 +66,7 @@
 
 ## 🔒 Security & Architecture Notes
 - UIDs must use `[LAYER-DOMAIN-ACTION]` format. DO NOT use line numbers.
-- Keep mapping explanations in `docs/07_ARCHITECTURE_MAP.md` human-readable and concise.
+- Keep mapping explanations in `docs/reference/07_ARCHITECTURE_MAP.md` human-readable and concise.
 
 ## 🏁 Completion Criteria
 - Every `.py` file containing logic is checked off.

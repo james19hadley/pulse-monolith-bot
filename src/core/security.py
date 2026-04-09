@@ -8,7 +8,7 @@ def encrypt_key(raw_key: str) -> str:
     Encrypts a plaintext API key for database storage.
     
     @Architecture-Map: [CORE-SEC-AUTH]
-    @Docs: docs/07_ARCHITECTURE_MAP.md
+    @Docs: docs/reference/07_ARCHITECTURE_MAP.md
     """
     return _fernet.encrypt(raw_key.encode('utf-8')).decode('utf-8')
 

@@ -2,7 +2,7 @@
 Slash commands for managing entities (e.g., bypassing menus).
 
 @Architecture-Map: [HND-ENT-CMDS]
-@Docs: docs/07_ARCHITECTURE_MAP.md
+@Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 from aiogram import Router, F
 from aiogram.filters import Command, CommandObject

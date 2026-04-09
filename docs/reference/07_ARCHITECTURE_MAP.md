@@ -69,3 +69,7 @@ This document contains a registry of unique identifiers (UIDs) used directly ins
 
 ## 📁 12. Asynchronous Tasks (`src/scheduler/`)
 - **`[JOB-CELERY-MOD]`**: `src/scheduler/tasks.py` - Setup mapping connecting Python functions in 'jobs.py' to cron-like Celery behaviors.
+
+## 📁 13. Data Scripts & Migrations (`src/scripts/`)
+- **`[SCRIPT-MIGRATE-LANG]`**: `src/scripts/migrate_language.py` - Single-run migration script to populate a default language column in the database.
+- **`[SCRIPT-AUDIT-DOCS]`**: `src/scripts/audit_docs.py` - Automated CI/CD script to audit the Project Architecture mapping.

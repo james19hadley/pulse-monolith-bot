@@ -10,7 +10,7 @@ class ReportingService:
     Calculates progress for projects today and orchestrates report building.
     
     @Architecture-Map: [SRV-REPORT-CALC]
-    @Docs: docs/07_ARCHITECTURE_MAP.md
+    @Docs: docs/reference/07_ARCHITECTURE_MAP.md
     """
         from src.bot.handlers.utils import generate_daily_report_text
         return generate_daily_report_text(db, user, force_date, is_auto_cron)

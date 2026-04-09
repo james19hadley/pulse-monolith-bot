@@ -2,7 +2,7 @@
 Processing AI-parsed work-logging intents (adding minutes or absolute hours to projects).
 
 @Architecture-Map: [HND-INTENT-WORK]
-@Docs: docs/07_ARCHITECTURE_MAP.md
+@Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 from aiogram.types import Message
 from src.db.models import TokenUsage, Project, TimeLog, Session

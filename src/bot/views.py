@@ -1,3 +1,9 @@
+"""
+Collects statistics calculated by [SRV-REPORT-CALC] and builds formatted strings for the end-user.
+
+@Architecture-Map: [UI-REP-BUILDER]
+@Docs: docs/reference/07_ARCHITECTURE_MAP.md
+"""
 # Presentation Layer: Pulse Monolith Bot
 # Strictly factual and objective responses.
 

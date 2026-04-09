@@ -2,7 +2,7 @@
 Core bot handlers like /start, /help, and global keyboard interactions.
 
 @Architecture-Map: [HND-BOT-CORE]
-@Docs: docs/07_ARCHITECTURE_MAP.md
+@Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 from aiogram import Router, F
 from aiogram.filters import Command

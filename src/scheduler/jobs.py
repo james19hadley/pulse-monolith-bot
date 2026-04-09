@@ -235,7 +235,7 @@ def morning_planner_job():
     Pulls pending DB tasks and spoon-feeds priority items to the AI for a curated morning message.
     
     @Architecture-Map: [JOB-MORN-PLAN]
-    @Docs: docs/07_ARCHITECTURE_MAP.md
+    @Docs: docs/reference/07_ARCHITECTURE_MAP.md
     """
     """
     Runs periodically. Triggers around 9 AM user time.

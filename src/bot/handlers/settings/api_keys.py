@@ -2,7 +2,7 @@
 Handlers for the user to securely submit and store their own provider API Keys (BYOK).
 
 @Architecture-Map: [HND-SET-APIKEYS]
-@Docs: docs/07_ARCHITECTURE_MAP.md
+@Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery

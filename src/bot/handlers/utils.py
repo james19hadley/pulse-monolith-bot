@@ -2,7 +2,7 @@
 Utility bot handlers (e.g. callback query cleaners, generic paginations).
 
 @Architecture-Map: [HND-UTILS]
-@Docs: docs/07_ARCHITECTURE_MAP.md
+@Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 from sqlalchemy.orm import Session as DBSession
 from datetime import datetime
