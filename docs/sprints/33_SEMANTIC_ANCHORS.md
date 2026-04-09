@@ -64,6 +64,13 @@
 - [x] `src/scheduler/jobs.py` (Completed)
 - [x] `src/scheduler/tasks.py`
 
+
+### Documentation Restructuring & Automation
+- [x] Reorganize `docs/` folder into the Diátaxis framework (`reference/`, `explanation/`, etc.).
+- [x] `src/scripts/audit_docs.py` (Automated Document Auditing).
+- [x] Install `pre-push` git hook (`scripts/install_hooks.sh`) to block undocumented commits.
+- [x] Update `WORK_POLICY.md` with AI Auditing Guardrails.
+
 ## 🔒 Security & Architecture Notes
 - UIDs must use `[LAYER-DOMAIN-ACTION]` format. DO NOT use line numbers.
 - Keep mapping explanations in `docs/reference/07_ARCHITECTURE_MAP.md` human-readable and concise.
