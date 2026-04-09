@@ -35,3 +35,7 @@ To ensure AI agents and human developers can navigate the monolithic elements an
   - Layers: `SRV` (services database ops), `HND` (aiogram handlers), `UI` (bot views and keyboards), `JOB` (celery/async scheduler), `CORE` (ai and config).
 - **Rule for Code:** Key architectural functions must include `@Architecture-Map: [UID]` in their Python `docstring`.
 - **Rule for Docs:** The UID must be registered in `docs/reference/07_ARCHITECTURE_MAP.md` along with a human-readable explanation of why the component exists and what it connects to.
+
+## 6. AI Automation & Audit Guardrails
+- **Pre-Push Linter Check:** We enforce a `pre-push` git hook (via `scripts/install_hooks.sh`) that strictly blocks any repository pushes if `src/scripts/audit_docs.py` detects missing Semantic Anchors.
+- **Agent Accountability:** Whenever finishing a Sprint and performing Git commits, the AI Agent must proactively parse `07_ARCHITECTURE_MAP.md` and ensure UIDs align. The agent must resolve any architecture audit errors independently before declaring a feature complete.
