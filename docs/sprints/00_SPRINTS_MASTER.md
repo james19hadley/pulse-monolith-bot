@@ -68,4 +68,3 @@ Every new Sprint Markdown file must follow this strict structure to maintain con
 | [Sprint 35](35_DEHARDCODING_AND_DOCUMENTATION.md) | De-hardcoding, Texts, & Documentation | 🟢 Completed |
 | [Sprint 36](36_SECOPS_AND_INFRASTRUCTURE.md) | SecOps & Infrastructure Hardening | 🟢 Completed |
 | [Sprint 37](37_INTENT_ROUTING_AND_USABILITY.md) | Intent Routing | [Sprint 37](37_INTENT_ROUTING_AND_USABILITY.md) | Intent Routing | [Sprint 37](37_INTENT_ROUTING_AND_USABILITY.md) | Intent Routing & Usability Fixes | ⚪ Draft | Usability Fixes | 🟢 Completed | Usability Fixes | 🟢 Completed |
-| [Sprint 38](38_CENTRALIZED_NAGGING_AND_TASKS.md) | Centralized Nagging & Task Prompts | 🟢 Completed |

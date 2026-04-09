@@ -32,63 +32,47 @@ def catalyst_heartbeat():
     """
     Runs periodically. Checks for active sessions that have been idle
     (no time logs) for over the user's threshold. Sends a soft ping.
-    Also handles "Zero Tasks" gentle nudge if there's no active session.
     """
     with SessionLocal() as db:
-        now = datetime.utcnow()
-        users = db.query(User).all()
-        for user in users:
-            telegram_id = user.telegram_id
+        active_sessions = db.query(AppSession).filter(AppSession.status.in_(["active", "rest"])).all()
+        for session in active_sessions:
+            last_log = db.query(TimeLog).filter(TimeLog.session_id == session.id).order_by(TimeLog.created_at.desc()).first()
+            idle_since = last_log.created_at if last_log else session.start_time
+            now = datetime.utcnow()
             
+            user = db.query(User).filter(User.id == session.user_id).first()
+            if not user:
+                continue
+                
             threshold_minutes = user.catalyst_threshold_minutes if user.catalyst_threshold_minutes is not None else 60
             interval_minutes = user.catalyst_interval_minutes if user.catalyst_interval_minutes is not None else 20
+            telegram_id = user.telegram_id
             
-            if threshold_minutes <= 0:
-                continue
-
-            session = db.query(AppSession).filter(
-                AppSession.user_id == user.id, 
-                AppSession.status.in_(["active", "rest"])
-            ).first()
-
+            # Sprint 24 Guardrails Processing
             is_ping_due = False
             ping_text = ""
-            last_event_time = None
-
-            if session:
-                last_log = db.query(TimeLog).filter(TimeLog.session_id == session.id).order_by(TimeLog.created_at.desc()).first()
-                idle_since = last_log.created_at if last_log else session.start_time
-                last_event_time = session.rest_start_time if session.status == 'rest' else idle_since
-                if last_event_time is None: 
-                    last_event_time = now
-
-                if session.status == "active":
-                    if now - idle_since > timedelta(minutes=threshold_minutes):
-                        # Active session idling
-                        hours_idle = round((now - idle_since).total_seconds() / 3600, 1)
-                        is_ping_due = True
-                        ping_text = Prompts.NUDGE_ACTIVE_SESSION.format(hours_idle=hours_idle)
-                elif session.status == "rest":
-                    # Rest mode for > 30 minutes
-                    if session.rest_start_time and (now - session.rest_start_time > timedelta(minutes=30)):
-                        mins_rested = int((now - session.rest_start_time).total_seconds() / 60)
-                        is_ping_due = True
-                        ctx_text = f" Твой Save-State: «{session.save_state_context}»." if session.save_state_context else ""
-                        ping_text = Prompts.NUDGE_REST_SESSION.format(mins_rested=mins_rested, ctx_text=ctx_text)
-
-            else:
-                # ZERO TASKS CHECK
-                last_log = db.query(TimeLog).filter(TimeLog.user_id == user.id).order_by(TimeLog.created_at.desc()).first()
-                if last_log and (now - last_log.created_at) > timedelta(minutes=60):
-                    pending_tasks = db.query(Task).filter_by(user_id=user.id, status='pending').count()
-                    if pending_tasks == 0:
-                        last_event_time = last_log.created_at
-                        is_ping_due = True
-                        from src.bot.texts import Prompts
-                        ping_text = Prompts.NUDGE_ZERO_TASKS
+            
+            if session.status == "active":
+                if threshold_minutes <= 0:
+                    continue
+                if now - idle_since > timedelta(minutes=threshold_minutes):
+                    # Active session idling
+                    hours_idle = round((now - idle_since).total_seconds() / 3600, 1)
+                    is_ping_due = True
+                    ping_text = Prompts.NUDGE_ACTIVE_SESSION.format(hours_idle=hours_idle)
+            elif session.status == "rest":
+                # Rest mode for > 30 minutes
+                if session.rest_start_time and (now - session.rest_start_time > timedelta(minutes=30)):
+                    mins_rested = int((now - session.rest_start_time).total_seconds() / 60)
+                    is_ping_due = True
+                    # Let's not annoy them every 5 mins. Use `last_ping_timestamps` to throttle.
+                    ctx_text = f" Твой Save-State: «{session.save_state_context}»." if session.save_state_context else ""
+                    ping_text = Prompts.NUDGE_REST_SESSION.format(mins_rested=mins_rested, ctx_text=ctx_text)
 
             if is_ping_due:
-                last_ping_time = user.last_ping_timestamp
+                last_ping_time = last_ping_timestamps.get(telegram_id)
+                last_event_time = session.rest_start_time if session.status == 'rest' else idle_since
+                if last_event_time is None: last_event_time = now
                 
                 already_pinged = (last_ping_time is not None and last_ping_time >= last_event_time)
                 
@@ -99,10 +83,10 @@ def catalyst_heartbeat():
                     if (now - last_ping_time) < timedelta(minutes=interval_minutes):
                         continue
                 
-                if user.last_ping_message_id:
+                if telegram_id in last_ping_message_ids:
                     try:
                         if bot:
-                            run_async(bot.delete_message(chat_id=telegram_id, message_id=user.last_ping_message_id))
+                            run_async(bot.delete_message(chat_id=telegram_id, message_id=last_ping_message_ids[telegram_id]))
                     except Exception:
                         pass
                 
@@ -112,9 +96,8 @@ def catalyst_heartbeat():
                             chat_id=telegram_id, 
                             text=ping_text, reply_markup=get_nudge_keyboard()
                         ))
-                        user.last_ping_message_id = msg.message_id
-                        user.last_ping_timestamp = now
-                        db.commit()
+                        last_ping_message_ids[telegram_id] = msg.message_id
+                        last_ping_timestamps[telegram_id] = now
                 except Exception as e:
                     print(f"Failed to send ping to {telegram_id}: {e}")
 

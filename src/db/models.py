@@ -43,7 +43,6 @@ class User(Base):
     # Links to the currently active session (if any)
     active_session_id: Mapped[Optional[int]] = mapped_column(ForeignKey("sessions.id", use_alter=True), nullable=True)
     last_ping_message_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
-    last_ping_timestamp: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     last_manual_report_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     
     # Catalyst Settings
