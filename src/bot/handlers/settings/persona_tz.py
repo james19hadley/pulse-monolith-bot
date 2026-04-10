@@ -75,13 +75,24 @@ async def cq_set_tz(callback: CallbackQuery):
 @router.message(SettingsState.waiting_for_tz_text)
 async def process_manual_tz(message: Message, state: FSMContext):
     tz = message.text.strip()
+    import zoneinfo
+    try:
+        # Validate that they entered a correct timezone
+        zoneinfo.ZoneInfo(tz)
+    except Exception:
+        await message.answer("❌ Invalid timezone format. Please use standard IANA formats like 'Europe/Moscow', 'America/New_York', or 'Asia/Kolkata'. Try again:")
+        return
+
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
         user.timezone = tz
         db.commit()
         db.refresh(user)
+        from src.bot.handlers.settings.general import get_control_panel_text, get_settings_keyboard
         text = get_control_panel_text(user)
-        await message.answer(f"✅ Timezone set to {tz}\n\n" + text, parse_mode="HTML", reply_markup=get_settings_keyboard())
+        await message.answer(f"✅ Timezone set to {tz}
+
+" + text, parse_mode="HTML", reply_markup=get_settings_keyboard())
     await state.clear()
 
 

@@ -36,9 +36,9 @@ celery_app.conf.update(
             "task": "job_stale_session_killer",
             "schedule": crontab(minute=0),
         },
-        "daily-accountability-every-hour": {
+        "daily-accountability-quarter-hourly": {
             "task": "job_daily_accountability",
-            "schedule": crontab(minute=0), # Top of every hour
+            "schedule": crontab(minute='*/15'),
         },
         "evening-nudge-every-hour": {
             "task": "job_evening_nudge",
@@ -48,10 +48,6 @@ celery_app.conf.update(
             "task": "job_morning_planner",
             "schedule": crontab(minute=0),
         },
-        "midnight-reset-every-hour": {
-            "task": "job_midnight_reset",
-            "schedule": crontab(minute=0),
-        }
     }
 )
 

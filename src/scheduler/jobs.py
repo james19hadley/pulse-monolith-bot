@@ -154,7 +154,7 @@ def daily_accountability_job():
     """
     import zoneinfo
     from datetime import timezone
-    now_utc = datetime.utcnow().replace(tzinfo=timezone.utc)
+    now_utc = datetime.now(timezone.utc)
     with SessionLocal() as db:
         users = db.query(User).all()
         for user in users:
@@ -168,7 +168,8 @@ def daily_accountability_job():
             if user.last_manual_report_date and user.last_manual_report_date == local_time.date():
                 already_done = True
                 
-            if local_time.hour == getattr(user, 'day_cutoff_time', time(23, 0)).hour and not already_done: # Runs once an hour roughly
+            cutoff = getattr(user, 'day_cutoff_time', time(23, 0))
+            if local_time.hour == cutoff.hour and local_time.minute == cutoff.minute and not already_done: # Precise execution for odd timezones! # Runs once an hour roughly
                 
                 target_chat_id = user.target_channel_id or user.telegram_id
                 
@@ -187,6 +188,19 @@ def daily_accountability_job():
                     except Exception as e:
                         print(f"Failed to send accountability report to {target_chat_id}: {e}")
 
+                # End of Day Reset: Explicitly after the daily report generation!
+                try:
+                    projects = db.query(Project).filter(Project.user_id == user.id, Project.daily_target_value != None).all()
+                    for p in projects:
+                        if (p.daily_progress or 0) < p.daily_target_value:
+                            p.current_streak = 0
+                        p.daily_progress = 0
+                    db.commit()
+                except Exception as e:
+                    print(f"Failed to reset daily stats for user {user.telegram_id}: {e}")
+                    db.rollback()
+
+
 @shared_task(name="job_evening_nudge")
 def evening_nudge_job():
     """
@@ -195,7 +209,7 @@ def evening_nudge_job():
     """
     import zoneinfo
     from datetime import timezone
-    now_utc = datetime.utcnow().replace(tzinfo=timezone.utc)
+    now_utc = datetime.now(timezone.utc)
     with SessionLocal() as db:
         users = db.query(User).all()
         for user in users:
@@ -257,7 +271,7 @@ def morning_planner_job():
     """
     import zoneinfo
     from datetime import timezone
-    now_utc = datetime.utcnow().replace(tzinfo=timezone.utc)
+    now_utc = datetime.now(timezone.utc)
     with SessionLocal() as db:
         users = db.query(User).all()
         for user in users:
@@ -303,31 +317,4 @@ def morning_planner_job():
             except Exception as e:
                 print(f"Failed to send morning planner to {user.telegram_id}: {e}")
 
-@shared_task(name="job_midnight_reset")
-def midnight_reset_job():
-    """
-    Runs at midnight. Inspects all Projects with a daily_target_value.
-    Calculates if daily_progress >= daily_target_value. If yes, bump total_completions.
-    If no, break current_streak = 0.
-    Finally, reset project.daily_progress = 0.
-    """
-    import zoneinfo
-    from datetime import timezone
-    now_utc = datetime.utcnow().replace(tzinfo=timezone.utc)
-    with SessionLocal() as db:
-        users = db.query(User).all()
-        for user in users:
-            try:
-                user_tz = zoneinfo.ZoneInfo(user.timezone)
-            except Exception:
-                user_tz = zoneinfo.ZoneInfo("UTC")
-            local_time = now_utc.astimezone(user_tz)
 
-            cutoff_hour = getattr(user, 'day_cutoff_time', time(23, 0)).hour
-            if local_time.hour == cutoff_hour:
-                projects = db.query(Project).filter(Project.user_id == user.id, Project.daily_target_value != None).all()
-                for p in projects:
-                    if p.daily_progress < p.daily_target_value:
-                        p.current_streak = 0
-                    p.daily_progress = 0
-                db.commit()
