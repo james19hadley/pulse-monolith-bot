@@ -83,6 +83,69 @@ async def cmd_faq(message: Message):
 """
     await message.answer(faq_text, parse_mode="HTML", disable_web_page_preview=True)
 
+
+from aiogram import F
+
+@router.message(F.text == "📋 Tasks")
+async def ui_tasks(message: Message):
+    from src.db.models import Task, Project
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        tasks = db.query(Task).filter(Task.user_id == user.id, Task.status == "pending").all()
+        
+        if not tasks:
+            await message.answer("You have no pending tasks. Add one by saying 'Create a task to ...'", reply_markup=get_main_menu())
+            return
+            
+        projs = {p.id: p.title for p in db.query(Project).filter(Project.user_id == user.id).all()}
+        
+        lines = ["<b>📋 Your Pending Tasks:</b>"]
+        for t in tasks:
+            proj_info = f" [<i>{projs.get(t.project_id)}</i>]" if t.project_id else ""
+            lines.append(f"• {t.title}{proj_info}")
+            
+        await message.answer("\n".join(lines), parse_mode="HTML", reply_markup=get_main_menu())
+
+@router.message(F.text == "📥 Inbox")
+async def ui_inbox(message: Message):
+    from src.db.models import Inbox
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        items = db.query(Inbox).filter(Inbox.user_id == user.id, Inbox.status == "pending").all()
+        
+        if not items:
+            await message.answer("Your inbox is empty.", reply_markup=get_main_menu())
+            return
+            
+        lines = ["<b>📥 Your Inbox:</b>"]
+        for i in items:
+            lines.append(f"• {i.raw_text}")
+            
+        await message.answer("\n".join(lines), parse_mode="HTML", reply_markup=get_main_menu())
+
+@router.message(F.text == "📊 Stats")
+@router.message(Command("stats"))
+async def cmd_stats(message: Message):
+    from src.bot.handlers.utils import generate_daily_report_text
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        try:
+            report_text = generate_daily_report_text(db, user)
+            try:
+                await message.answer(report_text, parse_mode="HTML", reply_markup=get_main_menu())
+            except Exception as tg_err:
+                import html
+                # The text might have invalid HTML, try without parse mode or escape
+                from aiogram.exceptions import TelegramBadRequest
+                if isinstance(tg_err, TelegramBadRequest) and "parse" in str(tg_err).lower():
+                    # Fallback: Strip HTML or just send without formatting
+                    await message.answer(report_text, parse_mode=None, reply_markup=get_main_menu())
+                else:
+                    raise tg_err
+        except Exception as e:
+            import html
+            await message.answer(f"Failed to generate stats: {html.escape(str(e))}", parse_mode="HTML", reply_markup=get_main_menu())
+
 @router.message(Command("undo"))
 @router.message(lambda msg: msg.text == "↩️ Undo")
 async def cmd_undo(message: Message, state: FSMContext):
