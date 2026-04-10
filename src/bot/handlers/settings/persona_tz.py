@@ -90,9 +90,7 @@ async def process_manual_tz(message: Message, state: FSMContext):
         db.refresh(user)
         from src.bot.handlers.settings.general import get_control_panel_text, get_settings_keyboard
         text = get_control_panel_text(user)
-        await message.answer(f"✅ Timezone set to {tz}
-
-" + text, parse_mode="HTML", reply_markup=get_settings_keyboard())
+        await message.answer(f"✅ Timezone set to {tz}\n\n" + text, parse_mode="HTML", reply_markup=get_settings_keyboard())
     await state.clear()
 
 
