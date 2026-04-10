@@ -93,6 +93,7 @@ async def main():
         BotCommand(command="new_project", description="Create: /new_project <name>"),
         BotCommand(command="new_habit", description="Create: /new_habit <name>"),
         BotCommand(command="settings", description="View or change configs"),
+        BotCommand(command="report_config", description="Configure daily reports UI"),
         BotCommand(command="stats", description="Show API usage tokens/cost"),
         BotCommand(command="test_report", description="Force generate daily report"),
         BotCommand(command="add_key", description="Add new API key"),

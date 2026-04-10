@@ -68,25 +68,46 @@ def get_or_create_project_zero(db: DBSession, user_id: int):
 
 
 def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: bool = False) -> str:
-    now = datetime.datetime.utcnow()
-    # Calculate logical day boundaries based on server UTC cutoff
-    cutoff_time = getattr(user, 'day_cutoff_time', datetime.time(23, 0))
-    today_cutoff = datetime.datetime.combine(now.date(), cutoff_time)
+    import zoneinfo
+    from datetime import datetime, timedelta, timezone, time
+    
+    try:
+        user_tz = zoneinfo.ZoneInfo(user.timezone)
+    except Exception:
+        user_tz = timezone.utc
+        
+    now_utc = datetime.now(timezone.utc)
+    local_time = now_utc.astimezone(user_tz)
+    cutoff_time = getattr(user, 'day_cutoff_time', time(23, 0))
+    
+    # Base the boundary on the local date
+    local_cutoff_datetime = datetime.combine(local_time.date(), cutoff_time).replace(tzinfo=user_tz)
     
     if is_auto_cron:
-        if now >= today_cutoff:
-            start_bound = today_cutoff - datetime.timedelta(days=1)
-            end_bound = today_cutoff
+        # At cron time (e.g. 23:01 local), we just crossed the cutoff for today.
+        # Ensure we always grab the preceding 24h block ending at the most recent cutoff.
+        if local_time >= local_cutoff_datetime:
+            end_bound_aware = local_cutoff_datetime
+            start_bound_aware = local_cutoff_datetime - timedelta(days=1)
         else:
-            start_bound = today_cutoff - datetime.timedelta(days=2)
-            end_bound = today_cutoff - datetime.timedelta(days=1)
+            # Should rarely happen for cron since it runs at the hour matching cutoff, but just in case
+            end_bound_aware = local_cutoff_datetime - timedelta(days=1)
+            start_bound_aware = end_bound_aware - timedelta(days=1)
     else:
-        if now < today_cutoff:
-            start_bound = today_cutoff - datetime.timedelta(days=1)
-            end_bound = today_cutoff
+        # Manual run: if we haven't reached cutoff yet, the "current" day ends at upcoming cutoff.
+        # e.g., it's 15:00, cutoff is 23:00. End bound is 23:00 today, start bound is 23:00 yesterday.
+        if local_time < local_cutoff_datetime:
+            end_bound_aware = local_cutoff_datetime
+            start_bound_aware = local_cutoff_datetime - timedelta(days=1)
         else:
-            start_bound = today_cutoff
-            end_bound = today_cutoff + datetime.timedelta(days=1)
+            # It's past cutoff (e.g. 23:30). "Current" day ends at tomorrow's cutoff.
+            end_bound_aware = local_cutoff_datetime + timedelta(days=1)
+            start_bound_aware = local_cutoff_datetime
+
+    # TimeLog.created_at is stored in naive UTC (standard SQLAlchemy DateTime)
+    start_bound = start_bound_aware.astimezone(timezone.utc).replace(tzinfo=None)
+    end_bound = end_bound_aware.astimezone(timezone.utc).replace(tzinfo=None)
+
     
     config = user.report_config
     if isinstance(config, str):
@@ -96,7 +117,7 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
         except Exception:
             config = None
     if not config:
-        config = {"blocks": ["focus", "projects", "inbox"], "style": "emoji"}
+        config = {"blocks": ["focus", "projects_daily", "inbox"], "style": "emoji"}
         
     user_logs = db.query(TimeLog).filter(TimeLog.user_id == user.id, TimeLog.created_at >= start_bound, TimeLog.created_at < end_bound).all()
     focus_time = sum(l.duration_minutes for l in user_logs if l.project_id is not None)
@@ -204,3 +225,12 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
                 
     report_text = build_daily_report(stats, config, ai_comment)
     return report_text
+
+
+def get_projects_local_mapping(db, user_id: int):
+    from src.db.models import Project
+    projects = db.query(Project).filter(Project.user_id == user_id, Project.status == "active").order_by(Project.id).all()
+    mapping = {i+1: p.id for i, p in enumerate(projects)}
+    reverse = {p.id: i+1 for i, p in enumerate(projects)}
+    docs = "User's active projects:\n" + "\n".join([f"ID: {reverse[p.id]}, Title: {p.title}" for p in projects]) if projects else "User has no active projects yet."
+    return projects, mapping, reverse, docs
