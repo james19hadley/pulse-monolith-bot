@@ -109,6 +109,18 @@ def init_db():
                     conn.execute(sql_text("ALTER TABLE projects ADD COLUMN parent_id INTEGER REFERENCES projects(id) ON DELETE SET NULL"))
                 except Exception:
                     pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE sessions ADD COLUMN project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL"))
+                except Exception:
+                    pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE tasks ADD COLUMN project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL"))
+                except Exception:
+                    pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE time_logs ADD COLUMN project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL"))
+                except Exception:
+                    pass
             else:
                 # PostgreSQL
                 columns_to_add = [
@@ -127,6 +139,9 @@ def init_db():
                     ("sessions", "save_state_context", "VARCHAR"),
                     ("tasks", "is_focus_today", "BOOLEAN DEFAULT FALSE"),
                     ("projects", "parent_id", "INTEGER REFERENCES projects(id) ON DELETE SET NULL"),
+                    ("sessions", "project_id", "INTEGER REFERENCES projects(id) ON DELETE SET NULL"),
+                    ("tasks", "project_id", "INTEGER REFERENCES projects(id) ON DELETE SET NULL"),
+                    ("time_logs", "project_id", "INTEGER REFERENCES projects(id) ON DELETE SET NULL"),
                 ]
                 for table, col, col_type in columns_to_add:
                     try:
