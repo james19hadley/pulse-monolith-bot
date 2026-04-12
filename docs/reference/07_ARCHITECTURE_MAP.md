@@ -59,6 +59,7 @@ This document contains a registry of unique identifiers (UIDs) used directly ins
 - **`[HND-SET-APIKEYS]`**: `src/bot/handlers/settings/api_keys.py` - Handles user uploading their own Provider API Keys.
 - **`[HND-SET-GENERAL]`**: `src/bot/handlers/settings/general.py` - Settings main menu.
 - **`[HND-SET-PERSONA]`**: `src/bot/handlers/settings/persona_tz.py` - Controls Timezone overrides and Bot Tone.
+- **`[HND-SET-REPORTUI]`**: `src/bot/handlers/settings/report_ui.py` - Configures the formatting and blocks shown in daily evening reports.
 - **`[HND-SET-REPORTS]`**: `src/bot/handlers/settings/reports.py` - Toggles evening report preferences.
 - **`[HND-SET-ROUTER]`**: `src/bot/handlers/settings/router.py` - Glues all settings options together.
 - **`[HND-SET-SYSCONF]`**: `src/bot/handlers/settings/system_configs.py` - Advanced logic configuration menus.

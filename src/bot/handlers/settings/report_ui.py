@@ -1,3 +1,9 @@
+"""
+UI and Callbacks for customizing the formatting and content blocks of Daily Reports.
+
+@Architecture-Map: [HND-SET-REPORTUI]
+@Docs: docs/reference/07_ARCHITECTURE_MAP.md
+"""
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
