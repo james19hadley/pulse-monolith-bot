@@ -22,7 +22,7 @@ async def cq_settings_catalyst(callback: CallbackQuery):
     with SessionLocal() as db:
         from src.bot.handlers.utils import get_or_create_user
         user = get_or_create_user(db, callback.from_user.id)
-        current = getattr(user, 'catalyst_limit', 60)
+        current = getattr(user, 'catalyst_threshold_minutes', 60)
     text = f"⏱️ <b>Catalyst Limit</b> (Minutes)\n\n<i>How much time should pass after the deadline before I notify you?</i>\n\n<b>Current:</b> <code>{current}</code>"
     await callback.message.edit_text(text, reply_markup=get_catalyst_keyboard(), parse_mode="HTML")
 
@@ -42,7 +42,7 @@ async def cq_set_catalyst_action(callback: CallbackQuery, state: FSMContext):
         limit = int(val)
         with SessionLocal() as db:
             user = get_or_create_user(db, callback.from_user.id)
-            user.catalyst_limit = limit
+            user.catalyst_threshold_minutes = limit
             db.commit()
     except Exception as e:
         await callback.answer(f"Error: {e}", show_alert=True)
@@ -58,7 +58,7 @@ async def process_catalyst_text(message: Message, state: FSMContext):
         limit = int(message.text.strip())
         with SessionLocal() as db:
             user = get_or_create_user(db, message.from_user.id)
-            user.catalyst_limit = limit
+            user.catalyst_threshold_minutes = limit
             db.commit()
         await state.clear()
         
@@ -73,7 +73,7 @@ async def cq_settings_interval(callback: CallbackQuery):
     with SessionLocal() as db:
         from src.bot.handlers.utils import get_or_create_user
         user = get_or_create_user(db, callback.from_user.id)
-        current = getattr(user, 'interval_limit', 20)
+        current = getattr(user, 'catalyst_interval_minutes', 20)
     text = f"⏱️ <b>Ping Interval</b> (Minutes)\n\n<i>How often should I ping you to remind you about the overdue project?</i>\n\n<b>Current:</b> <code>{current}</code>"
     await callback.message.edit_text(text, reply_markup=get_interval_keyboard(), parse_mode="HTML")
 
@@ -93,7 +93,7 @@ async def cq_set_interval_action(callback: CallbackQuery, state: FSMContext):
         limit = int(val)
         with SessionLocal() as db:
             user = get_or_create_user(db, callback.from_user.id)
-            user.interval_limit = limit
+            user.catalyst_interval_minutes = limit
             db.commit()
     except Exception as e:
         await callback.answer(f"Error: {e}", show_alert=True)
@@ -109,7 +109,7 @@ async def process_interval_text(message: Message, state: FSMContext):
         limit = int(message.text.strip())
         with SessionLocal() as db:
             user = get_or_create_user(db, message.from_user.id)
-            user.interval_limit = limit
+            user.catalyst_interval_minutes = limit
             db.commit()
         await state.clear()
         
