@@ -41,8 +41,8 @@ celery_app.conf.update(
             "schedule": crontab(minute='*/15'),
         },
         "evening-nudge-every-hour": {
-            "task": "job_evening_nudge",
-            "schedule": crontab(minute=0),
+            "task": "job_evening_reflection",
+            "schedule": crontab(minute='*/15'),
         },
         "morning-planner-every-hour": {
             "task": "job_morning_planner",

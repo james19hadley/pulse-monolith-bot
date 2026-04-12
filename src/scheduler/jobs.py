@@ -77,6 +77,25 @@ def catalyst_heartbeat():
                         ping_text = Prompts.NUDGE_ZERO_TASKS
 
             if is_ping_due:
+                # Intercept with AI generation if API keys exist
+                user_keys = getattr(user, "api_keys", None)
+                if user_keys and user.llm_provider in user_keys:
+                    try:
+                        key_data = user_keys[user.llm_provider]
+                        from src.ai.providers import GoogleProvider
+                        from src.core.security import decrypt_key
+                        from src.core.personas import get_persona_prompt
+                        
+                        ai = GoogleProvider(api_key=decrypt_key(key_data["key"]))
+                        persona_sys = get_persona_prompt(user.persona_type, getattr(user, "custom_persona_prompt", None), user.report_config)
+                        user_lang = getattr(user, "language", "Russian")
+                        prompt = f"The user is currently idle. Here is the context: '{ping_text}'. Send them a very short Catalyst Nudge (1-2 sentences) encouraging them to log their time or update their status. Speak purely in {user_lang}. DO NOT USE MARKDOWN, only <b> and <i>."
+                        text, _ = ai.generate_chat_response(prompt, persona_sys)
+                        if text:
+                            ping_text = text
+                    except Exception as e:
+                        print(f"Failed to generate AI catalyst ping: {e}")
+                
                 last_ping_time = last_ping_timestamps.get(telegram_id)
                 already_pinged = (last_ping_time is not None and last_ping_time >= last_event_time)
                 
@@ -201,12 +220,9 @@ def daily_accountability_job():
                     db.rollback()
 
 
-@shared_task(name="job_evening_nudge")
-def evening_nudge_job():
-    """
-    Runs periodically. Checks for projects that haven't been logged in over their nudge_threshold_days.
-    Sends a warm coach message to remind them, a few hours before day_cutoff_time.
-    """
+@shared_task(name="job_evening_reflection")
+def evening_reflection_job():
+    """Runs 30 minutes before day_cutoff_time to trigger an evening reflection."""
     import zoneinfo
     from datetime import timezone
     now_utc = datetime.now(timezone.utc)
@@ -218,44 +234,41 @@ def evening_nudge_job():
             except Exception:
                 user_tz = zoneinfo.ZoneInfo("UTC")
             local_time = now_utc.astimezone(user_tz)
-
-            # Trigger about 3 hours before cutoff time (e.g. 20:00 if cutoff is 23:00)
-            target_hour = (getattr(user, 'day_cutoff_time', time(23, 0)).hour - 3) % 24
+            cutoff = getattr(user, 'day_cutoff_time', time(23, 0))
             
-            if local_time.hour == target_hour:
-                # Private nudge always goes to DM, not the public linked channel
-                target_chat_id = user.telegram_id
-                
-                # Find lagging projects that act as routines
-                projects = db.query(Project).filter(Project.user_id == user.id, Project.daily_target_value != None).all()
-                lagging_projects = []
-                for p in projects:
-                    last_update = p.last_completed_date if p.last_completed_date else (p.updated_at.date() if p.updated_at else p.created_at.date())
-                    if last_update:
-                        since_update = (local_time.date() - last_update).days
-                        if since_update >= 3: # default nudge threshold 3 days
-                            lagging_projects.append(p.name)
-                
-                if not lagging_projects:
-                    continue
-                
-                msg_text = "It looks like you've fallen behind on these projects: " + ", ".join(lagging_projects) + "\nPlease remember why you started."
-                
-                if user.encrypted_google_api_key:
+            # Check if it is EXACTLY 30 minutes before cutoff (hour matching)
+            is_time = False
+            if cutoff.minute >= 30:
+                if local_time.hour == cutoff.hour and local_time.minute == cutoff.minute - 30:
+                    is_time = True
+            else:
+                target_hour = (cutoff.hour - 1) % 24
+                target_minute = 60 + cutoff.minute - 30
+                if local_time.hour == target_hour and local_time.minute == target_minute:
+                    is_time = True
+            
+            if is_time:
+                msg_text = "It is almost the end of the day. What targets did you hit today, and what is your plan for tomorrow? Tell me naturally, and I will log it for you."
+                user_keys = getattr(user, "api_keys", None)
+                if user_keys and user.llm_provider in user_keys:
                     try:
-                        api_key = decrypt_key(user.encrypted_google_api_key)
-                        ai = GoogleProvider(api_key=api_key)
-                        prompt = f"The user has fallen behind on these projects for several days: {', '.join(lagging_projects)}. Write a brief, supportive, and pedagogical evening nudge (1-2 sentences) encouraging them to restart without feeling guilty. No markdown."
-                        msg_text = run_async(ai.generate_text(prompt))
+                        key_data = user_keys[user.llm_provider]
+                        ai = GoogleProvider(api_key=decrypt_key(key_data["key"]))
+                        from src.core.personas import get_persona_prompt
+                        persona_sys = get_persona_prompt(user.persona_type, getattr(user, "custom_persona_prompt", None), user.report_config)
+                        user_lang = getattr(user, "language", "Russian")
+                        prompt = f"Initiate an evening reflection session with the user. Inform them that the day is almost over (their cutoff is {cutoff.strftime("%H:%M")}). Ask them what project targets they achieved today and what they want to plan for tomorrow so you can passively log it. DO NOT USE MARKDOWN. Use HTML tags <b> and <i> only. Must strictly speak in {user_lang}. Limit to 2 short sentences."
+                        text, _ = ai.generate_chat_response(prompt, persona_sys)
+                        if text:
+                            msg_text = text
                     except Exception as e:
-                        print(f"Failed to generate AI project nudge: {e}")
+                        print(f"Failed to generate reflection prompt: {e}")
                 
                 try:
                     if bot:
-                        run_async(bot.send_message(chat_id=target_chat_id, text=msg_text))
+                        run_async(bot.send_message(chat_id=user.telegram_id, text=msg_text, parse_mode="HTML"))
                 except Exception as e:
-                    print(f"Failed to send evening nudge to {user.telegram_id}: {e}")
-
+                    print(f"Failed to send reflection ping to {user.telegram_id}: {e}")
 @shared_task(name="job_morning_planner")
 def morning_planner_job():
     """
