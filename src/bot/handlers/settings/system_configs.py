@@ -13,6 +13,7 @@ from src.bot.handlers.utils import get_or_create_user
 from src.db.models import User
 from src.bot.states import SettingsState
 from src.bot.keyboards import get_catalyst_keyboard, get_interval_keyboard, get_channel_keyboard, get_pulse_menu_keyboard, get_cutoff_keyboard, get_back_settings_keyboard
+from src.bot.handlers.settings.general import get_control_panel_data
 
 router = Router()
 
