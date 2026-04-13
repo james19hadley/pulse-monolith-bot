@@ -222,7 +222,7 @@ def daily_accountability_job():
 
 @shared_task(name="job_evening_reflection")
 def evening_reflection_job():
-    """Runs 30 minutes before day_cutoff_time to trigger an evening reflection."""
+    """Runs at 21:00 user local time to trigger an evening reflection."""
     import zoneinfo
     from datetime import timezone
     now_utc = datetime.now(timezone.utc)
@@ -236,16 +236,10 @@ def evening_reflection_job():
             local_time = now_utc.astimezone(user_tz)
             cutoff = getattr(user, 'day_cutoff_time', time(23, 0))
             
-            # Check if it is EXACTLY 30 minutes before cutoff (hour matching)
+            # Request from user: Evening reflection should be explicitly at 21:00 local time
             is_time = False
-            if cutoff.minute >= 30:
-                if local_time.hour == cutoff.hour and local_time.minute == cutoff.minute - 30:
-                    is_time = True
-            else:
-                target_hour = (cutoff.hour - 1) % 24
-                target_minute = 60 + cutoff.minute - 30
-                if local_time.hour == target_hour and local_time.minute == target_minute:
-                    is_time = True
+            if local_time.hour == 21 and local_time.minute == 0:
+                is_time = True
             
             if is_time:
                 msg_text = "It is almost the end of the day. What targets did you hit today, and what is your plan for tomorrow? Tell me naturally, and I will log it for you."
@@ -257,7 +251,7 @@ def evening_reflection_job():
                         from src.core.personas import get_persona_prompt
                         persona_sys = get_persona_prompt(user.persona_type, getattr(user, "custom_persona_prompt", None), user.report_config)
                         user_lang = getattr(user, "language", "Russian")
-                        prompt = f"Initiate an evening reflection session with the user. Inform them that the day is almost over (their cutoff is {cutoff.strftime("%H:%M")}). Ask them what project targets they achieved today and what they want to plan for tomorrow so you can passively log it. DO NOT USE MARKDOWN. Use HTML tags <b> and <i> only. Must strictly speak in {user_lang}. Limit to 2 short sentences."
+                        prompt = f"Initiate an evening reflection session with the user. Inform them that the day is wrapping up (approaching their {cutoff.strftime('%H:%M')} cutoff). Ask them what project targets they achieved today and what they want to plan for tomorrow so you can passively log it. DO NOT USE MARKDOWN. Use HTML tags <b> and <i> only. Must strictly speak in {user_lang}. Limit to 2 short sentences."
                         text, _ = ai.generate_chat_response(prompt, persona_sys)
                         if text:
                             msg_text = text
