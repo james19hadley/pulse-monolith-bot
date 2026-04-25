@@ -20,7 +20,6 @@ router.include_router(api_keys_router)
 router.include_router(persona_tz_router)
 router.include_router(system_configs_router)
 router.include_router(reports_router)
-router.include_router(report_ui_router)
 router.include_router(ai_conv_router)
 
 router.include_router(report_ui_router)
