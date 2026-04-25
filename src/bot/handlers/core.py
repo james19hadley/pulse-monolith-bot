@@ -166,9 +166,36 @@ async def cmd_undo(message: Message, state: FSMContext):
                 pid = action.new_state_json.get("project_id")
                 p = db.query(Project).filter(Project.id == pid).first()
                 if p:
-                    title = p.title
-                    db.delete(p)
-                    await message.answer(f"↩️ Project creation undone: <b>{title}</b>", parse_mode="HTML")
+                    # If it was an unarchive, restore the archived state
+                    prev_status = action.previous_state_json.get("status")
+                    if prev_status == "archived":
+                        p.status = "archived"
+                        await message.answer(f"↩️ Project unarchive undone: <b>{p.title}</b> is back in archive.", parse_mode="HTML")
+                    else:
+                        title = p.title
+                        db.delete(p)
+                        await message.answer(f"↩️ Project creation undone: <b>{title}</b>", parse_mode="HTML")
+                        
+            elif tool == "delete_project":
+                pid = action.previous_state_json.get("id")
+                p = db.query(Project).filter(Project.id == pid).first()
+                if p:
+                    p.status = action.previous_state_json.get("status", "active")
+                    p.title = action.previous_state_json.get("title", p.title)
+                    p.target_value = action.previous_state_json.get("target_value", p.target_value)
+                    p.unit = action.previous_state_json.get("unit", p.unit)
+                    p.parent_id = action.previous_state_json.get("parent_id", p.parent_id)
+                    await message.answer(f"↩️ Project deletion undone: <b>{p.title}</b> is restored.", parse_mode="HTML")
+                    
+            elif tool == "edit_project":
+                pid = action.previous_state_json.get("id")
+                p = db.query(Project).filter(Project.id == pid).first()
+                if p:
+                    p.title = action.previous_state_json.get("title", p.title)
+                    p.target_value = action.previous_state_json.get("target_value", p.target_value)
+                    p.unit = action.previous_state_json.get("unit", p.unit)
+                    p.parent_id = action.previous_state_json.get("parent_id", p.parent_id)
+                    await message.answer(f"↩️ Project edit undone: <b>{p.title}</b>", parse_mode="HTML")
                     
             elif tool == "log_work":
                 lid = action.new_state_json.get("log_id")
@@ -181,7 +208,8 @@ async def cmd_undo(message: Message, state: FSMContext):
                     db.delete(log_entry)
                     p = db.query(Project).filter(Project.id == pid).first()
                     if p:
-                        delta = prog if prog else mins
+                        # Fallback correctly if prog is None
+                        delta = prog if prog is not None else mins
                         p.current_value = max(0, (p.current_value or 0) - delta)
                         
                         if p.daily_target_value is not None:
@@ -194,15 +222,24 @@ async def cmd_undo(message: Message, state: FSMContext):
                                 p.current_streak = max(0, (p.current_streak or 0) - 1)
                                 
                     await message.answer(f"↩️ Time log successfully undone.", parse_mode="HTML")
+            else:
+                await message.answer(f"⚠️ Undo for action '{tool}' is not currently supported.")
             
             # Clean up the log so we don't undo it twice
             db.delete(action)
             db.commit()
             
         except Exception as e:
-            await message.answer(f"Failed to undo: {e}")
+            db.rollback()
+            await message.answer(f"⚠️ Failed to undo: {e}")
+            import traceback
+            traceback.print_exc()
     if state: await state.clear()
-    await message.answer("Action canceled.", reply_markup=get_main_menu())
+    
+    # Do not print 'Action canceled.' if we successfully undid or errored. We handled it.
+    # We will just return to main menu quietly or send the menu again if needed.
+    from src.bot.keyboards import get_main_menu
+    await message.answer("Menu:", reply_markup=get_main_menu())
 
 from aiogram.types import CallbackQuery
 

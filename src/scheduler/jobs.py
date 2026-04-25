@@ -193,7 +193,18 @@ def daily_accountability_job():
                 already_done = True
                 
             cutoff = getattr(user, 'day_cutoff_time', time(23, 0))
-            if local_time.hour == cutoff.hour and local_time.minute == cutoff.minute and not already_done: # Precise execution for odd timezones! # Runs once an hour roughly
+            
+            current_mins = local_time.hour * 60 + local_time.minute
+            cutoff_mins = cutoff.hour * 60 + cutoff.minute
+            
+            # How many minutes have passed since cutoff?
+            mins_passed = current_mins - cutoff_mins
+            if mins_passed < 0:
+                mins_passed += 24 * 60
+                
+            # If we are within the first 15 minutes after the cutoff, and haven't run today
+            # (Matches Celery */15 crontab exactly once per day)
+            if 0 <= mins_passed < 15 and not already_done:
                 
                 target_chat_id = user.target_channel_id or user.telegram_id
                 
@@ -209,12 +220,15 @@ def daily_accountability_job():
                             text=report_text,
                             parse_mode="HTML"
                         ))
+                        # Mark as done so we don't spam them
+                        user.last_manual_report_date = local_time.date()
+                        db.commit()
                     except Exception as e:
                         print(f"Failed to send accountability report to {target_chat_id}: {e}")
 
                 # End of Day Reset: Explicitly after the daily report generation!
                 try:
-                    projects = db.query(Project).filter(Project.user_id == user.id, Project.daily_target_value != None).all()
+                    projects = db.query(Project).filter(Project.user_id == user.id, Project.daily_target_value != None, Project.status == "active").all()
                     for p in projects:
                         if (p.daily_progress or 0) < p.daily_target_value:
                             p.current_streak = 0
@@ -242,8 +256,9 @@ def evening_reflection_job():
             cutoff = getattr(user, 'day_cutoff_time', time(23, 0))
             
             # Request from user: Evening reflection should be explicitly at 21:00 local time
+            # Using < 15 matches the */15 Celery beat schedule to guarantee exactly 1 execution
             is_time = False
-            if local_time.hour == 21 and local_time.minute == 0:
+            if local_time.hour == 21 and 0 <= local_time.minute < 15:
                 is_time = True
             
             if is_time:

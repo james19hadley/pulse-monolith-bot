@@ -26,8 +26,14 @@ def get_projects_tree_keyboard(all_projects, page=0, toggled_ids=None) -> Inline
     
     from collections import defaultdict
     children_map = defaultdict(list)
+    
+    # Check for orphaned children (parent is archived/deleted but child is active)
+    active_project_ids = {p.id for p in all_projects}
+    
     for p in all_projects:
-        children_map[p.parent_id].append(p)
+        # If parent is not active/in-list, treat this project as a root project
+        actual_parent = p.parent_id if p.parent_id in active_project_ids else None
+        children_map[actual_parent].append(p)
         
     for k in children_map:
         children_map[k].sort(key=lambda p: (0 if p.title.startswith("Project 0") else 1, p.title))
@@ -47,7 +53,7 @@ def get_projects_tree_keyboard(all_projects, page=0, toggled_ids=None) -> Inline
                 
     walk(None, 0)
     
-    items_per_page = 15 # more items since it's a tree
+    items_per_page = 8
     total_pages = max(1, (len(flat_list) + items_per_page - 1) // items_per_page)
     page = max(0, min(page, total_pages - 1))
     
