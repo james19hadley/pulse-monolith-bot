@@ -39,6 +39,9 @@ class User(Base):
     # Persona Engine
     persona_type: Mapped[str] = mapped_column(String, default="monolith") # monolith, tars, friday, alfred, custom
     custom_persona_prompt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    talkativeness_level: Mapped[str] = mapped_column(String, default="standard") # minimal, standard, coach
+    reflection_config: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True) # JSON with keys like focus_wins, focus_blockers, etc.
+    last_evening_plan: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
     # Links to the currently active session (if any)
     active_session_id: Mapped[Optional[int]] = mapped_column(ForeignKey("sessions.id", use_alter=True), nullable=True)

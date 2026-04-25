@@ -17,6 +17,7 @@ class SettingsState(StatesGroup):
     waiting_for_interval = State()
     waiting_for_channel = State()
     waiting_for_cutoff = State()
+    waiting_for_custom_prompt = State()
 
 class EntityState(StatesGroup):
     waiting_for_project_name = State()

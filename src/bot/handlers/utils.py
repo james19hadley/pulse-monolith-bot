@@ -208,7 +208,7 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
         if active_key_data["provider"] == "google":
             try:
                 provider = GoogleProvider(api_key=decrypt_key(active_key_data["key"]))
-                persona_sys = get_persona_prompt(user.persona_type, getattr(user, "custom_persona_prompt", None), config)
+                persona_sys = get_persona_prompt(user.persona_type, getattr(user, "custom_persona_prompt", None), config, getattr(user, "talkativeness_level", "standard"))
                 
                 # Context injection
                 import json

@@ -15,15 +15,14 @@ from src.bot.handlers.utils import get_or_create_user
 
 router = Router()
 
+@router.message(F.text == "🗂 Projects")
 @router.message(Command("projects"))
 async def cmd_projects(message: Message):
     """List all active projects."""
+    from src.bot.handlers.utils import get_projects_local_mapping
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
-        projects = db.query(Project).filter(
-            Project.user_id == user.id, 
-            Project.status == "active"
-        ).all()
+        projects, mapping, reverse, docs = get_projects_local_mapping(db, user.id)
         
         if not projects:
             await message.answer("You don't have any active projects right now.\nUse <code>/new_project &lt;name&gt;</code> to start one.", parse_mode="HTML")
@@ -31,12 +30,13 @@ async def cmd_projects(message: Message):
             
         lines = ["<b>Your Active Projects:</b>"]
         for p in projects:
-            info = f"• <code>{p.title}</code> (<i>ID: {p.id}</i>)"
+            info = f"• <code>{p.title}</code> (<i>ID: {reverse[p.id]}</i>)"
             if p.target_value > 0:
                 info += f" — Target: {p.target_value / 60:g}h"
             lines.append(info)
             
         await message.answer("\n".join(lines), parse_mode="HTML")
+
 
 
 

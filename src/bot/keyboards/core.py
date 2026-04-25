@@ -8,7 +8,6 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from src.bot.texts import Buttons
 
 def get_main_menu() -> ReplyKeyboardMarkup:
-    # Uses true persistent text matching properly routed via decorators
     kb = [
         [
             KeyboardButton(text=Buttons.START_SESSION),
@@ -17,11 +16,12 @@ def get_main_menu() -> ReplyKeyboardMarkup:
         ],
         [
             KeyboardButton(text=Buttons.INBOX),
-            KeyboardButton(text=Buttons.PROJECTS),
-            KeyboardButton(text=Buttons.SETTINGS)
+            KeyboardButton(text=Buttons.TASKS),
+            KeyboardButton(text=Buttons.PROJECTS)
         ],
         [
-            KeyboardButton(text=Buttons.HELP),
+            KeyboardButton(text=Buttons.STATS),
+            KeyboardButton(text=Buttons.SETTINGS),
             KeyboardButton(text=Buttons.UNDO)
         ]
     ]

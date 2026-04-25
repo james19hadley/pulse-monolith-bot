@@ -121,11 +121,26 @@ def init_db():
                     conn.execute(sql_text("ALTER TABLE time_logs ADD COLUMN project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL"))
                 except Exception:
                     pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE users ADD COLUMN talkativeness_level VARCHAR DEFAULT 'standard'"))
+                except Exception:
+                    pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE users ADD COLUMN reflection_config JSON"))
+                except Exception:
+                    pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE users ADD COLUMN last_evening_plan VARCHAR"))
+                except Exception:
+                    pass
             else:
                 # PostgreSQL
                 columns_to_add = [
                     ("users", "report_config", "JSON"),
                     ("users", "language", "VARCHAR DEFAULT 'ru'"),
+                    ("users", "talkativeness_level", "VARCHAR DEFAULT 'standard'"),
+                    ("users", "reflection_config", "JSON"),
+                    ("users", "last_evening_plan", "VARCHAR"),
                     ("projects", "daily_target_value", "INTEGER"),
                     ("projects", "daily_progress", "INTEGER DEFAULT 0"),
                     ("projects", "current_streak", "INTEGER DEFAULT 0"),

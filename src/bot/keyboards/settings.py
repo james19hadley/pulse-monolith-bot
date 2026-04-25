@@ -38,7 +38,8 @@ def get_settings_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="📢 Target Channel", callback_data="settings_channel")
         ],
         [
-            InlineKeyboardButton(text="💓 Pulse Intervals", callback_data="settings_pulse")
+            InlineKeyboardButton(text="💓 Pulse Intervals", callback_data="settings_pulse"),
+            InlineKeyboardButton(text="🗣 AI Conversation", callback_data="settings_ai_conv")
         ],
         [
             InlineKeyboardButton(text="🔙 Back", callback_data="settings_close")
@@ -46,6 +47,35 @@ def get_settings_keyboard() -> InlineKeyboardMarkup:
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
+
+def get_ai_conv_keyboard(talkativeness_level: str, reflection_config: dict) -> InlineKeyboardMarkup:
+    """Returns the AI Conversation settings menu."""
+    config = reflection_config or {}
+    wins_toggle = "✅" if config.get("focus_wins", False) else "❌"
+    blockers_toggle = "✅" if config.get("focus_blockers", False) else "❌"
+    tomorrow_toggle = "✅" if config.get("focus_tomorrow", False) else "❌"
+    
+    t_min = "✅" if talkativeness_level == "minimal" else "🧊"
+    t_std = "✅" if talkativeness_level == "standard" else "⚖️"
+    t_coach = "✅" if talkativeness_level == "coach" else "🧠"
+    
+    builder = InlineKeyboardBuilder()
+    
+    builder.button(text=f"{t_min} Minimal", callback_data="set_talk_minimal")
+    builder.button(text=f"{t_std} Standard", callback_data="set_talk_standard")
+    builder.button(text=f"{t_coach} Coach", callback_data="set_talk_coach")
+    
+    builder.button(text="--- 🌙 Evening Reflection ---", callback_data="ignore")
+    
+    builder.button(text=f"{wins_toggle} Focus: Daily Wins", callback_data="toggle_ref_wins")
+    builder.button(text=f"{blockers_toggle} Focus: Blockers", callback_data="toggle_ref_blockers")
+    builder.button(text=f"{tomorrow_toggle} Focus: Tomorrow", callback_data="toggle_ref_tomorrow")
+    builder.button(text="📝 Custom Prompt", callback_data="set_ref_custom")
+    
+    builder.button(text="🔙 Back", callback_data="settings_main")
+    
+    builder.adjust(3, 1, 1, 1, 1, 1, 1)
+    return builder.as_markup()
 
 def get_pulse_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()

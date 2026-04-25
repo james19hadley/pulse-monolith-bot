@@ -61,15 +61,33 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
             
             from datetime import datetime, time
             from src.db.models import TimeLog
+            
+            # Recursive function to get all sub-project IDs
+            def get_all_child_ids(p_id):
+                children = db.query(Project.id).filter(Project.parent_id == p_id).all()
+                res = []
+                for c in children:
+                    res.append(c[0])
+                    res.extend(get_all_child_ids(c[0]))
+                return res
+                
+            all_ids = [proj.id] + get_all_child_ids(proj.id)
+            
             today_start = datetime.combine(datetime.utcnow().date(), time.min)
-            logs = db.query(TimeLog).filter(TimeLog.project_id == proj.id).all()
-            total_minutes = sum([l.duration_minutes for l in logs])
-            today_minutes = sum([l.duration_minutes for l in logs if l.created_at >= today_start])
+            
+            # Logs for THIS project only (for progress units like pages)
+            direct_logs = db.query(TimeLog).filter(TimeLog.project_id == proj.id).all()
+            
+            # Logs for ENTIRE tree (for total HOURS bubbled up)
+            tree_logs = db.query(TimeLog).filter(TimeLog.project_id.in_(all_ids)).all()
+            
+            total_minutes = sum([l.duration_minutes for l in tree_logs])
+            today_minutes = sum([l.duration_minutes for l in tree_logs if l.created_at >= today_start])
             
             now_dt = datetime.now(timezone.utc)
             last_active_str = "Never"
-            if logs:
-                last_log_dt = max(l.created_at for l in logs).replace(tzinfo=timezone.utc)
+            if tree_logs:
+                last_log_dt = max(l.created_at for l in tree_logs).replace(tzinfo=timezone.utc)
                 diff = now_dt - last_log_dt
                 if diff.total_seconds() < 3600:
                     last_active_str = f"{int(diff.total_seconds() // 60)} mins ago"
@@ -78,8 +96,9 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
                 else:
                     last_active_str = f"{diff.days} days ago"
 
-            today_progress = sum([l.progress_amount or 0 for l in logs if l.created_at >= today_start and l.progress_amount])
-            total_progress = sum([l.progress_amount or 0 for l in logs if l.progress_amount])
+            today_progress = sum([l.progress_amount or 0 for l in direct_logs if l.created_at >= today_start and l.progress_amount])
+            total_progress = sum([l.progress_amount or 0 for l in direct_logs if l.progress_amount])
+
 
             total_hours = total_minutes / 60
             today_hours = today_minutes / 60

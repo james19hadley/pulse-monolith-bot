@@ -10,13 +10,14 @@ Centralized hub for all static non-AI bot copy (messages) for localization / qui
 class Buttons:
     NUDGE_WORKING = "Я работаю 🧘‍♂️"
     NUDGE_FINISH = "Завершить 🛑"
-    START_SESSION = "🟢 Start Session"
+    START_SESSION = "▶️ Session"
     END_SESSION = "🛑 End Session"
     END_DAY = "🌙 End Day"
     INBOX = "📥 Inbox"
     SETTINGS = "⚙️ Settings"
+    TASKS = "📋 Tasks"
     PROJECTS = "🗂 Projects"
-    HABITS = "🎯 Habits"
+    STATS = "📊 Stats"
     HELP = "❓ Help"
     UNDO = "↩️ Undo"
 
@@ -27,6 +28,7 @@ class Prompts:
     ERROR_GLOBAL = "⚠️ Простите, на сервере произошла ошибка. Пожалуйста, обратитесь позднее."
     INBOX_EMPTY = "Your inbox is empty. To add a thought, use <code>/inbox &lt;text&gt;</code>"
     INBOX_CLEARED = "🧹 Inbox cleared."
+    NUDGE_ZERO_TASKS = "Эй, я смотрю ты уже час без активных логов и у тебя ни одной задачи в пуле. Давай запланируем что-то полезное?"
 
 class Commands:
     START_SESSION = "start_session"

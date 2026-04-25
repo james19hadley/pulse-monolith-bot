@@ -70,3 +70,4 @@ Every new Sprint Markdown file must follow this strict structure to maintain con
 | [Sprint 37](37_INTENT_ROUTING_AND_USABILITY.md) | Intent Routing & Usability Fixes | 🟢 Completed |
 | [Sprint 38](38_USABILITY_UX_AND_INDEXING.md) | Usability, UX, and Active Indexing | 🟢 Completed |
 | [Sprint 39](39_PROACTIVE_CATALYST_NUDGING.md) | Proactive Catalyst Nudges & Evening Reflection | 🟢 Completed |
+| [Sprint 40](40_CONVERSATIONAL_TUNING.md) | Conversational Tuning & Reflection Settings | � Completed |

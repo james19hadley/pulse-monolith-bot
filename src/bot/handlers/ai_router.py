@@ -54,6 +54,33 @@ async def ai_message_router(message: Message):
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
         
+        # --- Evening Continuity Capture ---
+        import zoneinfo
+        from datetime import timezone, datetime
+        try:
+            user_tz = zoneinfo.ZoneInfo(user.timezone)
+        except Exception:
+            user_tz = zoneinfo.ZoneInfo("UTC")
+        local_time = datetime.now(timezone.utc).astimezone(user_tz)
+        cutoff = getattr(user, 'day_cutoff_time', None)
+        if cutoff:
+            current_mins = local_time.hour * 60 + local_time.minute
+            cutoff_mins = cutoff.hour * 60 + cutoff.minute
+            diff = cutoff_mins - current_mins
+            if diff < 0:
+                diff += 24 * 60
+            
+            # If it's the evening (within 4 hours before cutoff or 1 hour after)
+            if diff <= 4 * 60 or diff >= 23 * 60:
+                old_plan = user.last_evening_plan or ""
+                if message.text not in old_plan:
+                    new_plan = (old_plan + "\n" + message.text).strip()
+                    if len(new_plan) > 800:
+                        new_plan = new_plan[-800:]
+                    user.last_evening_plan = new_plan
+                    db.commit()
+        # ----------------------------------
+
         provider_name = user.llm_provider
         api_key = None
         

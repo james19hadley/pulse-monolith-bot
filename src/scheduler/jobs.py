@@ -67,7 +67,7 @@ def catalyst_heartbeat():
                         ping_text = Prompts.NUDGE_REST_SESSION.format(mins_rested=mins_rested, ctx_text=ctx_text)
                         last_event_time = session.rest_start_time
             else:
-                # Zero Tasks Check
+                # No Active Session Check
                 last_log = db.query(TimeLog).filter(TimeLog.user_id == user.id).order_by(TimeLog.created_at.desc()).first()
                 if last_log and (now - last_log.created_at) > timedelta(minutes=60):
                     pending_tasks = db.query(Task).filter_by(user_id=user.id, status='pending').count()
@@ -75,6 +75,11 @@ def catalyst_heartbeat():
                         last_event_time = last_log.created_at
                         is_ping_due = True
                         ping_text = Prompts.NUDGE_ZERO_TASKS
+                    elif (now - last_log.created_at) > timedelta(minutes=180): 
+                        # Proactive push if they have tasks but haven't worked in 3+ hours
+                        last_event_time = last_log.created_at
+                        is_ping_due = True
+                        ping_text = "Hey, you have pending tasks but haven't logged any work in a few hours. Ready to tackle one?"
 
             if is_ping_due:
                 # Intercept with AI generation if API keys exist
@@ -87,7 +92,7 @@ def catalyst_heartbeat():
                         from src.core.personas import get_persona_prompt
                         
                         ai = GoogleProvider(api_key=decrypt_key(key_data["key"]))
-                        persona_sys = get_persona_prompt(user.persona_type, getattr(user, "custom_persona_prompt", None), user.report_config)
+                        persona_sys = get_persona_prompt(user.persona_type, getattr(user, "custom_persona_prompt", None), user.report_config, getattr(user, "talkativeness_level", "standard"))
                         user_lang = getattr(user, "language", "Russian")
                         prompt = f"The user is currently idle. Here is the context: '{ping_text}'. Send them a very short Catalyst Nudge (1-2 sentences) encouraging them to log their time or update their status. Speak purely in {user_lang}. DO NOT USE MARKDOWN, only <b> and <i>."
                         text, _ = ai.generate_chat_response(prompt, persona_sys)
@@ -242,16 +247,28 @@ def evening_reflection_job():
                 is_time = True
             
             if is_time:
-                msg_text = "It is almost the end of the day. What targets did you hit today, and what is your plan for tomorrow? Tell me naturally, and I will log it for you."
+                msg_text = "It is almost the end of the day. What did you get done, and what's the plan for tomorrow?"
                 user_keys = getattr(user, "api_keys", None)
                 if user_keys and user.llm_provider in user_keys:
                     try:
                         key_data = user_keys[user.llm_provider]
                         ai = GoogleProvider(api_key=decrypt_key(key_data["key"]))
                         from src.core.personas import get_persona_prompt
-                        persona_sys = get_persona_prompt(user.persona_type, getattr(user, "custom_persona_prompt", None), user.report_config)
+                        persona_sys = get_persona_prompt(user.persona_type, getattr(user, "custom_persona_prompt", None), user.report_config, getattr(user, "talkativeness_level", "standard"))
                         user_lang = getattr(user, "language", "Russian")
-                        prompt = f"Initiate an evening reflection session with the user. Inform them that the day is wrapping up (approaching their {cutoff.strftime('%H:%M')} cutoff). Ask them what project targets they achieved today and what they want to plan for tomorrow so you can passively log it. DO NOT USE MARKDOWN. Use HTML tags <b> and <i> only. Must strictly speak in {user_lang}. Limit to 2 short sentences."
+                        
+                        ref_config = getattr(user, 'reflection_config', {}) or {}
+                        wins = "Ask them about their wins/achievements today. " if ref_config.get("focus_wins") else ""
+                        blockers = "Ask them about any blockers or problems they faced today. " if ref_config.get("focus_blockers") else ""
+                        tomorrow = "Ask them what they want to plan for tomorrow. " if ref_config.get("focus_tomorrow") else ""
+                        custom = f"Also incorporate this specific focus into your question: '{ref_config.get('custom_prompt')}'. " if ref_config.get("custom_prompt") else ""
+                        
+                        topics = wins + blockers + tomorrow + custom
+                        if not topics:
+                            topics = "Ask them how the day went overall."
+                        
+                        prompt = f"Initiate an evening reflection session with the user. Inform them that the day is wrapping up (approaching their {cutoff.strftime('%H:%M')} cutoff). {topics} DO NOT USE MARKDOWN. Use HTML tags <b> and <i> only. Must strictly speak in {user_lang}. Do not write a long paragraph unless talkativeness is set to coach."
+                        
                         text, _ = ai.generate_chat_response(prompt, persona_sys)
                         if text:
                             msg_text = text
@@ -302,21 +319,33 @@ def morning_planner_job():
             for t in pending_tasks:
                 t.is_focus_today = False
             
+            # Continuity check: Did they say something yesterday evening?
+            evening_plan_text = ""
+            if getattr(user, 'last_evening_plan', None):
+                evening_plan_text = f"\n\nLast night, the user shared this plan/reflection:\n\"{user.last_evening_plan}\"\n\nPlease reference this gracefully in your morning welcome."
+                user.last_evening_plan = None # Clear it for the new day
+            
             tasks_list_str = "\\n".join([f"- {t.title}" for t in pending_tasks[:15]])
             
             msg_text = "Good morning! ☀️ You have some tasks lined up. Take a look at your Projects when you're ready."
-            if user.api_key_encrypted:
+            user_keys = getattr(user, "api_keys", None)
+            if user_keys and user.llm_provider in user_keys:
                 try:
-                    api_key = decrypt_key(user.api_key_encrypted)
-                    ai = GoogleProvider(api_key=api_key)
-                    prompt = f"The user has these pending tasks:\\n{tasks_list_str}\\n\\nDon't list all of them. Act as a gentle productivity sherpa. Welcome them to a new day. Pick the top 1 or 2 most impactful tasks from the list to suggest as the 'Priority for today'. Keep it conversational, short, and not overwhelming. Ask if they want to start one of those."
-                    res, _ = ai.generate_chat_response(prompt, persona_prompt="You are a gentle productivity coach.")
+                    key_data = user_keys[user.llm_provider]
+                    ai = GoogleProvider(api_key=decrypt_key(key_data["key"]))
+                    from src.core.personas import get_persona_prompt
+                    persona_sys = get_persona_prompt(user.persona_type, getattr(user, "custom_persona_prompt", None), user.report_config, getattr(user, "talkativeness_level", "standard"))
+                    
+                    user_lang = getattr(user, "language", "Russian")
+                    prompt = f"The user has these pending tasks:\\n{tasks_list_str}{evening_plan_text}\\n\\nDon't list all of them. Welcome them to a new day. Pick the top 1 or 2 most impactful tasks from the list to suggest as the 'Priority for today'. Keep it conversational. Ask if they want to start one of those. Must strictly speak in {user_lang}. DO NOT USE MARKDOWN. Use HTML tags <b> and <i> only."
+                    
+                    res, _ = ai.generate_chat_response(prompt, persona_prompt=persona_sys)
                     if res:
                         msg_text = res
                 except Exception as e:
                     print(f"Failed to generate morning AI planner: {e}")
             
-            db.commit() # Save the cleared focus flags just in case
+            db.commit() # Save the cleared focus flags and cleared evening plan
             
             try:
                 if bot:

@@ -12,7 +12,7 @@ from src.ai.router import generate_chat, extract_system_config, extract_report_c
 from src.bot.handlers.utils import log_tokens
 async def _handle_chat(message: Message, db, user, provider_name, api_key):
     import html
-    persona_prompt = get_persona_prompt(user.persona_type, user.custom_persona_prompt, user.report_config)
+    persona_prompt = get_persona_prompt(user.persona_type, user.custom_persona_prompt, user.report_config, getattr(user, "talkativeness_level", "standard"))
     
     response_text, tokens = generate_chat(message.text, provider_name, api_key, persona_prompt)
     if tokens:
