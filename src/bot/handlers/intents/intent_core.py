@@ -12,13 +12,62 @@ from src.ai.router import generate_chat, extract_system_config, extract_report_c
 from src.bot.handlers.utils import log_tokens
 async def _handle_chat(message: Message, db, user, provider_name, api_key):
     import html
+    
+    # Context Injection for smart NLP
+    from src.db.models import Project, Task
+    active_projects = db.query(Project).filter(Project.user_id == user.id, Project.status == 'active').all()
+    pending_tasks = db.query(Task).filter(Task.user_id == user.id, Task.status == 'pending').all()
+    
+    context_str = ""
+    if active_projects or pending_tasks:
+        context_str = "\n\nUSER's CURRENT ENTITIES (For your awareness):\n"
+        if active_projects:
+            context_str += "Active Projects:\n" + "\n".join([f"- {p.title} (ID: {p.id})" for p in active_projects]) + "\n"
+        if pending_tasks:
+            context_str += "Pending Tasks:\n" + "\n".join([f"- {t.title} (ID: {t.id})" for t in pending_tasks]) + "\n"
+    
     persona_prompt = get_persona_prompt(user.persona_type, user.custom_persona_prompt, user.report_config, getattr(user, "talkativeness_level", "standard"))
+    
+    if user.active_session_id:
+        persona_prompt += "\n\n[SYSTEM NOTICE]: The user is currently in an active focus session. If they describe what they are currently working on or what they just finished (e.g. answering a 'what are you doing' nudge), you MUST include the exact string `[CHUNK_LOG]` in your response. This will signal the system to log the elapsed time as a chunk."
+        
+    persona_prompt += context_str
     
     response_text, tokens = generate_chat(message.text, provider_name, api_key, persona_prompt)
     if tokens:
         log_tokens(db, message.from_user.id, tokens)
         
     if response_text:
+        # Check for smart chunk
+        if "[CHUNK_LOG]" in response_text and user.active_session_id:
+            response_text = response_text.replace("[CHUNK_LOG]", "").strip()
+            from src.db.models import Session, TimeLog
+            import datetime
+            session = db.query(Session).filter(Session.id == user.active_session_id).first()
+            if session:
+                last_log = db.query(TimeLog).filter(TimeLog.session_id == session.id).order_by(TimeLog.created_at.desc()).first()
+                start_ref = last_log.created_at if last_log else session.start_time
+                now = datetime.datetime.utcnow()
+                elapsed_mins = int((now - start_ref).total_seconds() / 60)
+                
+                if elapsed_mins > 0:
+                    from src.bot.handlers.utils import get_or_create_project_zero
+                    p_zero = get_or_create_project_zero(db, user.id)
+                    chunk = TimeLog(
+                        user_id=user.id,
+                        session_id=session.id,
+                        duration_minutes=elapsed_mins,
+                        project_id=p_zero.id,
+                        description=message.text[:200], # Save their response as the description
+                        created_at=now
+                    )
+                    db.add(chunk)
+                    p_zero.current_value = (p_zero.current_value or 0) + elapsed_mins
+                    if p_zero.daily_target_value is not None:
+                        p_zero.daily_progress = (p_zero.daily_progress or 0) + elapsed_mins
+                    db.commit()
+                    response_text += f"\n\n<i>⏱ Logged {elapsed_mins} minutes to this session chunk.</i>"
+                    
         # Check for pending_split close out in chat
         if user.active_session_id:
             from src.db.models import Session

@@ -67,13 +67,14 @@ class AddTasksParams(BaseModel):
 
 
 class EditEntitiesParam(BaseModel):
-    entity_type: str = Field(description="Strictly 'project' - what kind of entity to edit")
+    entity_type: str = Field(description="Strictly 'project' or 'task' - what kind of entity to edit")
     action: str = Field(description="Strictly 'edit' or 'delete'", default="edit")
     entity_name_or_id: str = Field(description="The name or ID of the existing entity to edit or delete")
     new_name: Optional[str] = Field(description="The new name for the entity, if renaming", default=None)
     new_target_value: Optional[int] = Field(description="The new target value for the entity", default=None)
     new_unit: Optional[str] = Field(description="The new unit for measurement", default=None)
     new_parent_project_id: Optional[int] = Field(description="The ID of the new parent project if they want to move/link this project under another one. Send -1 to unlink.", default=None)
+    new_status: Optional[str] = Field(description="The new status for a task (e.g. 'completed', 'cancelled', 'pending')", default=None)
 
 class EditEntitiesParams(BaseModel):
     edits: List[EditEntitiesParam] = Field(description="List of entity edits requested by user")
@@ -218,8 +219,12 @@ If they don't specify blocks, use the default list."""
     def extract_edit_entities(self, text: str, entities_text: str):
         """Extract entity edit requests from user text"""
         system_prompt = f"""You are a data extraction tool.
-The user wants to edit (rename, change target value) one or more existing entities.
-Extract the entity type (project), the current name or identifier, and the changes requested.
+The user wants to edit (rename, change target value, complete) one or more existing entities (projects or tasks).
+Extract the entity type, the current name or identifier, and the changes requested.
+When completing a task, set action='edit' and new_status='completed'.
+
+CRITICAL: The user might say "complete task 1" (using an ordinal number).
+You MUST look at the list below, find "Task 1", and extract its DB_ID for the `entity_name_or_id` field. Do not return "1" if "1" is just the ordinal number. Return the DB_ID!
 
 CURRENT ENTITIES:
 {entities_text}

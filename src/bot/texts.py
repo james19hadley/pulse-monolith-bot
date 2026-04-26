@@ -8,8 +8,8 @@ Centralized hub for all static non-AI bot copy (messages) for localization / qui
 # This file serves as the Single Source of Truth (SSOT) for all strings and button labels.
 
 class Buttons:
-    NUDGE_WORKING = "Я работаю 🧘‍♂️"
-    NUDGE_FINISH = "Завершить 🛑"
+    NUDGE_WORKING = "Retroactive End (1h ago) 🔙"
+    NUDGE_FINISH = "End Session Now 🛑"
     START_SESSION = "▶️ Session"
     END_SESSION = "🛑 End Session"
     END_DAY = "🌙 End Day"
@@ -22,7 +22,7 @@ class Buttons:
     UNDO = "↩️ Undo"
 
 class Prompts:
-    NUDGE_ACTIVE_SESSION = "⏳ Слышишь, ты уже в контексте сессии {hours_idle} часа(ов) без логов. Всё еще в потоке, или пора завершить сессию?"
+    NUDGE_ACTIVE_SESSION = "⏳ Ты работаешь уже {hours_idle} ч. без логов. Что конкретно удалось сделать за это время? Напиши мне текстом, и я залогирую этот кусок (сессия продолжится)."
     NUDGE_REST_SESSION = "⏸️ Перерыв затянулся: меня не было {mins_rested} минут.{ctx_text} Возвращаемся или заканчиваем на сегодня?"
     UNKNOWN_COMMAND = "Unknown command: <code>{text}</code>\\n\\nUse /help to see available commands."
     ERROR_GLOBAL = "⚠️ Простите, на сервере произошла ошибка. Пожалуйста, обратитесь позднее."

@@ -100,9 +100,9 @@ async def ui_tasks(message: Message):
         projs = {p.id: p.title for p in db.query(Project).filter(Project.user_id == user.id).all()}
         
         lines = ["<b>📋 Your Pending Tasks:</b>"]
-        for t in tasks:
+        for idx, t in enumerate(tasks, 1):
             proj_info = f" [<i>{projs.get(t.project_id)}</i>]" if t.project_id else ""
-            lines.append(f"• {t.title}{proj_info}")
+            lines.append(f"{idx}. {t.title}{proj_info}")
             
         await message.answer("\n".join(lines), parse_mode="HTML", reply_markup=get_main_menu())
 

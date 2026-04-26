@@ -247,32 +247,54 @@ Here is your report anyway:
 @router.callback_query(F.data == "nudge_working")
 async def handle_nudge_working_callback(callback_query: CallbackQuery):
     """
-    User clicked 'I am still working' on a nudge message.
-    Edit the message to a green checkmark and secretly bump the session notes so the scheduler resets the idle timer.
+    User clicked 'Retroactive End'.
+    End the session, but rewind the end_time by 1 hour (cutting off the dead time).
     """
-    await callback_query.answer("✅")
-    await callback_query.message.edit_text("✅")
+    await callback_query.answer("Rewinding...")
+    
+    # Clean the keyboard
+    try:
+        await callback_query.message.edit_reply_markup(reply_markup=None)
+    except Exception:
+        pass
     
     with SessionLocal() as db:
         user = db.query(User).filter(User.telegram_id == callback_query.from_user.id).first()
-        if not user: return
+        if not user or not user.active_session_id: return
         
-        session = db.query(Session).filter(
-            Session.user_id == user.id,
-            Session.status.in_(["active", "rest"])
-        ).order_by(Session.start_time.desc()).first()
-        
+        session = db.query(Session).filter(Session.id == user.active_session_id).first()
         if session:
-            # Append a silent log so the latest worklog checks are reset
+            # End the session 1 hour ago
+            end_time = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
+            # Make sure end_time is not before start_time
+            if end_time < session.start_time:
+                end_time = session.start_time
+                
+            session.end_time = end_time
+            actual_duration_minutes = int((session.end_time - session.start_time).total_seconds() / 60)
+            session.status = "closed"
+            
+            # Log time
+            from src.bot.handlers.utils import get_or_create_project_zero
+            p_zero = get_or_create_project_zero(db, user.id)
+
             log = TimeLog(
                 user_id=user.id,
                 session_id=session.id,
-                duration_minutes=0,
-                description="✅ Checked in (Acknowledged Nudge)",
-                created_at=datetime.datetime.utcnow()
+                duration_minutes=actual_duration_minutes,
+                project_id=p_zero.id,
+                description="Completed Focus Session (Retroactive)"
             )
             db.add(log)
-            db.commit()
+            
+            p_zero.current_value = (p_zero.current_value or 0) + actual_duration_minutes
+            if p_zero.daily_target_value is not None:
+                p_zero.daily_progress = (p_zero.daily_progress or 0) + actual_duration_minutes
+                
+            await callback_query.message.answer(f"🍅 Focus session ended retroactively! You worked for {actual_duration_minutes} minutes.")
+            
+        user.active_session_id = None
+        db.commit()
 
 @router.callback_query(F.data == "nudge_finish")
 async def handle_nudge_finish_callback(callback_query: CallbackQuery):

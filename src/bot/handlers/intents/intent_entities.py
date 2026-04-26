@@ -165,19 +165,23 @@ async def _handle_add_tasks(message: Message, db, user, provider_name, api_key):
 
 async def _handle_edit_entities(message: Message, db, user, provider_name, api_key):
 
-    from src.db.models import Project
+    from src.db.models import Project, Task
     
     # 1. Fetch active projects formatting for AI prompt
     projects = db.query(Project).filter(Project.user_id == user.id, Project.status == 'active').all()
     entities_list = []
     for p in projects:
         entities_list.append(f"Project: {p.title} (ID: {p.id})")
+        
+    tasks = db.query(Task).filter(Task.user_id == user.id, Task.status == 'pending').all()
+    for idx, t in enumerate(tasks, 1):
+        entities_list.append(f"Task {idx}: {t.title} (DB_ID: {t.id})")
     
     if not entities_list:
-        await message.answer("You have no projects or habits to edit yet.")
+        await message.answer("You have no projects or tasks to edit yet.")
         return
     
-    entities_text = "Your entities:\n" + "\n".join(entities_list)
+    entities_text = "Your entities (Tasks have ordinal numbers for UX, but MUST be referenced by DB_ID):\n" + "\n".join(entities_list)
     
     # Extract edit requests
     extraction, tokens = extract_edit_entities(message.text, provider_name, api_key, entities_text)
@@ -256,6 +260,37 @@ async def _handle_edit_entities(message: Message, db, user, provider_name, api_k
             if proj.target_value > 0:
                 msg += f" (Target: {proj.target_value} {proj.unit or 'minutes'})"
             responses.append(msg)
+            
+        elif entity_type == "task":
+            task = None
+            try:
+                entity_id = int(edit.entity_name_or_id)
+                task = db.query(Task).filter(Task.id == entity_id, Task.user_id == user.id).first()
+            except ValueError:
+                task = db.query(Task).filter(
+                    Task.user_id == user.id,
+                    func.lower(Task.title) == edit.entity_name_or_id.lower()
+                ).first()
+                
+            if not task:
+                responses.append(f"❌ Could not find task: {edit.entity_name_or_id}")
+                continue
+                
+            if edit.action == "delete":
+                task.status = "cancelled"
+                responses.append(f"🗑 Task cancelled: <b>{task.title}</b>")
+                continue
+                
+            if getattr(edit, 'new_status', None) == "completed":
+                task.status = "completed"
+                from datetime import datetime, timezone
+                task.completed_at = datetime.now(timezone.utc)
+                responses.append(f"✅ Task completed: <b>{task.title}</b>")
+                continue
+                
+            if edit.new_name:
+                task.title = edit.new_name
+                responses.append(f"✅ Task renamed to: <b>{task.title}</b>")
         
         else:
             responses.append(f"⚠️ Unknown entity type: {entity_type}")
