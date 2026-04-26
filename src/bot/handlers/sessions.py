@@ -257,21 +257,19 @@ async def handle_nudge_working_callback(callback_query: CallbackQuery):
         user = db.query(User).filter(User.telegram_id == callback_query.from_user.id).first()
         if not user: return
         
-        session = db.query(AgentSession).filter(
-            AgentSession.user_id == user.id,
-            AgentSession.status.in_(["active", "rest"])
-        ).order_by(AgentSession.created_at.desc()).first()
+        session = db.query(Session).filter(
+            Session.user_id == user.id,
+            Session.status.in_(["active", "rest"])
+        ).order_by(Session.start_time.desc()).first()
         
         if session:
             # Append a silent log so the latest worklog checks are reset
-            from src.db.models import WorkLog
-            from datetime import timezone
-            log = WorkLog(
+            log = TimeLog(
+                user_id=user.id,
                 session_id=session.id,
                 duration_minutes=0,
                 description="✅ Checked in (Acknowledged Nudge)",
-                timestamp=datetime.now(timezone.utc),
-                source="nudge"
+                created_at=datetime.datetime.utcnow()
             )
             db.add(log)
             db.commit()
@@ -290,4 +288,4 @@ async def handle_nudge_finish_callback(callback_query: CallbackQuery):
     except Exception:
         pass
         
-    await handle_end_session(callback_query.message)
+    await cmd_end_session(callback_query.message)
