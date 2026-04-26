@@ -81,6 +81,8 @@ def catalyst_heartbeat():
                         is_ping_due = True
                         ping_text = "Hey, you have pending tasks but haven't logged any work in a few hours. Ready to tackle one?"
 
+            has_active_session = session is not None
+
             if is_ping_due:
                 # Intercept with AI generation if API keys exist
                 user_keys = getattr(user, "api_keys", None)
@@ -126,9 +128,14 @@ def catalyst_heartbeat():
                 
                 try:
                     if bot:
+                        # Only send buttons (Retroactive End/Finish) if the user is ACTUALLY in a session.
+                        # If they are just being prodded to start working, send NO buttons (they just reply).
+                        reply_markup = get_nudge_keyboard() if has_active_session else None
+                        
                         msg = run_async(bot.send_message(
                             chat_id=telegram_id, 
-                            text=ping_text, reply_markup=get_nudge_keyboard()
+                            text=ping_text, 
+                            reply_markup=reply_markup
                         ))
                         last_ping_message_ids[telegram_id] = msg.message_id
                         user.last_ping_message_id = msg.message_id
