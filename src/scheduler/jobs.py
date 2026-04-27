@@ -135,6 +135,7 @@ def catalyst_heartbeat():
                         msg = run_async(bot.send_message(
                             chat_id=telegram_id, 
                             text=ping_text, 
+                            parse_mode="HTML",
                             reply_markup=reply_markup
                         ))
                         last_ping_message_ids[telegram_id] = msg.message_id

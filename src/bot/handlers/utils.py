@@ -191,8 +191,11 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
     
     inbox_items = db.query(Inbox).filter(Inbox.user_id == user.id, Inbox.status == "pending").count()
     
-    logical_date = start_bound.date()
-    date_str = force_date if force_date else logical_date.strftime("%Y-%m-%d")
+    # Always use local_time.date() for manual stats, not start_bound which is yesterday at cutoff hour
+    if force_date:
+        date_str = force_date
+    else:
+        date_str = local_time.date().strftime("%Y-%m-%d")
     stats = {
         "date": date_str,
         "focus_minutes": focus_time,
