@@ -14,6 +14,7 @@ from src.db.repo import SessionLocal
 from src.bot.views import welcome_message
 from src.bot.keyboards import get_main_menu
 from src.bot.handlers.utils import get_or_create_user
+from src.bot.texts import Buttons
 
 router = Router()
 
@@ -84,8 +85,6 @@ async def cmd_faq(message: Message):
     await message.answer(faq_text, parse_mode="HTML", disable_web_page_preview=True)
 
 
-from aiogram import F
-
 @router.message(F.text == "📋 Tasks")
 async def ui_tasks(message: Message):
     from src.db.models import Task, Project
@@ -123,14 +122,14 @@ async def ui_inbox(message: Message):
             
         await message.answer("\n".join(lines), parse_mode="HTML", reply_markup=get_main_menu())
 
-@router.message(F.text == "📊 Stats")
+@router.message(F.text == Buttons.STATS)
 @router.message(Command("stats"))
 async def cmd_stats(message: Message):
     from src.bot.handlers.utils import generate_daily_report_text
     with SessionLocal() as db:
         user = get_or_create_user(db, message.from_user.id)
         try:
-            report_text = generate_daily_report_text(db, user)
+            report_text = generate_daily_report_text(db, user, skip_ai_comment=True)
             try:
                 await message.answer(report_text, parse_mode="HTML", reply_markup=get_main_menu())
             except Exception as tg_err:

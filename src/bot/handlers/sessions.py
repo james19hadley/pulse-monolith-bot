@@ -55,22 +55,38 @@ async def cmd_end_session(message: Message):
             actual_duration_minutes = int((session.end_time - session.start_time).total_seconds() / 60)
             session.status = "closed"
             
-            # Log time
-            from src.bot.handlers.utils import get_or_create_project_zero
-            p_zero = get_or_create_project_zero(db, user.id)
+            # Determine the correct project to log time to
+            log_project_id = None
+            if session.project_id:
+                project = db.query(Project).filter(Project.id == session.project_id).first()
+                if project:
+                    if project.unit == "minutes" or project.unit is None:
+                        log_project_id = project.id
+                    elif project.parent_id:
+                        parent = db.query(Project).filter(Project.id == project.parent_id).first()
+                        if parent and (parent.unit == "minutes" or parent.unit is None):
+                            log_project_id = parent.id
+            
+            if not log_project_id:
+                from src.bot.handlers.utils import get_or_create_project_zero
+                p_zero = get_or_create_project_zero(db, user.id)
+                log_project_id = p_zero.id
 
             log = TimeLog(
                 user_id=user.id,
                 session_id=session.id,
                 duration_minutes=actual_duration_minutes,
-                project_id=p_zero.id,
+                project_id=log_project_id,
                 description="Completed Focus Session"
             )
             db.add(log)
             
-            p_zero.current_value = (p_zero.current_value or 0) + actual_duration_minutes
-            if p_zero.daily_target_value is not None:
-                p_zero.daily_progress = (p_zero.daily_progress or 0) + actual_duration_minutes
+            # Update project progress
+            project = db.query(Project).filter(Project.id == log_project_id).first()
+            if project:
+                project.current_value = (project.current_value or 0) + actual_duration_minutes
+                if project.daily_target_value is not None:
+                    project.daily_progress = (project.daily_progress or 0) + actual_duration_minutes
                 
             await message.answer(f"🍅 Focus session ended! You worked for {actual_duration_minutes} minutes.")
             
@@ -274,22 +290,38 @@ async def handle_nudge_working_callback(callback_query: CallbackQuery):
             actual_duration_minutes = int((session.end_time - session.start_time).total_seconds() / 60)
             session.status = "closed"
             
-            # Log time
-            from src.bot.handlers.utils import get_or_create_project_zero
-            p_zero = get_or_create_project_zero(db, user.id)
+            # Determine the correct project to log time to
+            log_project_id = None
+            if session.project_id:
+                project = db.query(Project).filter(Project.id == session.project_id).first()
+                if project:
+                    if project.unit == "minutes" or project.unit is None:
+                        log_project_id = project.id
+                    elif project.parent_id:
+                        parent = db.query(Project).filter(Project.id == project.parent_id).first()
+                        if parent and (parent.unit == "minutes" or parent.unit is None):
+                            log_project_id = parent.id
+            
+            if not log_project_id:
+                from src.bot.handlers.utils import get_or_create_project_zero
+                p_zero = get_or_create_project_zero(db, user.id)
+                log_project_id = p_zero.id
 
             log = TimeLog(
                 user_id=user.id,
                 session_id=session.id,
                 duration_minutes=actual_duration_minutes,
-                project_id=p_zero.id,
+                project_id=log_project_id,
                 description="Completed Focus Session (Retroactive)"
             )
             db.add(log)
             
-            p_zero.current_value = (p_zero.current_value or 0) + actual_duration_minutes
-            if p_zero.daily_target_value is not None:
-                p_zero.daily_progress = (p_zero.daily_progress or 0) + actual_duration_minutes
+            # Update project progress
+            project = db.query(Project).filter(Project.id == log_project_id).first()
+            if project:
+                project.current_value = (project.current_value or 0) + actual_duration_minutes
+                if project.daily_target_value is not None:
+                    project.daily_progress = (project.daily_progress or 0) + actual_duration_minutes
                 
             await callback_query.message.answer(f"🍅 Focus session ended retroactively! You worked for {actual_duration_minutes} minutes.")
             

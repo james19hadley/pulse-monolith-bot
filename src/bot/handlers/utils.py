@@ -67,7 +67,7 @@ def get_or_create_project_zero(db: DBSession, user_id: int):
     return proj_zero
 
 
-def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: bool = False) -> str:
+def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: bool = False, skip_ai_comment: bool = False) -> str:
     import zoneinfo
     from datetime import datetime, timedelta, timezone, time
     
@@ -205,26 +205,27 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
     }
     
     ai_comment = None
-    keys = getattr(user, "api_keys", None)
-    if keys and user.llm_provider in keys:
-        active_key_data = keys[user.llm_provider]
-        if active_key_data["provider"] == "google":
-            try:
-                provider = GoogleProvider(api_key=decrypt_key(active_key_data["key"]))
-                persona_sys = get_persona_prompt(user.persona_type, getattr(user, "custom_persona_prompt", None), config, getattr(user, "talkativeness_level", "standard"))
-                
-                # Context injection
-                import json
-                stats_json = json.dumps(stats, ensure_ascii=False)
-                context_msg = "The user's day has just automatically ended via chronjob." if is_auto_cron else "The user has manually triggered the end of their day."
-                user_lang = getattr(user, 'language', 'Russian') or 'Russian'
-                prompt = f"{context_msg} Look at their logged stats: {stats_json}. Write a short 1-2 sentence closing comment in your persona's tone. Mention specific achievements or failures if notable. NOTE IMPORTANT: You must respond in the user's explicit language: {user_lang}. DO NOT wrap your response in italics. Use Telegram HTML tag <b> to highlight names of specific projects or habits, e.g., <b>Pulse Monolith Bot</b>. NEVER use markdown (**bold**). Just output the sentence, nothing else."
-                
-                response, tokens = provider.generate_chat_response(prompt, persona_sys)
-                if response:
-                    ai_comment = response
-            except Exception as e:
-                print(f"Failed to generate AI comment: {e}")
+    if not skip_ai_comment:
+        keys = getattr(user, "api_keys", None)
+        if keys and user.llm_provider in keys:
+            active_key_data = keys[user.llm_provider]
+            if active_key_data["provider"] == "google":
+                try:
+                    provider = GoogleProvider(api_key=decrypt_key(active_key_data["key"]))
+                    persona_sys = get_persona_prompt(user.persona_type, getattr(user, "custom_persona_prompt", None), config, getattr(user, "talkativeness_level", "standard"))
+                    
+                    # Context injection
+                    import json
+                    stats_json = json.dumps(stats, ensure_ascii=False)
+                    context_msg = "The user's day has just automatically ended via chronjob." if is_auto_cron else "The user has manually triggered the end of their day."
+                    user_lang = getattr(user, 'language', 'Russian') or 'Russian'
+                    prompt = f"{context_msg} Look at their logged stats: {stats_json}. Write a short 1-2 sentence closing comment in your persona's tone. Mention specific achievements or failures if notable. NOTE IMPORTANT: You must respond in the user's explicit language: {user_lang}. DO NOT wrap your response in italics. Use Telegram HTML tag <b> to highlight names of specific projects or habits, e.g., <b>Pulse Monolith Bot</b>. NEVER use markdown (**bold**). Just output the sentence, nothing else."
+                    
+                    response, tokens = provider.generate_chat_response(prompt, persona_sys)
+                    if response:
+                        ai_comment = response
+                except Exception as e:
+                    print(f"Failed to generate AI comment: {e}")
                 
     report_text = build_daily_report(stats, config, ai_comment)
     return report_text
