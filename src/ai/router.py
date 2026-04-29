@@ -4,20 +4,20 @@ The central NLP router that passes user messages to the Intent classifier to fig
 @Architecture-Map: [CORE-AI-ROUTER]
 @Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, List
 from src.ai.providers import GoogleProvider, LogWorkMultiParams, AddInboxParams, SessionControlParams, ReportConfigParams, SystemConfigParams, CreateEntitiesParams, AddTasksParams, EditEntitiesParams, UpdateMemoryParams
 from src.core.constants import IntentType
 
-def get_intent(user_text: str, provider_name: str, api_key: str, user_memory: dict = None) -> Tuple[IntentType, dict, Optional[str]]:
+def get_intents(user_text: str, provider_name: str, api_key: str, user_memory: dict = None) -> Tuple[List[IntentType], dict, Optional[str]]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
-            intent, tokens = provider.classify_intent(user_text, user_memory)
-            return intent, tokens, None
+            intents, tokens = provider.classify_intents(user_text, user_memory)
+            return intents, tokens, None
         except Exception as e:
             print(f'LLM Error: {e}')
-            return IntentType.ERROR, {}, str(e)
-    return IntentType.UNKNOWN_PROVIDER, {}, "Unknown provider"
+            return [IntentType.ERROR], {}, str(e)
+    return [IntentType.UNKNOWN_PROVIDER], {}, "Unknown provider"
 
 def extract_log_work(user_text: str, provider_name: str, api_key: str, active_projects_text: str) -> Tuple[Optional[LogWorkMultiParams], dict]:
     if provider_name == 'google':

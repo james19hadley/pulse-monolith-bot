@@ -17,6 +17,7 @@ INTENT_DESCRIPTIONS = {
     "GENERATE_REPORT": 'The user wants the daily report generated right NOW instantly, out of schedule (e.g. "Send the report now", "Show me the daily report", "Post report to the channel").',
     "UNDO": 'The user is correcting a mistake they just made (e.g. "Wait, I meant 20 mins", "Undo that last log").',
     "EDIT_ENTITIES": 'The user wants to delete, rename, complete, or modify properties of existing projects or tasks (e.g. "Rename \'Coding\' to \'Backend Dev\'", "Change the project daily target to 20 reps", "Complete task 3", "Done with task 2", "Finished task 5", "Mark project as done").',
+    "PROJECT_STATUS": 'The user is asking for the status, details, or progress of a specific project (e.g. "What is the status of Pulse?", "How much time is left on project X?").',
     "UPDATE_MEMORY": 'The user is explicitly telling the bot to remember, update, or forget a personal fact or preference (e.g. "Remember that I lunch at 13:00", "I prefer to be addressed as Boss", "Forget my previous instruction about mornings").',
     "CHAT_OR_UNKNOWN": 'The user is just chatting, asking a question, expressing emotions, or saying something you can\'t categorize.'
 }
@@ -30,9 +31,10 @@ def get_intent_router_system_prompt(user_memory_json=None) -> str:
 
     return f"""You are the internal Intent Router for the Pulse Monolith Bot.
 Your ONLY job is to read the user's natural language message and classify it into an exact operational intent.
+If the user's message contains multiple distinct requests (e.g. "Create a project X AND log 2 hours to it"), return a list of intents in the logical order of execution.
 Return strictly valid JSON and nothing else. Do NOT include markdown code blocks (e.g. ```json).
 
-Categorize the user's input into one of the following exact intents:
+Categorize the user's input into one or more of the following exact intents:
 {intents_list}
 {memory_injection}"""
 

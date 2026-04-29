@@ -13,14 +13,14 @@ from aiogram.types import Message, CallbackQuery
 from src.db.repo import SessionLocal
 from src.bot.texts import Prompts
 from src.bot.handlers.utils import get_or_create_user, log_tokens
-from src.ai.router import IntentType, get_intent
+from src.ai.router import IntentType, get_intents
 from src.ai.providers import GoogleProvider
 
 # --- NEW DISPATCHER IMPORTS ---
 from src.bot.handlers.intents.intent_core import _handle_chat, _handle_config_update, _handle_config_report, _handle_undo, _handle_update_memory
 from src.bot.handlers.intents.intent_entities import _handle_create_entities, _handle_add_inbox, _handle_add_tasks, _handle_edit_entities
 from src.bot.handlers.intents.intent_log_work import _handle_log_work
-from src.bot.handlers.intents.intent_session import _handle_session_control
+from src.bot.handlers.intents.intent_core import _handle_chat, _handle_config_update, _handle_config_report, _handle_undo, _handle_update_memory, _handle_project_status
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -38,6 +38,7 @@ INTENT_HANDLERS = {
     IntentType.EDIT_ENTITIES: _handle_edit_entities,
     IntentType.UNDO: _handle_undo,
     IntentType.UPDATE_MEMORY: _handle_update_memory,
+    IntentType.PROJECT_STATUS: _handle_project_status,
 }
 
 @router.message()
@@ -99,11 +100,11 @@ async def ai_message_router(message: Message):
             return
 
         try:
-            intent, tokens, err = get_intent(message.text, provider_name, api_key, user.user_memory)
+            intents, tokens, err = get_intents(message.text, provider_name, api_key, user.user_memory)
             if tokens:
                 log_tokens(db, user.telegram_id, tokens)
                 
-            if err or intent == IntentType.ERROR:
+            if err or not intents or IntentType.ERROR in intents:
                 logger.error(f"Routing Error: {err}")
                 if err and ("API key" in str(err) or "API_KEY" in str(err) or "api_key" in str(err).lower() or "400" in str(err)):
                     await message.answer("⚠️ Неверный API ключ для выбранного провайдера. Пожалуйста, проверьте его в настройках.\n\nОтладка: " + str(err))
@@ -111,18 +112,19 @@ async def ai_message_router(message: Message):
                     await message.answer(Prompts.ERROR_GLOBAL + f"\n\nОтладка LLM: {err}")
                 return
             
-            if intent == IntentType.UNKNOWN_PROVIDER:
+            if IntentType.UNKNOWN_PROVIDER in intents:
                 await message.answer(Prompts.UNKNOWN_COMMAND.format(text=message.text))
                 return
                 
-            logger.info(f"User {user.telegram_id} intent localized: {intent}")
+            logger.info(f"User {user.telegram_id} intent(s) localized: {intents}")
             
-            # --- NEW DISPATCH ROUTER ---
-            handler = INTENT_HANDLERS.get(intent)
-            if handler:
-                await handler(message, db, user, provider_name, api_key)
-            else:
-                await message.answer(Prompts.UNKNOWN_COMMAND.format(text=message.text))
+            # Execute multiple intents sequentially
+            for intent in intents:
+                handler = INTENT_HANDLERS.get(intent)
+                if handler:
+                    await handler(message, db, user, provider_name, api_key)
+                else:
+                    await message.answer(Prompts.UNKNOWN_COMMAND.format(text=message.text))
                 
         except Exception as e:
             logger.error(f"Routing Error: {e}", exc_info=True)

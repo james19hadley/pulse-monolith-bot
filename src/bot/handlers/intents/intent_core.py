@@ -40,13 +40,29 @@ async def _handle_update_memory(message: Message, db, user, provider_name, api_k
     db.commit()
     await message.answer(msg, parse_mode="HTML")
 
+async def _handle_project_status(message: Message, db, user, provider_name, api_key):
+    from src.db.models import Project
+    import html
+    
+    # We will just fetch active projects and ask LLM which one they mean, or we can just list all active projects for now.
+    active_projs = db.query(Project).filter(Project.user_id == user.id, Project.status == "active").all()
+    if not active_projs:
+        await message.answer("У вас нет активных проектов.")
+        return
+        
+    # Temporary fallback until we build a full project search parameter extractor:
+    # Just render the standard /projects list.
+    from src.bot.handlers.core import cmd_projects
+    await cmd_projects(message)
+
 async def _handle_chat(message: Message, db, user, provider_name, api_key):
     import html
     
     # Context Injection for smart NLP
     from src.db.models import Project, Task
     active_projects = db.query(Project).filter(Project.user_id == user.id, Project.status == 'active').all()
-    pending_tasks = db.query(Task).filter(Task.user_id == user.id, Task.status == 'pending').all()
+    # TRUNCATE PENDING TASKS to avoid massive LLM context explosion which causes high latency
+    pending_tasks = db.query(Task).filter(Task.user_id == user.id, Task.status == 'pending').limit(10).all()
     
     context_str = ""
     if active_projects or pending_tasks:

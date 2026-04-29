@@ -13,7 +13,7 @@ from google.genai import types
 from src.core.constants import IntentType
 
 class IntentResponse(BaseModel):
-    intent: IntentType
+    intents: List[IntentType] = Field(description="The operational intents found in the user's message. Can be a single intent, or multiple if the user asked to do several distinct things (e.g. 'Create a project AND log 2 hours to it' -> [CREATE_ENTITIES, LOG_WORK]). Order matters.")
 
 class LogWorkParams(BaseModel):
     duration_minutes: int = Field(description="The total time spent, strictly converted to minutes. Can be negative for subtraction. E.g., '1.5 hours' -> 90, 'remove 10 mins' -> -10.")
@@ -103,7 +103,7 @@ class GoogleProvider(BaseLLMProvider):
             'model_name': self.model_id
         }
         
-    def classify_intent(self, text: str, user_memory: dict = None) -> Tuple[IntentType, dict]:
+    def classify_intents(self, text: str, user_memory: dict = None) -> Tuple[List[IntentType], dict]:
         from src.core.prompts import get_intent_router_system_prompt
         system_prompt = get_intent_router_system_prompt(user_memory)
         
@@ -117,8 +117,8 @@ class GoogleProvider(BaseLLMProvider):
                 temperature=0.0
             ),
         )
-        data = json.loads(response.text)
-        return IntentType(data.get('intent', IntentType.CHAT_OR_UNKNOWN)), self._get_usage(response)
+        data = IntentResponse.model_validate_json(response.text)
+        return data.intents, self._get_usage(response)
 
     def extract_log_work_parameters(self, text: str, active_projects_text: str) -> Tuple[Optional[LogWorkMultiParams], dict]:
         system_prompt = f"""You are a precise data extraction tool.

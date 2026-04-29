@@ -20,7 +20,7 @@ class BaseLLMProvider(ABC):
         self.model_id = model_id
 
     @abstractmethod
-    def classify_intent(self, text: str) -> Tuple[IntentType, dict]:
+    def classify_intents(self, text: str) -> Tuple[List[IntentType], dict]:
         pass
 
     @abstractmethod
