@@ -142,23 +142,36 @@ def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str
                 for p, data in stats['projects'].items():
                     # Handle both old format (int minutes) and new format (dict)
                     if isinstance(data, dict):
-                        mins = data["minutes"]
+                        mins = data.get("minutes", 0)
+                        bubble_mins = data.get("bubble_minutes", 0)
+                        total_mins = data.get("total_minutes", mins)
                         prog = data["progress"]
                         unit = data["unit"]
                         
-                        p_h, p_m = divmod(mins, 60)
                         import html
                         
                         indent_level = data.get("indent", 0)
                         prefix = "  " * indent_level + "└ "
-                        msg = f"{prefix}<i>{html.escape(str(p))}</i>:"
-                        if mins > 0:
-                            msg += f" <b>{p_h}h {p_m}m</b>"
+                        
+                        if bubble_mins > 0:
+                            t_h, t_m = divmod(total_mins, 60)
+                            msg = f"{prefix}<i>{html.escape(str(p))}</i> (Total: {t_h}h {t_m}m)"
+                            if mins > 0:
+                                p_h, p_m = divmod(mins, 60)
+                                msg += f" | spent: {p_h}h {p_m}m"
+                        else:
+                            p_h, p_m = divmod(mins, 60)
+                            msg = f"{prefix}<i>{html.escape(str(p))}</i>:"
+                            if mins > 0:
+                                msg += f" <b>{p_h}h {p_m}m</b>"
+
                         if unit and unit != "minutes":
                             target = data.get("target_value", 0) or 0
                             current = data.get("current_value", 0) or 0
                             p_bar = build_progress_bar(current, target, length=8)
-                            msg += f" | {current:g}/{target:g} {unit} {p_bar}"
+                            
+                            # Add a new line for progress with extra indentation if needed
+                            msg += f"\n  {prefix}{current:g}/{target:g} {unit} {p_bar}"
                             if prog > 0:
                                 msg += f" (+{prog:g})"
                         else:

@@ -170,7 +170,9 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
         total_mins = self_mins + bubble_mins
         
         proj_stats[p.title] = {
-            "minutes": total_mins,
+            "minutes": self_mins,
+            "bubble_minutes": bubble_mins,
+            "total_minutes": total_mins,
             "progress": raw_stats.get(pid, {}).get("progress", 0),
             "unit": p.unit or "minutes",
             "target_value": p.target_value or 0,
