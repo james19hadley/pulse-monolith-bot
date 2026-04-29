@@ -162,8 +162,16 @@ async def _handle_add_tasks(message: Message, db, user, provider_name, api_key):
         
     db.commit()
     
+    extra_msg = ""
+    if getattr(extraction, 'clear_inbox', False):
+        from src.db.models import Inbox
+        cleared = db.query(Inbox).filter(Inbox.user_id == user.id, Inbox.status == "pending").update({"status": "cleared"})
+        db.commit()
+        if cleared > 0:
+            extra_msg = f"\n🧹 <i>(Cleared {cleared} items from Inbox)</i>"
+    
     nl = '\n'
-    await message.answer(f"✅ <b>Added {count} task(s):</b>\n{nl.join(msg_lines)}", parse_mode="HTML")
+    await message.answer(f"✅ <b>Added {count} task(s):</b>\n{nl.join(msg_lines)}{extra_msg}", parse_mode="HTML")
 
 async def _handle_edit_entities(message: Message, db, user, provider_name, api_key):
 

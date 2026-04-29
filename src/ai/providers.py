@@ -66,6 +66,7 @@ class TaskParam(BaseModel):
 
 class AddTasksParams(BaseModel):
     tasks: List[TaskParam] = Field(description="List of tasks to create.")
+    clear_inbox: Optional[bool] = Field(description="True if the user explicitly or implicitly asked to convert/empty their Inbox while adding these tasks.", default=False)
 
 
 class EditEntitiesParam(BaseModel):
