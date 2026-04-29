@@ -21,7 +21,11 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
     if not projects:
         active_projects_text = "User has no active projects yet."
     else:
-        active_projects_text = "User's active projects:\n" + "\n".join([f"ID: {p.id}, Title: {p.title}" for p in projects])
+        active_projects_text = "User's active projects:\n"
+        for p in projects:
+            target_info = f", Target: {p.daily_target_value} {p.unit or 'minutes'}" if p.daily_target_value else ""
+            progress_info = f", Current Progress: {p.daily_progress or 0}" if p.daily_target_value else ""
+            active_projects_text += f"ID: {p.id}, Title: {p.title}{target_info}{progress_info}\n"
 
     # 2. Call AI extraction
     extraction, tokens = extract_log_work(message.text, provider_name, api_key, active_projects_text)

@@ -1,46 +1,42 @@
-# Sprint 43: UX, Daily Reports, & NLP Enhancements
+# Sprint 43: NLP Polishing, Reporting & Undo UX
 
-**Status:** `Active`
+**Status:** `Completed`
 **Date Proposed:** 2026-04-29
-**Objective:** Polish the core user experience by improving daily report readability, ensuring proper NLP behavior for "done", implementing smart UI for immediate intention feedback (Undo buttons), and adding context memory for the LLM.
+**Objective:** Focuses on improving daily interaction friction points, including formatting Daily Reports, handling NLP habit completions correctly, transparent Undo mechanics, and context-aware focus sessions.
 
 ## 🎯 Goals
-- Make the daily report mathematically strict on parent vs self time.
-- Visually protect the mobile Telegram layout by putting progress bars on new lines.
-- Fix the "done" regression caused by the Habits -> Projects migration.
-- Empower the AI with persistent user context (lunch times, preferences) directly in prompts.
-- Ensure only today's inbox items are counted in the evening report.
+- Improve visual UX on mobile by properly indenting parent "Total" times and progress bars.
+- Fix NLP intent routing for habit completion (e.g. "typing done").
+- Add precise UI feedback for the Undo feature (✅ / ❌ emojis).
+- Add "Current Focus" questioning at the beginning of a timer session.
+- Track Daily Inbox counts correctly without including stale entries in the daily report.
 
 ## 📋 Tasks
 
-### 1. Daily Report Formatting (Completed ✅)
-- [x] Restructure parent project time representation to `(Total: Xh Ym)`.
-- [x] Push progress bars to a new line with an indent to prevent mobile text-wrapping bugs.
+### [Daily Reporting & UI]
+- [x] Change parent project aggregations to display `Total: Xh Ym` and keep self-logged time explicit.
+- [x] Unbreak mobile progress bars by rendering them on a fresh indented line.
+- [x] Add `🔥 Streak: N` display to the Evening Report next to completed targets.
+- [x] Make Inbox count in the Daily Report *strictly* show only items captured today.
 
-### 2. Inbox Temporal Isolation
-- [ ] Update `generate_daily_report_text` to count only `Inbox` items created on the *current day* (post last cutoff).
+### [NLP & Intent Resolution]
+- [x] Inject Project Units and Targets into `active_projects_text`.
+- [x] Update `extract_log_work` prompt so that if a user says "done", the AI uses the remaining daily target to log the correct duration automatically.
+- [x] Audit `EDIT_ENTITIES` vs `LOG_WORK` to ensure "I did my planch" goes to time logging instead of task toggling.
 
-### 3. Transparent Undo UI
-- [ ] When an action is performed, reply with what was explicitly done (e.g. "⏪ Action performed: Moved project A to B").
-- [ ] Attach inline buttons to the confirmation message: `✅` and `❌`.
-- [ ] Pressing `✅` removes the buttons and solidifies the message.
-- [ ] Pressing `❌` invokes the `UNDO` logic, reversing the changes and updating the message to state it was cancelled.
+### [Undo Transparency]
+- [x] Modify `intent_undo.py` to fetch exactly what action was undone.
+- [x] Reply with context (e.g., "⏪ Отменено: Изменение проекта X") and provide inline `✅` and `❌` emoji buttons for feedback.
 
-### 4. NLP Fixes ("Done" Regression)
-- [ ] Update the `LOG_WORK` system prompt to recognize "done", "finished", "сделал" when applied to projects with `daily_target_value`.
-- [ ] Teach the extractor to calculate the remaining amount to reach the daily target and submit it as the logged amount.
-
-### 5. Session Context Prompts
-- [ ] Modify `cmd_start_session` or the `SESSION_CONTROL` logic to ask "Над чем работаем?" with inline options representing active projects.
-
-### 6. AI Prompt Memory (Context Injection)
-- [ ] Add a `context_memory` string field to the `User` model.
-- [ ] Inject this field into the `LOG_WORK`, `ADD_TASKS`, and `SESSION_CONTROL` extraction prompts so the AI inherently knows user schedules (e.g., "Lunch is at 13:00").
+### [Session Context]
+- [x] When starting a session via `/session`, send a prompt asking "Над чем работаем?" with inline buttons for the top active projects.
+- [x] Associate the initiated session with the selected project before the timer ends.
 
 ## 🔒 Security & Architecture Notes
-- The Undo implementation should use the existing `ActionLog` table. Ensure `ActionLog` serializes changes bidirectionally for clean rollbacks.
+- The Undo prompt UI must remain mostly emoji-based or strictly minimal to support future i18n properly.
+- All modifications to AI prompts (`src/core/prompts.py` or Extraction params) must preserve the existing JSON Schema validation.
 
 ## 🏁 Completion Criteria
-- User can say "typing done" and it logs the exact remaining target minutes.
-- The Undo button explicitly tells the user what happened and gives clear emoji-only buttons for feedback.
-- Inbox daily counts are accurate.
+- User can say "typing done" and 10 minutes are properly logged.
+- The Daily Report cleanly lays out projects, correctly counts Streaks, and only counts today's Inbox entries.
+- The Undo action returns a context-aware inline string with emoji buttons.

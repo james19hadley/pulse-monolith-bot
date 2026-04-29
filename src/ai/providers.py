@@ -116,7 +116,7 @@ The user is logging work time. Extract the duration in minutes, the project ID, 
 If the user specifies moving time (e.g. 'subtract X from Y and add X to Z'), generate multiple log entries (one negative, one positive).
 If no project matches the text, return project_id as null.
 Always convert hours to minutes (e.g. 1 hour = 60 mins).
-IMPORTANT: If the user says they "did", "completed", or are "done" with a habit/project, and that project has a Target listed, you MUST extract the Target value and log exactly that duration. (e.g. if Target is 10 minutes and user says 'typing done', extract 10 minutes).
+IMPORTANT: If the user says they "did", "completed", or are "done" with a habit/project, and that project has a Target listed, you MUST calculate the remaining amount (Target - Current Progress) and log exactly that remaining amount to reach the target.
 
 CURRENT ACTIVE PROJECTS:
 {active_projects_text}
