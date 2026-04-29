@@ -148,6 +148,8 @@ async def _handle_add_tasks(message: Message, db, user, provider_name, api_key):
     count = 0
     from src.db.models import ActionLog
     
+    scheduled_tasks = []
+    
     for t in extraction.tasks:
         # Create Task
         new_task = Task(
@@ -158,6 +160,12 @@ async def _handle_add_tasks(message: Message, db, user, provider_name, api_key):
             reminder_time=getattr(t, 'reminder_time', None)
         )
         db.add(new_task)
+        # Flush to get the ID without committing the whole transaction yet
+        db.flush()
+        
+        if new_task.reminder_time:
+            scheduled_tasks.append((new_task.id, new_task.reminder_time))
+            
         count += 1
         
         proj_name = "Inbox"
@@ -170,6 +178,15 @@ async def _handle_add_tasks(message: Message, db, user, provider_name, api_key):
         msg_lines.append(f"• {t.title}{time_str} 📂 <i>{html.escape(proj_name)}</i>")
         
     db.commit()
+    
+    # Schedule Celery ETA tasks if any
+    if scheduled_tasks:
+        from src.scheduler.jobs import send_task_reminder_job
+        for tid, rtime in scheduled_tasks:
+            try:
+                send_task_reminder_job.apply_async(args=[tid], eta=rtime)
+            except Exception as e:
+                print(f"Failed to queue reminder for task {tid}: {e}")
     
     extra_msg = ""
     if getattr(extraction, 'clear_inbox', False):

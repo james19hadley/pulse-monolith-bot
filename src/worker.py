@@ -28,10 +28,6 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
     beat_schedule={
-        "task-reminders-watchdog-every-minute": {
-            "task": "job_task_reminders_watchdog",
-            "schedule": 60.0, # Every 1 minute for precision
-        },
         "catalyst-heartbeat-every-5-minutes": {
             "task": "job_catalyst_heartbeat",
             "schedule": 300.0,

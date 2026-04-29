@@ -333,46 +333,33 @@ def evening_reflection_job():
                 except Exception as e:
                     print(f"Failed to send reflection ping to {user.telegram_id}: {e}")
 
-@shared_task(name="job_task_reminders_watchdog")
-def task_reminders_watchdog_job():
+@shared_task(name="job_send_task_reminder")
+def send_task_reminder_job(task_id: int):
     """
-    Runs every 5 minutes to check for pending tasks that have a reminder_time <= now.
+    Called by Celery (via ETA) exactly at the time the reminder should fire.
     """
-    import zoneinfo
     import html
-    from datetime import timezone
-    now_utc = datetime.now(timezone.utc)
     with SessionLocal() as db:
-        users = db.query(User).all()
-        for user in users:
-            try:
-                user_tz = zoneinfo.ZoneInfo(user.timezone)
-            except Exception:
-                user_tz = zoneinfo.ZoneInfo("UTC")
-                
-            local_time = now_utc.astimezone(user_tz)
+        from src.db.models import Task, User
+        task = db.query(Task).filter(Task.id == task_id).first()
+        
+        # If the task was deleted, completed, or already sent, abort.
+        if not task or task.status != 'pending' or task.is_reminder_sent:
+            return
             
-            from src.db.models import Task
-            # Find tasks where reminder_time is not null, hasn't been sent, and time has passed
-            pending_reminders = db.query(Task).filter(
-                Task.user_id == user.id,
-                Task.status == 'pending',
-                Task.is_reminder_sent == False,
-                Task.reminder_time != None,
-                Task.reminder_time <= local_time
-            ).all()
+        user = db.query(User).filter(User.id == task.user_id).first()
+        if not user:
+            return
             
-            for task in pending_reminders:
-                try:
-                    target_chat_id = user.target_channel_id or user.telegram_id
-                    msg = f"⏰ <b>Напоминание:</b> {html.escape(task.title)}"
-                    if bot:
-                        run_async(bot.send_message(chat_id=target_chat_id, text=msg, parse_mode="HTML"))
-                    task.is_reminder_sent = True
-                except Exception as e:
-                    print(f"Failed to send task reminder to {user.telegram_id}: {e}")
-                    
-        db.commit()
+        try:
+            target_chat_id = user.target_channel_id or user.telegram_id
+            msg = f"⏰ <b>Напоминание:</b> {html.escape(task.title)}"
+            if bot:
+                run_async(bot.send_message(chat_id=target_chat_id, text=msg, parse_mode="HTML"))
+            task.is_reminder_sent = True
+            db.commit()
+        except Exception as e:
+            print(f"Failed to send task reminder to {user.telegram_id}: {e}")
 
 @shared_task(name="job_morning_planner")
 def morning_planner_job():
