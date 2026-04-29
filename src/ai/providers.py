@@ -9,7 +9,6 @@ from typing import Optional, List, Tuple
 import json
 from google import genai
 from google.genai import types
-from src.core.prompts import INTENT_ROUTER_SYSTEM_PROMPT
 from src.core.constants import IntentType
 
 class IntentResponse(BaseModel):

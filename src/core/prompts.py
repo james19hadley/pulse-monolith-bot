@@ -9,7 +9,7 @@ import json
 INTENT_DESCRIPTIONS = {
     "LOG_WORK": 'The user is reporting time spent working or progressing on a project/quest, or assigning a split part of time, or transferring time between projects. (e.g. "I coded for 40 mins", "Did 2 hours of writing", "subtract 10 from A and add 10 to B", "all to project 1", "half to admin").',
     "ADD_TASKS": 'The user is adding actionable to-do items, steps, or tasks to a plan/project (e.g. "Add tasks: buy milk, call Bob", "For Frontend project I need to design UI and fix bugs").',
-    "ADD_INBOX": 'The user is dumping a random raw idea, thought, or note to save for later (e.g. "Idea: add stripe later", "Don't forget to buy milk").',
+    "ADD_INBOX": "The user is dumping a random raw idea, thought, or note to save for later (e.g. \"Idea: add stripe later\", \"Don't forget to buy milk\").",
     "CREATE_ENTITIES": 'The user wants to create a new project (possibly with a target number of hours/minutes) (e.g. "Create a project \'Write Book\' with a 50h goal", "создай проект Х").',
     "SESSION_CONTROL": 'The user wants to start, pause, resume, or end a work session via text (e.g. "I\'m starting a work block", "Taking a break, stopped at SQL", "Back to work", "I\'m done for now").',
     "SYSTEM_CONFIG": 'The user wants to change bot settings. Settings include timezone, cutoff time, target channel, persona etc (e.g. "Set my cutoff to midnight", "Change timezone to Europe/Moscow", "Be more sarcastic").',
