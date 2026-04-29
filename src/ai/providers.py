@@ -50,8 +50,9 @@ class SystemConfigParams(BaseModel):
 
 class CreateProjectParams(BaseModel):
     title: str = Field(description="The name of the new project. You can creatively prefix it with a suitable emoji (like '📚 Reading' or '🏋️ Sport') so it looks nice. If it's a generic technical topic, use an abstract emoji. Ensure the emoji is strictly the very first character if used.")
-    target_value: int = Field(description="The target estimated effort value. If they specify hours, multiply by 60. Default is 0.", default=0)
-    target_period: str = Field(description="The period for the target value. Strictly 'daily', 'weekly', or 'monthly'. Defaults to 'daily'.", default="daily")
+    lifetime_target_value: int = Field(description="The absolute, total lifetime goal for this project. If they specify hours, multiply by 60 to get minutes. Default is 0.", default=0)
+    periodic_target_value: Optional[int] = Field(description="The recurring goal per period (e.g. '15 mins a day', '3 times a week'). If hours, multiply by 60. Default is null.", default=None)
+    target_period: Optional[str] = Field(description="The period for the periodic_target_value. Strictly 'daily', 'weekly', or 'monthly'. Leave null if there is only a lifetime goal.", default=None)
     unit: Optional[str] = Field(description="The unit of measurement (e.g. pages, reps, hours, minutes). Default is minutes.", default="minutes")
     parent_project_id: Optional[int] = Field(description="The numeric ID of the parent project if this is created as a sub-project or child. Requires context of existing projects with IDs.", default=None)
 

@@ -33,7 +33,12 @@ async def _handle_create_entities(message: Message, db, user, provider_name, api
         if existing:
             if existing.status == "archived":
                 existing.status = "active"
-                existing.target_value = getattr(p, 'target_value', 0)
+                if getattr(p, 'lifetime_target_value', 0) > 0:
+                    existing.target_value = p.lifetime_target_value
+                if getattr(p, 'periodic_target_value', None) is not None:
+                    existing.daily_target_value = p.periodic_target_value
+                if getattr(p, 'target_period', None):
+                    existing.target_period = p.target_period
                 if hasattr(p, 'unit') and p.unit:
                     existing.unit = p.unit
                 db.commit()
@@ -46,7 +51,9 @@ async def _handle_create_entities(message: Message, db, user, provider_name, api
                 
                 msg = f"✅ Project restored from archive: <b>{existing.title}</b>"
                 if existing.target_value > 0:
-                    msg += f" (Target: {existing.target_value})"
+                    msg += f" (Lifetime Target: {existing.target_value})"
+                if existing.daily_target_value:
+                    msg += f" ({existing.target_period.capitalize()} Target: {existing.daily_target_value})"
                 if hasattr(existing, 'unit') and existing.unit:
                     msg += f" {existing.unit}"
                 await message.answer(msg, parse_mode="HTML")
@@ -54,7 +61,14 @@ async def _handle_create_entities(message: Message, db, user, provider_name, api
                 await message.answer(f"⚠️ Project already exists: <b>{existing.title}</b>", parse_mode="HTML")
             continue
             
-        proj = Project(user_id=user.id, title=p.title, status="active", target_value=0, daily_target_value=getattr(p, 'target_value', None) if getattr(p, 'target_value', 0) > 0 else None, target_period=getattr(p, 'target_period', 'daily'))
+        proj = Project(
+            user_id=user.id,
+            title=p.title,
+            status="active",
+            target_value=getattr(p, 'lifetime_target_value', 0),
+            daily_target_value=getattr(p, 'periodic_target_value', None),
+            target_period=getattr(p, 'target_period', 'daily') or 'daily'
+        )
         if hasattr(p, 'unit') and p.unit:
             proj.unit = p.unit
         if hasattr(p, 'parent_project_id') and p.parent_project_id:
