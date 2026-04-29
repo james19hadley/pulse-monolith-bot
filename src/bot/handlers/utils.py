@@ -200,12 +200,10 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
         for h in user_habits
     ]
     
-    # Only count inbox items that have been created within this exact report day boundary
+    # Only count pending inbox items (regardless of creation date since it has no created_at)
     inbox_items = db.query(Inbox).filter(
         Inbox.user_id == user.id,
-        Inbox.status == "pending",
-        Inbox.created_at >= start_bound,
-        Inbox.created_at < end_bound
+        Inbox.status == "pending"
     ).count()
     
     # Always use local_time.date() for manual stats, not start_bound which is yesterday at cutoff hour

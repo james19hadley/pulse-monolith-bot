@@ -210,31 +210,35 @@ def daily_accountability_job():
             if mins_passed < 0:
                 mins_passed += 24 * 60
                 
-            # If we are within the first 15 minutes after the cutoff, and haven't run today
+            # If we are within the first 15 minutes after the cutoff
             # (Matches Celery */15 crontab exactly once per day)
-            if 0 <= mins_passed < 15 and not already_done:
+            if 0 <= mins_passed < 15:
                 
-                target_chat_id = user.target_channel_id or user.telegram_id
-                
-                try:
-                    report_text = generate_daily_report_text(db, user, is_auto_cron=True)
-                except Exception as e:
-                    print(f"Failed to build auto-report for {user.telegram_id}: {e}")
-                    continue
-                if bot:
+                # 1. Send Auto-Report if they haven't manually requested one today
+                if not already_done:
+                    target_chat_id = user.target_channel_id or user.telegram_id
+                    
                     try:
-                        run_async(bot.send_message(
-                            chat_id=target_chat_id,
-                            text=report_text,
-                            parse_mode="HTML"
-                        ))
-                        # Mark as done so we don't spam them
-                        user.last_manual_report_date = local_time.date()
-                        db.commit()
+                        report_text = generate_daily_report_text(db, user, is_auto_cron=True)
                     except Exception as e:
-                        print(f"Failed to send accountability report to {target_chat_id}: {e}")
+                        print(f"Failed to build auto-report for {user.telegram_id}: {e}")
+                        continue
+                    if bot:
+                        try:
+                            run_async(bot.send_message(
+                                chat_id=target_chat_id,
+                                text=report_text,
+                                parse_mode="HTML"
+                            ))
+                            # Mark as done so we don't spam them
+                            user.last_manual_report_date = local_time.date()
+                            db.commit()
+                        except Exception as e:
+                            print(f"Failed to send accountability report to {target_chat_id}: {e}")
 
-                # End of Day Reset: Explicitly after the daily report generation!
+                # 2. End of Day Reset: Explicitly after cutoff (runs regardless of already_done!)
+                # Note: Because this runs exactly once in the 0-15 min window, we reset stats.
+                # If the job runs multiple times in the 15 mins, stats will just be reset to 0 again.
                 try:
                     projects = db.query(Project).filter(Project.user_id == user.id, Project.daily_target_value != None, Project.status == "active").all()
                     for p in projects:
