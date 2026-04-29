@@ -62,7 +62,7 @@ class TaskParam(BaseModel):
     title: str = Field(description="The short actionable title of the task")
     project_id: Optional[int] = Field(description="The ID of the matching project if the user specified one or context implies it. Null if standalone.", default=None)
     unmatched_project_name: Optional[str] = Field(description="If the user specified a project but it's not in the active projects list, put its inferred name here.", default=None)
-    reminder_time: Optional[datetime] = Field(description="If the user explicitly mentions an exact time to do the task or be reminded (e.g. 'at 14:30', 'in 2 hours'), calculate the ISO-8601 datetime using the user's local time provided in the prompt context.", default=None)
+    reminder_time: Optional[str] = Field(description="If the user explicitly mentions an exact time to do the task or be reminded (e.g. 'at 14:30', 'in 2 hours'), calculate the ISO-8601 datetime using the user's local time provided in the prompt context.", default=None)
 
 class AddTasksParams(BaseModel):
     tasks: List[TaskParam] = Field(description="List of tasks to create.")

@@ -42,6 +42,7 @@ def get_settings_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="🗣 AI Conversation", callback_data="settings_ai_conv")
         ],
         [
+            InlineKeyboardButton(text="🧠 Memory", callback_data="settings_memory"),
             InlineKeyboardButton(text="🔙 Back", callback_data="settings_close")
         ]
     ]

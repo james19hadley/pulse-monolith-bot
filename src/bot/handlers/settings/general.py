@@ -11,7 +11,7 @@ from aiogram.filters import Command, CommandObject
 from src.db.repo import SessionLocal
 from src.bot.handlers.utils import get_or_create_user
 from src.db.models import User
-from src.bot.keyboards import get_settings_keyboard, get_api_keys_manage_keyboard, get_back_settings_keyboard, get_reports_keyboard, get_timezone_keyboard
+from src.bot.keyboards import get_settings_keyboard, get_api_keys_manage_keyboard, get_back_settings_keyboard, get_reports_keyboard, get_timezone_keyboard, get_persona_keyboard
 
 router = Router()
 
@@ -130,6 +130,23 @@ async def cq_settings_stubs(callback: CallbackQuery, state: FSMContext):
             await callback.answer()
         elif callback.data == "settings_persona":
             await callback.message.edit_text("<b>Choose a Persona:</b>\n\nEach persona has a different style.", parse_mode="HTML", reply_markup=get_persona_keyboard())
+            await callback.answer()
+        elif callback.data == "settings_memory":
+            with SessionLocal() as db:
+                user = get_or_create_user(db, callback.from_user.id)
+                memory_dict = user.user_memory or {}
+                
+                if not memory_dict:
+                    msg = "🧠 <b>Memory Space</b>\n\nI don't have any specific personal facts or preferences stored yet.\n\n<i>To add something, just tell me: 'Remember that I prefer morning workouts'.</i>"
+                else:
+                    msg = "🧠 <b>Memory Space</b>\n\nHere are the personal facts and preferences I currently remember:\n\n"
+                    import json
+                    msg += f"<pre>{json.dumps(memory_dict, ensure_ascii=False, indent=2)}</pre>"
+                    msg += "\n\n<i>To add, change, or remove something, just write it in the chat (e.g. 'Forget about lunch time').</i>"
+                    
+            from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+            kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔙 Back", callback_data="settings_main")]])
+            await callback.message.edit_text(msg, parse_mode="HTML", reply_markup=kb)
             await callback.answer()
         elif callback.data == "settings_timezone":
             await callback.message.edit_text("<b>Select your Timezone:</b>\n\nChoose from below, or just type your city/offset in the chat (e.g. 'Moscow', 'UTC+3', '+03:00') right now.", parse_mode="HTML", reply_markup=get_timezone_keyboard())

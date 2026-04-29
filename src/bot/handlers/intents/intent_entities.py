@@ -150,14 +150,23 @@ async def _handle_add_tasks(message: Message, db, user, provider_name, api_key):
     
     scheduled_tasks = []
     
+    from dateutil import parser
     for t in extraction.tasks:
+        parsed_reminder_time = None
+        raw_rt = getattr(t, 'reminder_time', None)
+        if raw_rt:
+            try:
+                parsed_reminder_time = parser.parse(raw_rt)
+            except Exception as e:
+                print(f"Could not parse reminder_time '{raw_rt}': {e}")
+                
         # Create Task
         new_task = Task(
             user_id=user.id,
             title=t.title,
             project_id=t.project_id if t.project_id else None,
             status='pending',
-            reminder_time=getattr(t, 'reminder_time', None)
+            reminder_time=parsed_reminder_time
         )
         db.add(new_task)
         # Flush to get the ID without committing the whole transaction yet
