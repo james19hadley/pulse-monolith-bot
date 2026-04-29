@@ -1,6 +1,6 @@
 # Sprint 46: Task Durations & UX Optimization
 
-**Status:** `Draft`
+**Status:** `Completed`
 **Date Proposed:** 2026-04-29
 **Objective:** Add estimated duration support to tasks and improve the UX of the `📋 Tasks` view so it displays durations and formatted reminder times.
 
