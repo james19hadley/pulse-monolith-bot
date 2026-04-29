@@ -9,9 +9,10 @@ from src.db.repo import engine
 
 def apply_migration():
     """
-    Applies the DB migration for Sprint 44: User Memory
+    Applies the DB migration for Sprint 44 & 45.
+    We use autocommit so that if one column already exists, it doesn't abort the transaction for the rest.
     """
-    with engine.begin() as conn:
+    with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
         try:
             conn.execute(text("ALTER TABLE users ADD COLUMN user_memory JSON;"))
             print("✅ Successfully added 'user_memory' column to 'users' table.")
