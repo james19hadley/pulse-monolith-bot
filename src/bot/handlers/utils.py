@@ -189,9 +189,24 @@ def generate_daily_report_text(db, user, force_date: str = None, is_auto_cron: b
     for r in roots:
         add_node(r, 0)
     user_habits = db.query(Project).filter(Project.user_id == user.id, Project.daily_target_value != None).all()
-    habits_data = [{"title": h.title, "current": h.daily_progress or 0, "target": h.daily_target_value, "unit": h.unit or ""} for h in user_habits]
+    habits_data = [
+        {
+            "title": h.title,
+            "current": h.daily_progress or 0,
+            "target": h.daily_target_value,
+            "unit": h.unit or "",
+            "streak": h.current_streak or 0
+        }
+        for h in user_habits
+    ]
     
-    inbox_items = db.query(Inbox).filter(Inbox.user_id == user.id, Inbox.status == "pending").count()
+    # Only count inbox items that have been created within this exact report day boundary
+    inbox_items = db.query(Inbox).filter(
+        Inbox.user_id == user.id,
+        Inbox.status == "pending",
+        Inbox.created_at >= start_bound,
+        Inbox.created_at < end_bound
+    ).count()
     
     # Always use local_time.date() for manual stats, not start_bound which is yesterday at cutoff hour
     if force_date:

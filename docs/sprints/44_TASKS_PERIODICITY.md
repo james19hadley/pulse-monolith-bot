@@ -1,34 +1,42 @@
-# Sprint 44: Task Management & Weekly/Monthly Periodicity
+# Sprint 44: Tasks, Periodicity, & Memory Space
 
 **Status:** `Draft`
 **Date Proposed:** 2026-04-29
-**Objective:** Evolve the Bot into an Active Planner by introducing complex Target periodicities, explicit Task assignments with Estimated Time, and a Daily Review reflection.
+**Objective:** Move from simple time-tracking and project trees to complete Day-Level Task Management, Custom Targets (Weekly/Monthly), and persistent User Memory extraction.
 
 ## 🎯 Goals
-- Implement temporal constraints on Target Goals (Daily, Weekly, Monthly).
-- Expand current Inbox functionality into a structured "Inbox Review" flow during Evening Check-ins.
-- Enable Advanced Task properties: estimated time, specific deadlines (before/after lunch, via AI Memory).
+- Implement a dedicated "Memory Space" (KV store/JSON) for user preferences like "Lunch is at 13:00".
+- Support new `target_period_type` on projects ("weekly", "monthly", "custom") while preserving the AI's NLP intelligence ("Balance 9 hours total, 3 mins daily").
+- Integrate Inbox processing into the evening reflection, converting raw thoughts into actionable Tasks for tomorrow.
+- Implement explicit "Task" entities bound to specific time periods (`morning`, `afternoon`).
 
 ## 📋 Tasks
 
-### 1. Goal Periodicity Migration
-- [ ] Add `target_period_type` column (String, default `daily` or `None`) to `projects` table (using `target_period_type` ENUM: daily, weekly, monthly).
-- [ ] Update `scheduler/jobs.py` to reset `current_value` / `daily_progress` based on the *correct* periodicity, taking into account `user.timezone`.
-- [ ] Update UI to reflect "Weekly Target: X" instead of "Daily Targets:".
+### [The User Memory Context]
+- [ ] Add a `user_memory` JSON field to the `User` model.
+- [ ] Enable the bot to cleanly overwrite and append to `user_memory` via natural language if the intent matches `UPDATE_MEMORY` or `SYSTEM_CONFIG`.
 
-### 2. Task Architecture Expansion
-- [ ] Add `estimated_minutes` (Int) and `time_period` (String) to the `tasks` table.
+### [Prompt Centralization & Persona Architecture]
+- [ ] Move all scattered LLM system prompts (from `jobs.py`, `providers.py`, `router.py`) into one centralized repository file: `src/core/prompts.py`.
+- [ ] Build a capability injector: dynamically generate a list of the Bot's capabilities directly from the `IntentType` enum descriptions and feed it to the Chat Fallback prompt.
+- [ ] Ensure the prompt simply states "Here are your capabilities: [List]" and lets the Persona decide how to respond if the user asks for something impossible, avoiding rigid "Say you don't know" instructions.
+- [ ] Inject the `user_memory` JSON directly into the base Chat and Intent Router prompts.
 
-### 3. Evening Reflection / Morning Briefing
-- [ ] Create an Interactive Report Flow trigger (`/review`).
-- [ ] Extract today's Inbox items and ask: "Keep, Task, or Archive?".
-- [ ] Allow user to type tomorrow's plan in raw text, parse it with LLM into distinct Task entities with `estimated_minutes`.
-- [ ] Morning cronjob: send "Plan for the day" with a "Start Session" button on the first task.
+### [Custom Target Periodicity]
+- [ ] Add `target_period` (Enum: `daily`, `weekly`, `monthly`) to the `Project` model schema and database.
+- [ ] Adjust `CREATE_ENTITIES` AI prompt to extract these specific `target_period` variants.
+- [ ] Adjust the cron script (`src/scheduler/jobs.py`) so that progress and streaks reset only on the correct interval (e.g. Sunday night for Weekly targets).
+
+### [Task Engine & Inbox Converter]
+- [ ] Create a robust Inbox command `/inbox` for ad-hoc clearing or management.
+- [ ] In the evening `Daily Reflection`, ask the user if today's Inbox items should be deleted or converted to actionable `Tasks`.
+- [ ] Add `target_time_period` to `Task` entities for granular day planning ("до обеда", "после обеда").
 
 ## 🔒 Security & Architecture Notes
-- Modifying the `projects` table requires careful tracking as existing records expect `daily_target_value` to clear at midnight. Weekly targets must clear at midnight Sunday (in local user time). Monthly targets clear on the 1st.
+- Prompt Injection is a risk when appending arbitrary user JSON objects to the system prompt; however, the user provides their own API key, so the risk is contained to their own quota. Still, we must isolate it properly inside markdown JSON blocks.
+- The Periodicity change requires a DB migration step but must be strictly backward compatible with existing `daily_target_value`.
 
 ## 🏁 Completion Criteria
-- User can create a project with a 10h/week target that doesn't reset on Tuesday.
-- Inbox automatically empties nightly via an interactive review session.
-- User can free-type a "Tomorrow's agenda" and get an organized actionable plan back in the morning.
+- User can define "Read 50 pages a week" via NLP and the bot schedules it.
+- The Bot knows "Lunch is at 13:00" from User Memory.
+- Inbox items can be converted to Tasks with a selected time of day.

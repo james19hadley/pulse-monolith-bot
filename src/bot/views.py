@@ -191,12 +191,13 @@ def build_daily_report(stats: dict, config: dict, ai_comment: str = None) -> str
                 for h in habits:
                     import html
                     done = "✅" if h['current'] >= h['target'] else "⏳"
-                    parts.append(f"  └ {done} <i>{html.escape(str(h['title']))}</i>: <b>{h['current']}/{h['target']}</b> {h.get('unit', '')}".strip() )
+                    streak_text = f" 🔥 {h['streak']}" if h.get('streak', 0) > 0 and done == "✅" else ""
+                    parts.append(f"  └ {done} <i>{html.escape(str(h['title']))}</i>: <b>{h['current']}/{h['target']}</b> {h.get('unit', '')}{streak_text}".strip() )
                     
         elif block == "inbox":
             inbox = stats.get('inbox_count', 0)
             if inbox > 0:
-                parts.append(f"\n{e['inbox']} <b>Inbox Captured:</b> {inbox} items")
+                parts.append(f"\n{e['inbox']} <b>Inbox Captured Today:</b> {inbox} items")
                 
 
 
