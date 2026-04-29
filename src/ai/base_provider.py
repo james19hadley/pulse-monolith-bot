@@ -6,7 +6,7 @@ Forces concrete implementations (Google, OpenAI) to adhere to the same parsing i
 @Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 from abc import ABC, abstractmethod
-from typing import Tuple, Optional, Any
+from typing import Tuple, Optional, Any, List
 from src.core.constants import IntentType
 from src.ai.providers import (
     IntentResponse, LogWorkParams, AddInboxParams, SessionControlParams,
