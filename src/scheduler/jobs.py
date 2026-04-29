@@ -332,6 +332,48 @@ def evening_reflection_job():
                         run_async(bot.send_message(chat_id=user.telegram_id, text=msg_text, parse_mode="HTML"))
                 except Exception as e:
                     print(f"Failed to send reflection ping to {user.telegram_id}: {e}")
+
+@shared_task(name="job_task_reminders_watchdog")
+def task_reminders_watchdog_job():
+    """
+    Runs every 5 minutes to check for pending tasks that have a reminder_time <= now.
+    """
+    import zoneinfo
+    import html
+    from datetime import timezone
+    now_utc = datetime.now(timezone.utc)
+    with SessionLocal() as db:
+        users = db.query(User).all()
+        for user in users:
+            try:
+                user_tz = zoneinfo.ZoneInfo(user.timezone)
+            except Exception:
+                user_tz = zoneinfo.ZoneInfo("UTC")
+                
+            local_time = now_utc.astimezone(user_tz)
+            
+            from src.db.models import Task
+            # Find tasks where reminder_time is not null, hasn't been sent, and time has passed
+            pending_reminders = db.query(Task).filter(
+                Task.user_id == user.id,
+                Task.status == 'pending',
+                Task.is_reminder_sent == False,
+                Task.reminder_time != None,
+                Task.reminder_time <= local_time
+            ).all()
+            
+            for task in pending_reminders:
+                try:
+                    target_chat_id = user.target_channel_id or user.telegram_id
+                    msg = f"⏰ <b>Напоминание:</b> {html.escape(task.title)}"
+                    if bot:
+                        run_async(bot.send_message(chat_id=target_chat_id, text=msg, parse_mode="HTML"))
+                    task.is_reminder_sent = True
+                except Exception as e:
+                    print(f"Failed to send task reminder to {user.telegram_id}: {e}")
+                    
+        db.commit()
+
 @shared_task(name="job_morning_planner")
 def morning_planner_job():
     """

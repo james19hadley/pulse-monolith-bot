@@ -30,14 +30,24 @@ def apply_migration():
             else:
                 print(f"❌ Error adding column target_period: {e}")
                 
+        # Sprint 45 additions
         try:
-            conn.execute(text("ALTER TABLE tasks ADD COLUMN target_time_period VARCHAR;"))
-            print("✅ Successfully added 'target_time_period' column to 'tasks' table.")
+            conn.execute(text("ALTER TABLE tasks ADD COLUMN reminder_time TIMESTAMP WITH TIME ZONE;"))
+            print("✅ Successfully added 'reminder_time' column to 'tasks' table.")
         except Exception as e:
             if "duplicate column" in str(e).lower() or "already exists" in str(e).lower():
-                print("⚠️ Column 'target_time_period' already exists.")
+                print("⚠️ Column 'reminder_time' already exists.")
             else:
-                print(f"❌ Error adding column target_time_period: {e}")
+                print(f"❌ Error adding column reminder_time: {e}")
+                
+        try:
+            conn.execute(text("ALTER TABLE tasks ADD COLUMN is_reminder_sent BOOLEAN DEFAULT FALSE;"))
+            print("✅ Successfully added 'is_reminder_sent' column to 'tasks' table.")
+        except Exception as e:
+            if "duplicate column" in str(e).lower() or "already exists" in str(e).lower():
+                print("⚠️ Column 'is_reminder_sent' already exists.")
+            else:
+                print(f"❌ Error adding column is_reminder_sent: {e}")
 
 if __name__ == "__main__":
     apply_migration()

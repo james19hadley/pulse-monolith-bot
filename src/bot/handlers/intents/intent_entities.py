@@ -124,6 +124,15 @@ async def _handle_add_tasks(message: Message, db, user, provider_name, api_key):
     projects = db.query(Project).filter(Project.user_id == user.id, Project.status == 'active').all()
     projects_text = "Active Projects:\n" + "\n".join([f"- {p.title} (ID: {p.id})" for p in projects]) if projects else "No active projects."
     
+    import zoneinfo
+    from datetime import datetime, timezone
+    try:
+        user_tz = zoneinfo.ZoneInfo(user.timezone)
+    except Exception:
+        user_tz = zoneinfo.ZoneInfo("UTC")
+    local_now = datetime.now(timezone.utc).astimezone(user_tz)
+    projects_text += f"\n\nCURRENT LOCAL TIME FOR USER: {local_now.isoformat()}"
+    
     # Extract tasks
     extraction, tokens = extract_add_tasks(message.text, provider_name, api_key, projects_text)
     
@@ -146,7 +155,7 @@ async def _handle_add_tasks(message: Message, db, user, provider_name, api_key):
             title=t.title,
             project_id=t.project_id if t.project_id else None,
             status='pending',
-            target_time_period=getattr(t, 'target_time_period', None)
+            reminder_time=getattr(t, 'reminder_time', None)
         )
         db.add(new_task)
         count += 1
@@ -157,7 +166,7 @@ async def _handle_add_tasks(message: Message, db, user, provider_name, api_key):
             if db_proj:
                 proj_name = db_proj.title
         
-        time_str = f" ⏰ <i>{t.target_time_period}</i>" if getattr(t, 'target_time_period', None) else ""
+        time_str = f" ⏰ <i>{t.reminder_time}</i>" if getattr(t, 'reminder_time', None) else ""
         msg_lines.append(f"• {t.title}{time_str} 📂 <i>{html.escape(proj_name)}</i>")
         
     db.commit()

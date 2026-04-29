@@ -130,7 +130,8 @@ class Task(Base):
     project_id: Mapped[Optional[int]] = mapped_column(ForeignKey("projects.id"), index=True, nullable=True)
     title: Mapped[str] = mapped_column(String)
     status: Mapped[str] = mapped_column(String, default="pending") # 'pending', 'completed', 'cancelled'
-    target_time_period: Mapped[Optional[str]] = mapped_column(String, nullable=True) # e.g. 'morning', 'afternoon', 'evening'
+    reminder_time: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    is_reminder_sent: Mapped[bool] = mapped_column(Boolean, default=False)
     is_focus_today: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
