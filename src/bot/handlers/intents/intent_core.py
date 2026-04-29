@@ -8,8 +8,38 @@ from src.core.config import USER_SETTINGS_REGISTRY
 from src.core.personas import get_persona_prompt
 import json
 from aiogram.types import Message
-from src.ai.router import generate_chat, extract_system_config, extract_report_config
+from src.ai.router import generate_chat, extract_system_config, extract_report_config, extract_update_memory
 from src.bot.handlers.utils import log_tokens
+
+async def _handle_update_memory(message: Message, db, user, provider_name, api_key):
+    extraction, tokens = extract_update_memory(message.text, provider_name, api_key)
+    if tokens:
+        log_tokens(db, user.telegram_id, tokens)
+        
+    if not extraction:
+        await message.answer("I couldn't figure out exactly what to remember.")
+        return
+        
+    mem_key = extraction.memory_key
+    mem_val = extraction.memory_value
+    
+    current_memory = user.user_memory or {}
+    
+    # If they want to forget something (value is empty or negative), delete the key
+    if mem_val.lower() in ["none", "null", "forget", "delete", ""]:
+        if mem_key in current_memory:
+            del current_memory[mem_key]
+            msg = f"🧠 Забыл факт: <b>{mem_key}</b>"
+        else:
+            msg = f"🧠 Я и так не помнил: <b>{mem_key}</b>"
+    else:
+        current_memory[mem_key] = mem_val
+        msg = f"🧠 Запомнил:\n<b>{mem_key}</b> = <i>{mem_val}</i>"
+        
+    user.user_memory = current_memory
+    db.commit()
+    await message.answer(msg, parse_mode="HTML")
+
 async def _handle_chat(message: Message, db, user, provider_name, api_key):
     import html
     

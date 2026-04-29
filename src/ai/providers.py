@@ -51,6 +51,7 @@ class SystemConfigParams(BaseModel):
 class CreateProjectParams(BaseModel):
     title: str = Field(description="The name of the new project. You can creatively prefix it with a suitable emoji (like '📚 Reading' or '🏋️ Sport') so it looks nice. If it's a generic technical topic, use an abstract emoji. Ensure the emoji is strictly the very first character if used.")
     target_value: int = Field(description="The target estimated effort value. If they specify hours, multiply by 60. Default is 0.", default=0)
+    target_period: str = Field(description="The period for the target value. Strictly 'daily', 'weekly', or 'monthly'. Defaults to 'daily'.", default="daily")
     unit: Optional[str] = Field(description="The unit of measurement (e.g. pages, reps, hours, minutes). Default is minutes.", default="minutes")
     parent_project_id: Optional[int] = Field(description="The numeric ID of the parent project if this is created as a sub-project or child. Requires context of existing projects with IDs.", default=None)
 
@@ -61,6 +62,7 @@ class TaskParam(BaseModel):
     title: str = Field(description="The short actionable title of the task")
     project_id: Optional[int] = Field(description="The ID of the matching project if the user specified one or context implies it. Null if standalone.", default=None)
     unmatched_project_name: Optional[str] = Field(description="If the user specified a project but it's not in the active projects list, put its inferred name here.", default=None)
+    target_time_period: Optional[str] = Field(description="If the user explicitly mentions when to do the task (e.g. 'morning', 'afternoon', 'evening', 'night'), extract it here.", default=None)
 
 class AddTasksParams(BaseModel):
     tasks: List[TaskParam] = Field(description="List of tasks to create.")
@@ -79,6 +81,10 @@ class EditEntitiesParam(BaseModel):
 class EditEntitiesParams(BaseModel):
     edits: List[EditEntitiesParam] = Field(description="List of entity edits requested by user")
 
+class UpdateMemoryParams(BaseModel):
+    memory_key: str = Field(description="A short, concise snake_case key identifying the context (e.g. 'lunch_time', 'address_preference', 'manager_name')")
+    memory_value: str = Field(description="The actual value or fact to remember")
+
 from src.ai.base_provider import BaseLLMProvider
 
 class GoogleProvider(BaseLLMProvider):
@@ -96,12 +102,15 @@ class GoogleProvider(BaseLLMProvider):
             'model_name': self.model_id
         }
         
-    def classify_intent(self, text: str) -> Tuple[IntentType, dict]:
+    def classify_intent(self, text: str, user_memory: dict = None) -> Tuple[IntentType, dict]:
+        from src.core.prompts import get_intent_router_system_prompt
+        system_prompt = get_intent_router_system_prompt(user_memory)
+        
         response = self.client.models.generate_content(
             model=self.model_id,
             contents=text,
             config=types.GenerateContentConfig(
-                system_instruction=INTENT_ROUTER_SYSTEM_PROMPT,
+                system_instruction=system_prompt,
                 response_mime_type='application/json',
                 response_schema=IntentResponse,
                 temperature=0.0
@@ -269,3 +278,17 @@ CURRENT ENTITIES:
             ),
         )
         return AddTasksParams.model_validate_json(response.text), self._get_usage(response)
+
+    def extract_update_memory(self, text: str) -> Tuple[Optional[UpdateMemoryParams], dict]:
+        system_prompt = "Extract the fact or preference the user wants the bot to remember."
+        response = self.client.models.generate_content(
+            model=self.model_id,
+            contents=text,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                response_mime_type="application/json",
+                response_schema=UpdateMemoryParams,
+                temperature=0.0
+            ),
+        )
+        return UpdateMemoryParams.model_validate_json(response.text), self._get_usage(response)

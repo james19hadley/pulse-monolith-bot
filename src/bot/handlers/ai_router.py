@@ -17,7 +17,7 @@ from src.ai.router import IntentType, get_intent
 from src.ai.providers import GoogleProvider
 
 # --- NEW DISPATCHER IMPORTS ---
-from src.bot.handlers.intents.intent_core import _handle_chat, _handle_config_update, _handle_config_report, _handle_undo
+from src.bot.handlers.intents.intent_core import _handle_chat, _handle_config_update, _handle_config_report, _handle_undo, _handle_update_memory
 from src.bot.handlers.intents.intent_entities import _handle_create_entities, _handle_add_inbox, _handle_add_tasks, _handle_edit_entities
 from src.bot.handlers.intents.intent_log_work import _handle_log_work
 from src.bot.handlers.intents.intent_session import _handle_session_control
@@ -37,6 +37,7 @@ INTENT_HANDLERS = {
     IntentType.CONFIG_REPORT: _handle_config_report,
     IntentType.EDIT_ENTITIES: _handle_edit_entities,
     IntentType.UNDO: _handle_undo,
+    IntentType.UPDATE_MEMORY: _handle_update_memory,
 }
 
 @router.message()
@@ -98,7 +99,7 @@ async def ai_message_router(message: Message):
             return
 
         try:
-            intent, tokens, err = get_intent(message.text, provider_name, api_key)
+            intent, tokens, err = get_intent(message.text, provider_name, api_key, user.user_memory)
             if tokens:
                 log_tokens(db, user.telegram_id, tokens)
                 

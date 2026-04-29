@@ -145,6 +145,33 @@ async def cmd_stats(message: Message):
             import html
             await message.answer(f"Failed to generate stats: {html.escape(str(e))}", parse_mode="HTML", reply_markup=get_main_menu())
 
+@router.message(Command("inbox"))
+async def cmd_inbox(message: Message, command):
+    from src.db.models import Inbox
+    import html
+    
+    with SessionLocal() as db:
+        user = get_or_create_user(db, message.from_user.id)
+        
+        args = command.args
+        if args and args.lower() in ["clear", "empty"]:
+            db.query(Inbox).filter(Inbox.user_id == user.id, Inbox.status == "pending").update({"status": "cleared"})
+            db.commit()
+            await message.answer("🧹 Inbox cleared.", parse_mode="HTML")
+            return
+            
+        items = db.query(Inbox).filter(Inbox.user_id == user.id, Inbox.status == "pending").all()
+        if not items:
+            await message.answer("📭 Your inbox is empty.")
+            return
+            
+        text = "📥 <b>Your Inbox:</b>\n\n"
+        for i, item in enumerate(items, 1):
+            text += f"{i}. <i>{html.escape(item.raw_text)}</i>\n"
+            
+        text += "\n<i>Use /inbox clear to empty it, or tell me to convert these to tasks.</i>"
+        await message.answer(text, parse_mode="HTML")
+
 @router.message(Command("undo"))
 @router.message(lambda msg: msg.text == "↩️ Undo")
 async def cmd_undo(message: Message, state: FSMContext):

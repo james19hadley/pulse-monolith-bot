@@ -5,14 +5,14 @@ The central NLP router that passes user messages to the Intent classifier to fig
 @Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 from typing import Optional, Tuple, Union
-from src.ai.providers import GoogleProvider, LogWorkMultiParams, AddInboxParams, SessionControlParams, ReportConfigParams, SystemConfigParams, CreateEntitiesParams, AddTasksParams, EditEntitiesParams
+from src.ai.providers import GoogleProvider, LogWorkMultiParams, AddInboxParams, SessionControlParams, ReportConfigParams, SystemConfigParams, CreateEntitiesParams, AddTasksParams, EditEntitiesParams, UpdateMemoryParams
 from src.core.constants import IntentType
 
-def get_intent(user_text: str, provider_name: str, api_key: str) -> Tuple[IntentType, dict, Optional[str]]:
+def get_intent(user_text: str, provider_name: str, api_key: str, user_memory: dict = None) -> Tuple[IntentType, dict, Optional[str]]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
-            intent, tokens = provider.classify_intent(user_text)
+            intent, tokens = provider.classify_intent(user_text, user_memory)
             return intent, tokens, None
         except Exception as e:
             print(f'LLM Error: {e}')
@@ -105,6 +105,16 @@ def extract_edit_entities(user_text: str, provider_name: str, api_key: str, enti
         provider = GoogleProvider(api_key=api_key)
         try:
             return provider.extract_edit_entities(user_text, entities_text)
+        except Exception as e:
+            print(f'LLM Extraction Error: {e}')
+            return None, {}
+    return None, {}
+
+def extract_update_memory(user_text: str, provider_name: str, api_key: str) -> Tuple[Optional[UpdateMemoryParams], dict]:
+    if provider_name == 'google':
+        provider = GoogleProvider(api_key=api_key)
+        try:
+            return provider.extract_update_memory(user_text)
         except Exception as e:
             print(f'LLM Extraction Error: {e}')
             return None, {}

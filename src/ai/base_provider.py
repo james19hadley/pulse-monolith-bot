@@ -11,7 +11,7 @@ from src.core.constants import IntentType
 from src.ai.providers import (
     IntentResponse, LogWorkParams, AddInboxParams, SessionControlParams,
     SystemConfigParams, ReportConfigParams, CreateEntitiesParams, 
-    EditEntitiesParams, AddTasksParams
+    EditEntitiesParams, AddTasksParams, UpdateMemoryParams
 )
 
 class BaseLLMProvider(ABC):
@@ -57,4 +57,8 @@ class BaseLLMProvider(ABC):
 
     @abstractmethod
     def extract_add_tasks_parameters(self, text: str, active_projects_text: str) -> Tuple[Optional[AddTasksParams], dict]:
+        pass
+
+    @abstractmethod
+    def extract_update_memory(self, text: str) -> Tuple[Optional[UpdateMemoryParams], dict]:
         pass

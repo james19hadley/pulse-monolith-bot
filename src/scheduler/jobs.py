@@ -241,10 +241,29 @@ def daily_accountability_job():
                 # If the job runs multiple times in the 15 mins, stats will just be reset to 0 again.
                 try:
                     projects = db.query(Project).filter(Project.user_id == user.id, Project.daily_target_value != None, Project.status == "active").all()
+                    
+                    is_sunday = local_time.weekday() == 6 # 0=Mon, 6=Sun
+                    
+                    # Check if tomorrow is the 1st of the month
+                    next_day = local_time.date() + timedelta(days=1)
+                    is_end_of_month = next_day.day == 1
+                    
                     for p in projects:
-                        if (p.daily_progress or 0) < p.daily_target_value:
-                            p.current_streak = 0
-                        p.daily_progress = 0
+                        target_period = getattr(p, 'target_period', 'daily')
+                        should_reset = False
+                        
+                        if target_period == 'daily':
+                            should_reset = True
+                        elif target_period == 'weekly' and is_sunday:
+                            should_reset = True
+                        elif target_period == 'monthly' and is_end_of_month:
+                            should_reset = True
+                            
+                        if should_reset:
+                            if (p.daily_progress or 0) < p.daily_target_value:
+                                p.current_streak = 0
+                            p.daily_progress = 0
+                            
                     db.commit()
                 except Exception as e:
                     print(f"Failed to reset daily stats for user {user.telegram_id}: {e}")
@@ -293,6 +312,12 @@ def evening_reflection_job():
                         topics = wins + blockers + tomorrow + custom
                         if not topics:
                             topics = "Ask them how the day went overall."
+                            
+                        # Sprint 44: Task Engine & Inbox Converter
+                        from src.db.models import Inbox
+                        pending_inbox = db.query(Inbox).filter(Inbox.user_id == user.id, Inbox.status == "pending").count()
+                        if pending_inbox > 0:
+                            topics += f"\nCRITICAL: Mention that they captured {pending_inbox} items in their inbox. Ask them if they want to delete them or convert them into Actionable Tasks for tomorrow (and ask when they want to do them: morning, afternoon, etc)."
                         
                         prompt = f"Initiate an evening reflection session with the user. Inform them that the day is wrapping up (approaching their {cutoff.strftime('%H:%M')} cutoff). {topics} DO NOT USE MARKDOWN. Use HTML tags <b> and <i> only. Must strictly speak in {user_lang}. Do not write a long paragraph unless talkativeness is set to coach."
                         

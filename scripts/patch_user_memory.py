@@ -19,7 +19,25 @@ def apply_migration():
             if "duplicate column" in str(e).lower() or "already exists" in str(e).lower():
                 print("⚠️ Column 'user_memory' already exists.")
             else:
-                print(f"❌ Error adding column: {e}")
+                print(f"❌ Error adding column user_memory: {e}")
+                
+        try:
+            conn.execute(text("ALTER TABLE projects ADD COLUMN target_period VARCHAR DEFAULT 'daily';"))
+            print("✅ Successfully added 'target_period' column to 'projects' table.")
+        except Exception as e:
+            if "duplicate column" in str(e).lower() or "already exists" in str(e).lower():
+                print("⚠️ Column 'target_period' already exists.")
+            else:
+                print(f"❌ Error adding column target_period: {e}")
+                
+        try:
+            conn.execute(text("ALTER TABLE tasks ADD COLUMN target_time_period VARCHAR;"))
+            print("✅ Successfully added 'target_time_period' column to 'tasks' table.")
+        except Exception as e:
+            if "duplicate column" in str(e).lower() or "already exists" in str(e).lower():
+                print("⚠️ Column 'target_time_period' already exists.")
+            else:
+                print(f"❌ Error adding column target_time_period: {e}")
 
 if __name__ == "__main__":
     apply_migration()
