@@ -11,7 +11,7 @@ from aiogram.filters import Command, CommandObject
 from aiogram.types import Message
 
 from src.db.repo import SessionLocal
-from src.db.models import User, Session, TimeLog
+from src.db.models import User, Session, TimeLog, Project
 from src.bot.handlers.utils import get_or_create_user
 
 router = Router()
@@ -60,12 +60,7 @@ async def cmd_end_session(message: Message):
             if session.project_id:
                 project = db.query(Project).filter(Project.id == session.project_id).first()
                 if project:
-                    if project.unit == "minutes" or project.unit is None:
-                        log_project_id = project.id
-                    elif project.parent_id:
-                        parent = db.query(Project).filter(Project.id == project.parent_id).first()
-                        if parent and (parent.unit == "minutes" or parent.unit is None):
-                            log_project_id = parent.id
+                    log_project_id = project.id
             
             if not log_project_id:
                 from src.bot.handlers.utils import get_or_create_project_zero
@@ -81,9 +76,9 @@ async def cmd_end_session(message: Message):
             )
             db.add(log)
             
-            # Update project progress
+            # Update project progress ONLY if it's a time-based project
             project = db.query(Project).filter(Project.id == log_project_id).first()
-            if project:
+            if project and (project.unit == "minutes" or project.unit is None):
                 project.current_value = (project.current_value or 0) + actual_duration_minutes
                 if project.daily_target_value is not None:
                     project.daily_progress = (project.daily_progress or 0) + actual_duration_minutes
@@ -295,12 +290,7 @@ async def handle_nudge_working_callback(callback_query: CallbackQuery):
             if session.project_id:
                 project = db.query(Project).filter(Project.id == session.project_id).first()
                 if project:
-                    if project.unit == "minutes" or project.unit is None:
-                        log_project_id = project.id
-                    elif project.parent_id:
-                        parent = db.query(Project).filter(Project.id == project.parent_id).first()
-                        if parent and (parent.unit == "minutes" or parent.unit is None):
-                            log_project_id = parent.id
+                    log_project_id = project.id
             
             if not log_project_id:
                 from src.bot.handlers.utils import get_or_create_project_zero
@@ -316,9 +306,9 @@ async def handle_nudge_working_callback(callback_query: CallbackQuery):
             )
             db.add(log)
             
-            # Update project progress
+            # Update project progress ONLY if it's a time-based project
             project = db.query(Project).filter(Project.id == log_project_id).first()
-            if project:
+            if project and (project.unit == "minutes" or project.unit is None):
                 project.current_value = (project.current_value or 0) + actual_duration_minutes
                 if project.daily_target_value is not None:
                     project.daily_progress = (project.daily_progress or 0) + actual_duration_minutes
