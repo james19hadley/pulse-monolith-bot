@@ -60,7 +60,8 @@ class CreateEntitiesParams(BaseModel):
     projects: List[CreateProjectParams] = Field(description="List of new projects to create.")
 
 class TaskParam(BaseModel):
-    title: str = Field(description="The short actionable title of the task")
+    title: str = Field(description="The short actionable title of the task. Strip any duration numbers from this title.")
+    estimated_minutes: Optional[int] = Field(description="If the user specifies an estimated duration for the task (e.g. '1.5 hours', '30 mins'), extract it here in minutes. Do not leave the duration in the title.", default=None)
     project_id: Optional[int] = Field(description="The ID of the matching project if the user specified one or context implies it. Null if standalone.", default=None)
     unmatched_project_name: Optional[str] = Field(description="If the user specified a project but it's not in the active projects list, put its inferred name here.", default=None)
     reminder_time: Optional[str] = Field(description="If the user explicitly mentions an exact time to do the task or be reminded (e.g. 'at 14:30', 'in 2 hours'), calculate the ISO-8601 datetime using the user's local time provided in the prompt context.", default=None)

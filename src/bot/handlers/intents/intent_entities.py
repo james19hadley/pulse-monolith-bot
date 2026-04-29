@@ -180,6 +180,7 @@ async def _handle_add_tasks(message: Message, db, user, provider_name, api_key):
             title=t.title,
             project_id=t.project_id if t.project_id else None,
             status='pending',
+            estimated_minutes=getattr(t, 'estimated_minutes', None),
             reminder_time=parsed_reminder_time
         )
         db.add(new_task)
@@ -198,7 +199,8 @@ async def _handle_add_tasks(message: Message, db, user, provider_name, api_key):
                 proj_name = db_proj.title
         
         time_str = f" ⏰ <i>{t.reminder_time}</i>" if getattr(t, 'reminder_time', None) else ""
-        msg_lines.append(f"• {t.title}{time_str} 📂 <i>{html.escape(proj_name)}</i>")
+        dur_str = f" ⏳ {t.estimated_minutes}m" if getattr(t, 'estimated_minutes', None) else ""
+        msg_lines.append(f"• {t.title}{dur_str}{time_str} 📂 <i>{html.escape(proj_name)}</i>")
         
     db.commit()
     

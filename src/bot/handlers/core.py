@@ -101,7 +101,9 @@ async def ui_tasks(message: Message):
         lines = ["<b>📋 Your Pending Tasks:</b>"]
         for idx, t in enumerate(tasks, 1):
             proj_info = f" [<i>{projs.get(t.project_id)}</i>]" if t.project_id else ""
-            lines.append(f"{idx}. {t.title}{proj_info}")
+            dur_info = f" ⏳ {t.estimated_minutes}m" if getattr(t, 'estimated_minutes', None) else ""
+            rem_info = f" ⏰ {t.reminder_time.strftime('%H:%M')}" if getattr(t, 'reminder_time', None) else ""
+            lines.append(f"{idx}. {t.title}{dur_info}{rem_info}{proj_info}")
             
         await message.answer("\n".join(lines), parse_mode="HTML", reply_markup=get_main_menu())
 
