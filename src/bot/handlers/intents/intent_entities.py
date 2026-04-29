@@ -229,7 +229,7 @@ async def _handle_edit_entities(message: Message, db, user, provider_name, api_k
                 responses.append(f"🗑 Project deleted: <b>{proj.title}</b>")
                 continue
             
-            prev_state = {"title": proj.title, "target_value": proj.target_value, "unit": proj.unit}
+            prev_state = {"title": proj.title, "target_value": proj.target_value, "unit": proj.unit, "parent_id": proj.parent_id}
             
             if edit.new_name:
                 proj.title = edit.new_name
@@ -251,7 +251,7 @@ async def _handle_edit_entities(message: Message, db, user, provider_name, api_k
             alog = ActionLog(
                 user_id=user.id,
                 tool_name="edit_project",
-                previous_state_json=prev_state,
+                previous_state_json={"id": proj.id, **prev_state},
                 new_state_json={"id": proj.id, "title": proj.title, "target_value": proj.target_value, "unit": proj.unit, "parent_id": proj.parent_id}
             )
             db.add(alog)

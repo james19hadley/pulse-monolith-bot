@@ -238,5 +238,13 @@ def get_projects_local_mapping(db, user_id: int):
     projects = db.query(Project).filter(Project.user_id == user_id, Project.status == "active").order_by(Project.id).all()
     mapping = {i+1: p.id for i, p in enumerate(projects)}
     reverse = {p.id: i+1 for i, p in enumerate(projects)}
-    docs = "User's active projects:\n" + "\n".join([f"ID: {reverse[p.id]}, Title: {p.title}" for p in projects]) if projects else "User has no active projects yet."
+    
+    projects_list = []
+    for p in projects:
+        info = f"ID: {reverse[p.id]}, Title: {p.title}"
+        if p.daily_target_value:
+            info += f", Target: {p.daily_target_value} {p.unit or 'minutes'}"
+        projects_list.append(info)
+        
+    docs = "User's active projects:\n" + "\n".join(projects_list) if projects else "User has no active projects yet."
     return projects, mapping, reverse, docs

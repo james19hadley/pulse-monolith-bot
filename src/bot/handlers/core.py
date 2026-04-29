@@ -169,11 +169,11 @@ async def cmd_undo(message: Message, state: FSMContext):
                     prev_status = action.previous_state_json.get("status")
                     if prev_status == "archived":
                         p.status = "archived"
-                        await message.answer(f"↩️ Project unarchive undone: <b>{p.title}</b> is back in archive.", parse_mode="HTML")
+                        msg_text = f"⏪ Отменено: Проект <b>{p.title}</b> возвращен в архив."
                     else:
                         title = p.title
                         db.delete(p)
-                        await message.answer(f"↩️ Project creation undone: <b>{title}</b>", parse_mode="HTML")
+                        msg_text = f"⏪ Отменено: Создание проекта <b>{title}</b>."
                         
             elif tool == "delete_project":
                 pid = action.previous_state_json.get("id")
@@ -184,7 +184,7 @@ async def cmd_undo(message: Message, state: FSMContext):
                     p.target_value = action.previous_state_json.get("target_value", p.target_value)
                     p.unit = action.previous_state_json.get("unit", p.unit)
                     p.parent_id = action.previous_state_json.get("parent_id", p.parent_id)
-                    await message.answer(f"↩️ Project deletion undone: <b>{p.title}</b> is restored.", parse_mode="HTML")
+                    msg_text = f"⏪ Отменено: Удаление проекта <b>{p.title}</b> отменено (проект восстановлен)."
                     
             elif tool == "edit_project":
                 pid = action.previous_state_json.get("id")
@@ -194,7 +194,7 @@ async def cmd_undo(message: Message, state: FSMContext):
                     p.target_value = action.previous_state_json.get("target_value", p.target_value)
                     p.unit = action.previous_state_json.get("unit", p.unit)
                     p.parent_id = action.previous_state_json.get("parent_id", p.parent_id)
-                    await message.answer(f"↩️ Project edit undone: <b>{p.title}</b>", parse_mode="HTML")
+                    msg_text = f"⏪ Отменено: Редактирование проекта <b>{p.title}</b>."
                     
             elif tool == "log_work":
                 lid = action.new_state_json.get("log_id")
@@ -220,13 +220,21 @@ async def cmd_undo(message: Message, state: FSMContext):
                                 p.total_completions = max(0, (p.total_completions or 0) - 1)
                                 p.current_streak = max(0, (p.current_streak or 0) - 1)
                                 
-                    await message.answer(f"↩️ Time log successfully undone.", parse_mode="HTML")
+                    msg_text = f"⏪ Отменено: Логирование времени отменено."
             else:
-                await message.answer(f"⚠️ Undo for action '{tool}' is not currently supported.")
+                msg_text = f"⚠️ Undo for action '{tool}' is not currently supported."
             
             # Clean up the log so we don't undo it twice
             db.delete(action)
             db.commit()
+            
+            # Send message with ✅ and ❌ buttons 
+            from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+            markup = InlineKeyboardMarkup(inline_keyboard=[[
+                 InlineKeyboardButton(text="✅", callback_data="ui_undo_ok"),
+                 InlineKeyboardButton(text="❌", callback_data="ui_undo_bad")
+            ]])
+            await message.answer(msg_text, reply_markup=markup, parse_mode="HTML")
             
         except Exception as e:
             db.rollback()
@@ -238,7 +246,20 @@ async def cmd_undo(message: Message, state: FSMContext):
     # Do not print 'Action canceled.' if we successfully undid or errored. We handled it.
     # We will just return to main menu quietly or send the menu again if needed.
     from src.bot.keyboards import get_main_menu
-    await message.answer("Menu:", reply_markup=get_main_menu())
-
+    if state: await state.clear()
+    
 from aiogram.types import CallbackQuery
+
+@router.callback_query(F.data == "ui_undo_ok")
+async def cq_undo_ok(callback_query: CallbackQuery):
+    # Add a green checkmark to the existing message and remove buttons
+    text = callback_query.message.html_text
+    new_text = "✅ " + text
+    await callback_query.message.edit_text(new_text, reply_markup=None, parse_mode="HTML")
+
+@router.callback_query(F.data == "ui_undo_bad")
+async def cq_undo_bad(callback_query: CallbackQuery):
+    text = callback_query.message.html_text
+    new_text = text + "\n\n<i>⚠️ Автоматический возврат (Redo) пока в разработке. Пожалуйста, повторите оригинальное действие вручную.</i>"
+    await callback_query.message.edit_text(new_text, reply_markup=None, parse_mode="HTML")
 
