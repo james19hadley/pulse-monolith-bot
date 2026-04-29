@@ -42,6 +42,7 @@ class User(Base):
     talkativeness_level: Mapped[str] = mapped_column(String, default="standard") # minimal, standard, coach
     reflection_config: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True) # JSON with keys like focus_wins, focus_blockers, etc.
     last_evening_plan: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    user_memory: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True) # JSON store for user preferences and context
     
     # Links to the currently active session (if any)
     active_session_id: Mapped[Optional[int]] = mapped_column(ForeignKey("sessions.id", use_alter=True), nullable=True)
