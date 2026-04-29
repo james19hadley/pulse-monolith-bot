@@ -1,12 +1,12 @@
-# Sprint 45: Dynamic Reminders & Task Watchdog
+# Sprint 45: Dynamic Reminders & Celery ETA
 
 **Status:** `Completed`
 **Date Proposed:** 2026-04-29
-**Objective:** Replace vague textual time periods for tasks with exact temporal reminders, and implement a Celery Watchdog to proactively ping the user at the specified time.
+**Objective:** Replace vague textual time periods for tasks with exact temporal reminders, and implement Redis/Celery ETA scheduling to proactively ping the user at the exact specified time without Database Polling.
 
 ## 🎯 Goals
 - Transition `Task` entities from generic strings ("morning") to precise exact times (e.g., `14:30`).
-- Build a generic Celery Watchdog that runs frequently (every 5-10 minutes) to check for pending reminders and dispatch them.
+- Leverage Redis Message Broker via `apply_async(eta=...)` for exact-second delivery instead of running a minute-by-minute database Watchdog.
 - Improve AI extraction so it naturally parses "Remind me in 2 hours to call Bob" into the exact datetime.
 
 ## 📋 Tasks
@@ -20,17 +20,18 @@
 - [x] Update `AddTasksParams` in `src/ai/providers.py` to extract `reminder_time` as a specific ISO-8601 datetime or relative time offset.
 - [x] Ensure the prompt knows the user's current local time to correctly calculate relative times ("in 2 hours").
 
-### [Celery Scheduler]
-- [x] Create `job_task_reminders` in `src/scheduler/jobs.py` that runs every 1 minute (using Celery Beat).
-- [x] Logic: Query all `Task` records where `status == 'pending'`, `reminder_time <= NOW()`, and `is_reminder_sent == False`.
+### [Celery Scheduler (Event-Driven)]
+- [x] Create `job_send_task_reminder` in `src/scheduler/jobs.py` that accepts a `task_id` and executes instantly.
+- [x] Modify the AI intent handler to immediately dispatch the task to Redis using `job.apply_async(args=[id], eta=reminder_time)`.
 - [x] Send a Telegram message to the user: "⏰ <b>Напоминание:</b> [Task Title]", then set `is_reminder_sent = True`.
 
 ### [Reporting Integration]
 - [x] Update `cmd_tasks` or daily report generation to display the scheduled time next to the task.
 
 ## 🔒 Security & Architecture Notes
-- Celery ETA tasks (`apply_async(eta=...)`) are vulnerable to being lost if Redis restarts/flushes. Therefore, we will use a **Database-Polling Watchdog** (a periodic task that checks the DB state). This is much safer for a persistent monolith.
+- We shifted from a **Database-Polling Watchdog** to **Redis ETA Scheduling**. This drastically reduces PostgreSQL queries (avoiding `SELECT * FROM tasks` every minute).
+- Redis must be configured with persistence (AOF/RDB) to ensure ETA tasks survive a container restart.
 - We must ensure we compare timezone-aware datetimes correctly (`user_tz` vs `UTC`).
 
 ## 🏁 Completion Criteria
-- User says "Напомни в 14:15 позвонить Джону", a task is created, and exactly at 14:15 local time the bot sends a push notification.
+- User says "Напомни в 14:15 позвонить Джону", a task is created, pushed directly into Redis ETA queue, and exactly at 14:15 local time the bot sends a push notification.

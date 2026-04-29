@@ -75,4 +75,4 @@ Every new Sprint Markdown file must follow this strict structure to maintain con
 | [Sprint 42](42_NLP_TASK_MANAGEMENT.md) | NLP Task Management & AI Context Injection | 🟢 Completed |
 | [Sprint 43](43_UX_REPORTS_NLP.md) | NLP Polishing, Reporting & Undo UX | 🟢 Completed |
 | [Sprint 44](44_TASKS_PERIODICITY.md) | Tasks, Periodicity, & Memory Space | 🟢 Completed |
-| [Sprint 45](45_DYNAMIC_REMINDERS.md) | Dynamic Reminders & Task Watchdog | 🟢 Completed |
+| [Sprint 45](45_DYNAMIC_REMINDERS.md) | Dynamic Reminders & Celery ETA | 🟢 Completed |
