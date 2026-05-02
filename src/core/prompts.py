@@ -7,7 +7,7 @@ Global registry of AI prompts used for routing and NLP intent classification.
 import json
 
 INTENT_DESCRIPTIONS = {
-    "LOG_WORK": 'The user is reporting time spent working or progressing on a project/quest, or assigning a split part of time, or transferring time between projects. (e.g. "I coded for 40 mins", "Did 2 hours of writing", "subtract 10 from A and add 10 to B", "all to project 1", "half to admin").',
+    "LOG_WORK": 'The user is reporting time spent working or progressing on a project/quest, completing a daily habit or routine, or assigning a split part of time, or transferring time between projects. (e.g. "I coded for 40 mins", "Did 2 hours of writing", "habit done", "typing done", "subtract 10 from A and add 10 to B", "all to project 1", "half to admin").',
     "ADD_TASKS": 'The user is adding actionable to-do items, steps, or tasks to a plan/project (e.g. "Add tasks: buy milk, call Bob", "For Frontend project I need to design UI and fix bugs").',
     "ADD_INBOX": "The user is dumping a random raw idea, thought, or note to save for later (e.g. \"Idea: add stripe later\", \"Don't forget to buy milk\").",
     "CREATE_ENTITIES": 'The user wants to create a new project (possibly with a target number of hours/minutes) (e.g. "Create a project \'Write Book\' with a 50h goal", "создай проект Х").',
@@ -16,7 +16,7 @@ INTENT_DESCRIPTIONS = {
     "CONFIG_REPORT": 'The user is configuring how their daily accountability report should look (e.g. "Make my report strict without emojis", "Show projects first then focus time").',
     "GENERATE_REPORT": 'The user wants the daily report generated right NOW instantly, out of schedule (e.g. "Send the report now", "Show me the daily report", "Post report to the channel").',
     "UNDO": 'The user is correcting a mistake they just made (e.g. "Wait, I meant 20 mins", "Undo that last log").',
-    "EDIT_ENTITIES": 'The user wants to delete, rename, complete, or modify properties of existing projects or tasks (e.g. "Rename \'Coding\' to \'Backend Dev\'", "Change the project daily target to 20 reps", "Complete task 3", "Done with task 2", "Finished task 5", "Mark project as done").',
+    "EDIT_ENTITIES": 'The user wants to delete, rename, complete, or modify properties of existing projects or tasks (e.g. "Rename \'Coding\' to \'Backend Dev\'", "Change the project daily target to 20 reps", "Complete task 3", "Done with task 2", "Finished task 5", "Archive project"). NOTE: If the user says they finished a DAILY HABIT or ROUTINE (e.g., "typing done", "habit done", "did yoga"), route to LOG_WORK, not here.',
     "PROJECT_STATUS": 'The user is asking for the status, details, or progress of a specific project (e.g. "What is the status of Pulse?", "How much time is left on project X?").',
     "UPDATE_MEMORY": 'The user is explicitly telling the bot to remember, update, or forget a personal fact or preference (e.g. "Remember that I lunch at 13:00", "I prefer to be addressed as Boss", "Forget my previous instruction about mornings").',
     "CHAT_OR_UNKNOWN": 'The user is just chatting, asking a question, expressing emotions, or saying something you can\'t categorize.'

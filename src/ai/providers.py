@@ -16,10 +16,10 @@ class IntentResponse(BaseModel):
     intents: List[IntentType] = Field(description="The operational intents found in the user's message. Can be a single intent, or multiple if the user asked to do several distinct things (e.g. 'Create a project AND log 2 hours to it' -> [CREATE_ENTITIES, LOG_WORK]). Order matters.")
 
 class LogWorkParams(BaseModel):
-    duration_minutes: int = Field(description="The total time spent, strictly converted to minutes. Can be negative for subtraction. E.g., '1.5 hours' -> 90, 'remove 10 mins' -> -10.")
-    progress_amount: Optional[int] = Field(description="The numeric amount of progress made, e.g. 50 if user says 50 pages. Can be negative.", default=None)
-    is_absolute_progress: Optional[bool] = Field(description="True if the user specifies an absolute completion point like 'I am on page 40' or 'Set progress to 50'. False if they are adding to it like 'I did 20 pages'.", default=False)
-    progress_unit: Optional[str] = Field(description="The unit of the progress made if specified, e.g. pages, km, tasks, chapters. Do not include time-based units like hours or minutes.", default=None)
+    duration_minutes: int = Field(description="The total time spent, strictly converted to minutes. Can be negative for subtraction. E.g., '1.5 hours' -> 90. Use 0 if the user explicitly sets absolute progress OR if they simply say they finished a habit without specifying time (e.g., 'typing done', 'сделал планку').")
+    progress_amount: Optional[float] = Field(description="The exact numeric amount of progress. If user says 'установи прогресс на 1.5', put 1.5 here. If user simply says they completed a habit without specifying an amount (e.g. 'did yoga', 'сделал планку'), leave this as null so the system can auto-fill.", default=None)
+    is_absolute_progress: Optional[bool] = Field(description="CRITICAL: True ONLY if the user uses words like 'ровно', 'set to', 'установи' to specify an EXACT replacement completion point (e.g. 'установи прогресс на 1.5').", default=False)
+    progress_unit: Optional[str] = Field(description="The unit of the progress made if specified, e.g. pages, km, tasks, chapters, hours, часов. MUST be extracted if mentioned.", default=None)
     project_id: Optional[int] = Field(description="The integer ID of the matching project. Null if no project matches.", default=None)
     unmatched_project_name: Optional[str] = Field(description="If no project matches, provide the inferred name of the project here", default=None)
     description: Optional[str] = Field(description="A brief 1-5 word summary of what was done.", default=None)

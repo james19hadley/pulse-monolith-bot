@@ -56,15 +56,16 @@ async def _handle_session_control(message: Message, db, user, provider_name, api
         user.active_session_id = new_session.id
         db.commit()
         
+        from src.bot.keyboards import get_main_menu
         # Determine if we started contextually with a project
         if params.project_id:
             project = db.query(Project).filter_by(id=params.project_id, user_id=user.id).first()
             if project:
-                await message.answer(f"🔥 Сессия начата для: <b>{project.title}</b>. Не отвлекайся. Когда закончишь, просто скажи.", parse_mode="HTML")
+                await message.answer(f"🔥 Сессия начата для: <b>{project.title}</b>. Не отвлекайся. Когда закончишь, просто скажи.", parse_mode="HTML", reply_markup=get_main_menu(True))
             else:
-                await message.answer("🔥 Сессия начата. (Не смог найти указанный проект). Не отвлекайся. Когда закончишь, просто скажи.")
+                await message.answer("🔥 Сессия начата. (Не смог найти указанный проект). Не отвлекайся. Когда закончишь, просто скажи.", reply_markup=get_main_menu(True))
         else:
-            await message.answer("🔥 Сессия начата. Не отвлекайся. Когда закончишь, просто скажи.")
+            await message.answer("🔥 Сессия начата. Не отвлекайся. Когда закончишь, просто скажи.", reply_markup=get_main_menu(True))
         
     elif action == "REST":
         if not active_session_id:

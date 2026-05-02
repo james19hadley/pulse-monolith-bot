@@ -13,6 +13,7 @@ from aiogram.types import Message
 from src.db.repo import SessionLocal
 from src.db.models import User, Session, TimeLog, Project
 from src.bot.handlers.utils import get_or_create_user
+from src.bot.keyboards import get_main_menu
 
 router = Router()
 
@@ -36,6 +37,8 @@ async def cmd_start_session(message: Message, command: CommandObject = None):
         
         user.active_session_id = session.id
         db.commit()
+    
+    await message.answer("🟢 Сессия начата.", reply_markup=get_main_menu(True))
     
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
     from src.db.models import Project
@@ -131,10 +134,22 @@ async def cmd_end_session(message: Message):
                 if project.daily_target_value is not None:
                     project.daily_progress = (project.daily_progress or 0) + actual_duration_minutes
                 
-            await message.answer(f"🍅 Focus session ended! You worked for {actual_duration_minutes} minutes.")
-            
-        user.active_session_id = None
-        db.commit()
+            user.active_session_id = None
+            db.commit()
+            db.refresh(log)
+
+            from src.db.models import ActionLog
+            action = ActionLog(
+                user_id=user.id,
+                tool_name="log_work",
+                previous_state_json={"amount": actual_duration_minutes, "progress_amount": None},
+                new_state_json={"log_id": log.id, "project_id": log_project_id}
+            )
+            db.add(action)
+            db.commit()
+
+            await message.answer(f"🍅 Focus session ended! You worked for {actual_duration_minutes} minutes.", reply_markup=get_main_menu(False))
+            return
 
 @router.message(Command("log"))
 async def cmd_log(message: Message, command: CommandObject):
@@ -361,10 +376,22 @@ async def handle_nudge_working_callback(callback_query: CallbackQuery):
                 if project.daily_target_value is not None:
                     project.daily_progress = (project.daily_progress or 0) + actual_duration_minutes
                 
-            await callback_query.message.answer(f"🍅 Focus session ended retroactively! You worked for {actual_duration_minutes} minutes.")
-            
-        user.active_session_id = None
-        db.commit()
+            user.active_session_id = None
+            db.commit()
+            db.refresh(log)
+
+            from src.db.models import ActionLog
+            action = ActionLog(
+                user_id=user.id,
+                tool_name="log_work",
+                previous_state_json={"amount": actual_duration_minutes, "progress_amount": None},
+                new_state_json={"log_id": log.id, "project_id": log_project_id}
+            )
+            db.add(action)
+            db.commit()
+
+            await callback_query.message.answer(f"🍅 Focus session ended retroactively! You worked for {actual_duration_minutes} minutes.", reply_markup=get_main_menu(False))
+            return
 
 @router.callback_query(F.data == "nudge_finish")
 async def handle_nudge_finish_callback(callback_query: CallbackQuery):

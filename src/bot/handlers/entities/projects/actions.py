@@ -41,6 +41,25 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
             )
         return
 
+    if data[0] == "complist":
+        await state.clear()
+        with SessionLocal() as db:
+            user = get_or_create_user(db, cb.from_user.id)
+            projects = db.query(Project).filter(
+                Project.user_id == user.id, 
+                Project.status == "completed"
+            ).all()
+            kb = []
+            for p in projects:
+                kb.append([InlineKeyboardButton(text=f"✅ {p.title}", callback_data=f"ui_proj_{p.id}")])
+            kb.append([InlineKeyboardButton(text="🔙 Back to Active", callback_data="ui_projects_list")])
+            await cb.message.edit_text(
+                "<b>Completed Projects:</b>",
+                parse_mode="HTML",
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=kb)
+            )
+        return
+
     if data[0] == "new":
         await state.set_state(EntityState.waiting_for_project_name)
         await cb.message.edit_text("Enter the **name** and **target hours** for the new project (e.g. `My Project | 50`).", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_projects_action")]]))
@@ -142,7 +161,11 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
                 parent = db.query(Project).filter(Project.id == parent_id).first()
                 if parent:
                     text = text.replace(f"📁 <b>{proj.title}</b>", f"📂 <b>{parent.title} ➡ {proj.title}</b>")
-            await cb.message.edit_text(text, parse_mode="HTML", reply_markup=get_project_view_keyboard(proj.id, status=proj.status, sub_count=sub_count, parent_id=parent_id))
+            try:
+                await cb.message.edit_text(text, parse_mode="HTML", reply_markup=get_project_view_keyboard(proj.id, status=proj.status, sub_count=sub_count, parent_id=parent_id))
+            except Exception as e:
+                if "message is not modified" not in str(e):
+                    raise e
             return
             
         action = action_or_id
@@ -158,10 +181,22 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
             await cb.answer(f"Sent {proj.title} to archive.")
             await cb_projects_list(cb, state)
 
+        elif action == "complete":
+            proj.status = "completed"
+            db.commit()
+            await cb.answer(f"🎉 Marked {proj.title} as completed!")
+            await cb_projects_list(cb, state)
+
         elif action == "unarch":
             proj.status = "active"
             db.commit()
             await cb.answer(f"Restored {proj.title} from archive.")
+            await cb_projects_list(cb, state)
+
+        elif action == "uncomp":
+            proj.status = "active"
+            db.commit()
+            await cb.answer(f"Reopened project {proj.title}.")
             await cb_projects_list(cb, state)
 
         elif action == "delete":
@@ -181,11 +216,22 @@ async def cb_project_action(cb: CallbackQuery, state: FSMContext):
                 new_state_json={}
             )
             db.add(delete_log)
+            
+            # Handle foreign key constraints explicitly for PostgreSQL
+            from src.db.models import TimeLog, Task, Session
+            db.query(TimeLog).filter(TimeLog.project_id == proj.id).update({TimeLog.project_id: None})
+            db.query(Task).filter(Task.project_id == proj.id).update({Task.project_id: None})
+            db.query(Session).filter(Session.project_id == proj.id).update({Session.project_id: None})
+            db.query(Project).filter(Project.parent_id == proj.id).update({Project.parent_id: None})
+            
             db.delete(proj)
             db.commit()
             await cb.answer(f"Deleted {proj.title}.")
             if status == "archived":
                 cb = cb.model_copy(update={"data": "ui_proj_archlist"})
+                await cb_project_action(cb, state)
+            elif status == "completed":
+                cb = cb.model_copy(update={"data": "ui_proj_complist"})
                 await cb_project_action(cb, state)
             else:
                 await cb_projects_list(cb, state)

@@ -42,7 +42,7 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
 
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
     from src.bot.keyboards import get_main_menu
-    keyboard = get_main_menu()
+    keyboard = get_main_menu(bool(user.active_session_id))
     msg_lines = []
 
     if not extraction.logs:
@@ -86,17 +86,34 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
         amount_to_add = 0
         is_time_based = not project.unit or project.unit in ['minutes', 'hours']
 
+        from sqlalchemy import func
+        current_db_minutes = db.query(func.sum(TimeLog.duration_minutes)).filter(TimeLog.project_id == project.id).scalar() or 0
+
         # 1. Determine what we logged based on what AI extracted
-        if extraction_item.progress_amount is not None:
-            if extraction_item.is_absolute_progress:
+        if extraction_item.is_absolute_progress and extraction_item.progress_amount is not None:
+            if is_time_based:
+                # User set absolute time (e.g. 1.5 hours) -> we treat progress_amount as hours. Convert to target minutes.
+                target_minutes = extraction_item.progress_amount * 60
+                delta_minutes = target_minutes - current_db_minutes
+                
+                log_entry.duration_minutes = delta_minutes
+                log_entry.progress_amount = None
+                project.current_value = target_minutes
+                
+                amount_to_add = delta_minutes
+                logged_progress = None
+                extraction_item.duration_minutes = delta_minutes # For message display logic
+                setattr(extraction_item, 'is_absolute_duration', True)
+            else:
+                # Other non-time unit absolute tracking
                 delta = extraction_item.progress_amount - (project.current_value or 0.0)
                 log_entry.progress_amount = delta
                 project.current_value = extraction_item.progress_amount
                 logged_progress = delta
                 amount_to_add = delta
-            else:
-                project.current_value = max(0.0, (project.current_value or 0.0) + extraction_item.progress_amount)
-                amount_to_add = extraction_item.progress_amount
+        elif extraction_item.progress_amount is not None:
+            project.current_value = max(0.0, (project.current_value or 0.0) + extraction_item.progress_amount)
+            amount_to_add = extraction_item.progress_amount
             
             if not project.unit and extraction_item.progress_unit:
                 project.unit = extraction_item.progress_unit
@@ -114,24 +131,26 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
                 amount_to_add = remains
                 if is_time_based:
                     log_entry.duration_minutes = amount_to_add
+                    extraction_item.duration_minutes = amount_to_add
                     project.current_value = max(0.0, (project.current_value or 0.0) + amount_to_add)
                 else:
                     log_entry.progress_amount = amount_to_add
+                    logged_progress = amount_to_add
                     project.current_value = max(0.0, (project.current_value or 0.0) + amount_to_add)
 
         # 3. Update Daily target if applicable
         daily_msg = ""
         if project.daily_target_value is not None:
-                old_daily = project.daily_progress or 0
-                new_daily = max(0, old_daily + amount_to_add)
-                project.daily_progress = new_daily
-            
-                if old_daily < project.daily_target_value and new_daily >= project.daily_target_value:
-                    project.total_completions = (project.total_completions or 0) + 1
-                    project.current_streak = (project.current_streak or 0) + 1
-                    daily_msg = f"🔥 Target Completed! ({new_daily:g} / {project.daily_target_value:g} {project.unit or 'minutes'}) 🏆 Streak: {project.current_streak}"
-                else:
-                    daily_msg = f"🔥 Daily target progress: {new_daily:g} / {project.daily_target_value:g} {project.unit or 'minutes'}"
+            old_daily = project.daily_progress or 0
+            new_daily = max(0, old_daily + amount_to_add)
+            project.daily_progress = new_daily
+        
+            if old_daily < project.daily_target_value and new_daily >= project.daily_target_value:
+                project.total_completions = (project.total_completions or 0) + 1
+                project.current_streak = (project.current_streak or 0) + 1
+                daily_msg = f"🔥 Target Completed! ({new_daily:g} / {project.daily_target_value:g} {project.unit or 'minutes'}) 🏆 Streak: {project.current_streak}"
+            else:
+                daily_msg = f"🔥 Daily target progress: {new_daily:g} / {project.daily_target_value:g} {project.unit or 'minutes'}"
 
         db.commit()
         db.refresh(log_entry)
@@ -142,12 +161,15 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
         append_desc = f"\n💬 <i>{desc}</i>" if desc else ""
     
         from src.bot.keyboards import get_main_menu
-        keyboard = get_main_menu()
+        keyboard = get_main_menu(bool(user.active_session_id))
     
     
         if daily_msg:
             msg_lines.append(daily_msg)
     
+        if getattr(extraction_item, 'is_absolute_duration', False):
+            hours = extraction_item.duration_minutes / 60
+            msg_lines.append(f"📈 Time set precisely to <b>{hours:g}h</b> for <b>{project.title}</b>!")
         if extraction_item.duration_minutes > 0:
             hours = extraction_item.duration_minutes / 60
             msg_lines.append(f"✅ Logged <b>{hours:g}h</b> to <b>{project.title}</b>!")

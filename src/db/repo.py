@@ -162,8 +162,17 @@ def init_db():
                     try:
                         conn.execute(sql_text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {col} {col_type}"))
                     except Exception as e:
-                        print(f"Migrate {{table}}.{{col}} skipped: {{e}}")
-
+                        print(f"Migrate {{table}}.{{col}} skipped: {{e}}")                        
+                # Ensure float types for projects
+                try:
+                    conn.execute(sql_text("ALTER TABLE projects ALTER COLUMN target_value TYPE FLOAT"))
+                    conn.execute(sql_text("ALTER TABLE projects ALTER COLUMN current_value TYPE FLOAT"))
+                    conn.execute(sql_text("ALTER TABLE projects ALTER COLUMN daily_target_value TYPE FLOAT"))
+                    conn.execute(sql_text("ALTER TABLE projects ALTER COLUMN daily_progress TYPE FLOAT"))
+                    conn.execute(sql_text("ALTER TABLE projects ALTER COLUMN current_streak TYPE FLOAT"))
+                    conn.execute(sql_text("ALTER TABLE projects ALTER COLUMN total_completions TYPE FLOAT"))
+                except Exception as e:
+                    print(f"Float migration skipped: {e}")
     except Exception as e:
         print(f"Migration error: {e}")
     # ---------------------------------------------

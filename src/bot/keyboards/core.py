@@ -7,11 +7,12 @@ Basic UI inline keyboards (Pagination loops, Yes/No, Back, and Home).
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from src.bot.texts import Buttons
 
-def get_main_menu() -> ReplyKeyboardMarkup:
+def get_main_menu(has_active_session: bool = False) -> ReplyKeyboardMarkup:
+    session_btn = KeyboardButton(text=Buttons.END_SESSION) if has_active_session else KeyboardButton(text=Buttons.START_SESSION)
+    
     kb = [
         [
-            KeyboardButton(text=Buttons.START_SESSION),
-            KeyboardButton(text=Buttons.END_SESSION),
+            session_btn,
             KeyboardButton(text=Buttons.END_DAY)
         ],
         [

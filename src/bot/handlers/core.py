@@ -24,7 +24,7 @@ async def cmd_start(message: Message):
         user = get_or_create_user(db, message.from_user.id)
         has_key = bool(user.api_keys)
         
-    await message.answer(welcome_message(has_key), parse_mode="HTML", reply_markup=get_main_menu())
+    await message.answer(welcome_message(has_key), parse_mode="HTML", reply_markup=get_main_menu(bool(user.active_session_id)))
 
 @router.message(Command("help"))
 @router.message(lambda msg: msg.text == "❓ Help")
@@ -93,7 +93,7 @@ async def ui_tasks(message: Message):
         tasks = db.query(Task).filter(Task.user_id == user.id, Task.status == "pending").all()
         
         if not tasks:
-            await message.answer("You have no pending tasks. Add one by saying 'Create a task to ...'", reply_markup=get_main_menu())
+            await message.answer("You have no pending tasks. Add one by saying 'Create a task to ...'", reply_markup=get_main_menu(bool(user.active_session_id)))
             return
             
         projs = {p.id: p.title for p in db.query(Project).filter(Project.user_id == user.id).all()}
@@ -105,7 +105,7 @@ async def ui_tasks(message: Message):
             rem_info = f" ⏰ {t.reminder_time.strftime('%H:%M')}" if getattr(t, 'reminder_time', None) else ""
             lines.append(f"{idx}. {t.title}{dur_info}{rem_info}{proj_info}")
             
-        await message.answer("\n".join(lines), parse_mode="HTML", reply_markup=get_main_menu())
+        await message.answer("\n".join(lines), parse_mode="HTML", reply_markup=get_main_menu(bool(user.active_session_id)))
 
 @router.message(F.text == "📥 Inbox")
 async def ui_inbox(message: Message):
@@ -115,14 +115,14 @@ async def ui_inbox(message: Message):
         items = db.query(Inbox).filter(Inbox.user_id == user.id, Inbox.status == "pending").all()
         
         if not items:
-            await message.answer("Your inbox is empty.", reply_markup=get_main_menu())
+            await message.answer("Your inbox is empty.", reply_markup=get_main_menu(bool(user.active_session_id)))
             return
             
         lines = ["<b>📥 Your Inbox:</b>"]
         for i in items:
             lines.append(f"• {i.raw_text}")
             
-        await message.answer("\n".join(lines), parse_mode="HTML", reply_markup=get_main_menu())
+        await message.answer("\n".join(lines), parse_mode="HTML", reply_markup=get_main_menu(bool(user.active_session_id)))
 
 @router.message(F.text == Buttons.STATS)
 @router.message(Command("stats"))
@@ -133,19 +133,19 @@ async def cmd_stats(message: Message):
         try:
             report_text = generate_daily_report_text(db, user, skip_ai_comment=True)
             try:
-                await message.answer(report_text, parse_mode="HTML", reply_markup=get_main_menu())
+                await message.answer(report_text, parse_mode="HTML", reply_markup=get_main_menu(bool(user.active_session_id)))
             except Exception as tg_err:
                 import html
                 # The text might have invalid HTML, try without parse mode or escape
                 from aiogram.exceptions import TelegramBadRequest
                 if isinstance(tg_err, TelegramBadRequest) and "parse" in str(tg_err).lower():
                     # Fallback: Strip HTML or just send without formatting
-                    await message.answer(report_text, parse_mode=None, reply_markup=get_main_menu())
+                    await message.answer(report_text, parse_mode=None, reply_markup=get_main_menu(bool(user.active_session_id)))
                 else:
                     raise tg_err
         except Exception as e:
             import html
-            await message.answer(f"Failed to generate stats: {html.escape(str(e))}", parse_mode="HTML", reply_markup=get_main_menu())
+            await message.answer(f"Failed to generate stats: {html.escape(str(e))}", parse_mode="HTML", reply_markup=get_main_menu(bool(user.active_session_id)))
 
 @router.message(Command("inbox"))
 async def cmd_inbox(message: Message, command):
@@ -201,6 +201,14 @@ async def cmd_undo(message: Message, state: FSMContext):
                         msg_text = f"⏪ Отменено: Проект <b>{p.title}</b> возвращен в архив."
                     else:
                         title = p.title
+                        
+                        # Handle foreign key constraints by unlinking
+                        from src.db.models import TimeLog, Task, Session
+                        db.query(TimeLog).filter(TimeLog.project_id == p.id).update({TimeLog.project_id: None})
+                        db.query(Task).filter(Task.project_id == p.id).update({Task.project_id: None})
+                        db.query(Session).filter(Session.project_id == p.id).update({Session.project_id: None})
+                        db.query(Project).filter(Project.parent_id == p.id).update({Project.parent_id: None})
+                        
                         db.delete(p)
                         msg_text = f"⏪ Отменено: Создание проекта <b>{title}</b>."
                         
@@ -249,7 +257,33 @@ async def cmd_undo(message: Message, state: FSMContext):
                                 p.total_completions = max(0, (p.total_completions or 0) - 1)
                                 p.current_streak = max(0, (p.current_streak or 0) - 1)
                                 
-                    msg_text = f"⏪ Отменено: Логирование времени отменено."
+                        if action.previous_state_json.get("was_session_end"):
+                            user.active_session_id = action.previous_state_json.get("session_id")
+                            from src.db.models import Session
+                            session_obj = db.query(Session).filter(Session.id == user.active_session_id).first()
+                            if session_obj:
+                                session_obj.status = "active"
+                                session_obj.end_time = None
+                            msg_text = f"⏪ Отменено: Завершение сессии. Сессия снова активна! (убрано {mins} м. из <b>{p.title}</b>)."
+                        elif mins and prog:
+                            msg_text = f"⏪ Отменено: Логирование {mins} м. и {prog} прогресса для <b>{p.title}</b>."
+                        elif mins:
+                            msg_text = f"⏪ Отменено: Логирование {mins} м. для <b>{p.title}</b>."
+                        elif prog:
+                            msg_text = f"⏪ Отменено: Логирование {prog} прогресса для <b>{p.title}</b>."
+                        else:
+                            msg_text = f"⏪ Отменено: Логирование для <b>{p.title}</b> отменено."
+                    else:
+                        if action.previous_state_json.get("was_session_end"):
+                            user.active_session_id = action.previous_state_json.get("session_id")
+                            from src.db.models import Session
+                            session_obj = db.query(Session).filter(Session.id == user.active_session_id).first()
+                            if session_obj:
+                                session_obj.status = "active"
+                                session_obj.end_time = None
+                            msg_text = f"⏪ Отменено: Завершение сессии. Сессия снова активна!"
+                        else:
+                            msg_text = f"⏪ Отменено: Логирование времени отменено."
             else:
                 msg_text = f"⚠️ Undo for action '{tool}' is not currently supported."
             
@@ -264,6 +298,9 @@ async def cmd_undo(message: Message, state: FSMContext):
                  InlineKeyboardButton(text="❌", callback_data="ui_undo_bad")
             ]])
             await message.answer(msg_text, reply_markup=markup, parse_mode="HTML")
+            
+            from src.bot.keyboards import get_main_menu
+            await message.answer("Меню обновлено.", reply_markup=get_main_menu(bool(user.active_session_id)))
             
         except Exception as e:
             db.rollback()
@@ -291,4 +328,3 @@ async def cq_undo_bad(callback_query: CallbackQuery):
     text = callback_query.message.html_text
     new_text = text + "\n\n<i>⚠️ Автоматический возврат (Redo) пока в разработке. Пожалуйста, повторите оригинальное действие вручную.</i>"
     await callback_query.message.edit_text(new_text, reply_markup=None, parse_mode="HTML")
-
