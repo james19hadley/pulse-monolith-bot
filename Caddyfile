@@ -1,18 +1,46 @@
+# ==========================================
+# 1. OLD DOMAIN (backward compatibility + Telegram webhhoks)
+# ==========================================
 {$WEBHOOK_DOMAIN:localhost} {
-    # 1. Allow multiple admin IPs explicitly to hit the dashboard /admin routes.
-    # Put your IP addresses here. You can add as many as needed separated by a space.
-    @adminAuth {
-        path /admin/*
-        remote_ip 127.0.0.1 192.168.1.1 10.0.0.1 7.7.7.7
-    }
-
-    # 2. Block everyone else from /admin/*
     @adminBlock {
         path /admin/*
-        not remote_ip 127.0.0.1 192.168.1.1 10.0.0.1 7.7.7.7
+        not remote_ip 127.0.0.1 192.168.1.1 10.0.0.1 92.208.108.220
     }
-    
     respond @adminBlock "403 Forbidden - Unauthorized IP" 403
 
     reverse_proxy bot:8080
+}
+
+# ==========================================
+# 2. NEW COOL DOMAIN (Landing + Bot)
+# ==========================================
+pulsemonolith.com, www.pulsemonolith.com {
+
+    # --- Bot Admin Security ---
+    @adminBlock {
+        path /admin/*
+        not remote_ip 127.0.0.1 192.168.1.1 10.0.0.1 92.208.108.220
+    }
+    respond @adminBlock "403 Forbidden - Unauthorized IP" 403
+
+    # --- BOT ROUTING ---
+    # Route all Telegram webhooks and admin panel requests to Python
+    handle /webhook* {
+        reverse_proxy bot:8080
+    }
+    handle /admin/* {
+        reverse_proxy bot:8080
+    }
+
+    # --- SITE / LANDING ROUTING ---
+    # All other requests (site root) are handled here
+    handle {
+        # CURRENTLY: Serving static files from /opt/landing
+        root * /var/www/landing
+        file_server
+
+        # FUTURE (Once the SaaS with registration is ready):
+        # 1. Remove `root` and `file_server`
+        # 2. Add: reverse_proxy webapp:3000 (your new web app container)
+    }
 }

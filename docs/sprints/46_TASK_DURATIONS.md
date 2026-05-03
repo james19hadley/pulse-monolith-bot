@@ -13,15 +13,15 @@
 ## 📋 Tasks
 
 ### [Database & Models]
-- [ ] Add `estimated_minutes` (Integer, nullable) to the `Task` model.
-- [ ] Create a patch script `patch_task_duration.py` to alter the database table without a full wipe.
+- [x] Add `estimated_minutes` (Integer, nullable) to the `Task` model.
+- [x] Create a patch script `patch_task_duration.py` to alter the database table without a full wipe.
 
 ### [AI & Prompts]
-- [ ] Update `AddTasksParams` and `TaskParam` in `src/ai/providers.py` to extract `estimated_minutes` from text.
+- [x] Update `AddTasksParams` and `TaskParam` in `src/ai/providers.py` to extract `estimated_minutes` from text.
 
 ### [UI & Views]
-- [ ] Update `cmd_tasks` in `src/bot/handlers/core.py` to cleanly format the tasks list including duration (e.g. "1h 30m") and reminder time if scheduled.
-- [ ] Incorporate task durations into `job_morning_planner` to give a summary of the day's load.
+- [x] Update `cmd_tasks` in `src/bot/handlers/core.py` to cleanly format the tasks list including duration (e.g. "1h 30m") and reminder time if scheduled.
+- [x] Incorporate task durations into `job_morning_planner` to give a summary of the day's load.
 
 ## 🔒 Security & Architecture Notes
 - The patch script must use `AUTOCOMMIT` as learned in Sprint 44/45 to prevent transaction lock errors.

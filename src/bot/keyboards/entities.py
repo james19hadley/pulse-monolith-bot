@@ -123,7 +123,10 @@ def get_projects_tree_keyboard(all_projects, page=0, toggled_ids=None) -> Inline
         kb.append(nav)
         
     kb.append([InlineKeyboardButton(text="➕ New Project", callback_data="ui_proj_new")])
-    kb.append([InlineKeyboardButton(text="🗄️ Archive", callback_data="ui_proj_archlist")])
+    kb.append([
+        InlineKeyboardButton(text="🗄️ Archive", callback_data="ui_proj_archlist"),
+        InlineKeyboardButton(text="✅ Completed", callback_data="ui_proj_complist")
+    ])
     kb.append([InlineKeyboardButton(text="🔙 Back", callback_data="ui_entities_menu")])
     
     return InlineKeyboardMarkup(inline_keyboard=kb)
@@ -151,6 +154,18 @@ def get_project_view_keyboard(proj_id, status="active", sub_count=0, parent_id=N
         ]
         return InlineKeyboardMarkup(inline_keyboard=kb)
         
+    if status == "completed":
+        kb = [
+            [
+                InlineKeyboardButton(text="🔄 Reopen", callback_data=f"ui_proj_uncomp_{proj_id}"),
+                InlineKeyboardButton(text="🗑 Delete", callback_data=f"ui_proj_delete_{proj_id}")
+            ],
+            [
+                InlineKeyboardButton(text="🔙 Back", callback_data="ui_proj_complist")
+            ]
+        ]
+        return InlineKeyboardMarkup(inline_keyboard=kb)
+        
     kb = [
         [
             InlineKeyboardButton(text="📋 Manage Tasks", callback_data=f"ui_proj_tasks_{proj_id}")
@@ -167,9 +182,10 @@ def get_project_view_keyboard(proj_id, status="active", sub_count=0, parent_id=N
         ],
         [
             InlineKeyboardButton(text="📦 Archive", callback_data=f"ui_proj_arch_{proj_id}"),
-            InlineKeyboardButton(text="🗑 Delete", callback_data=f"ui_proj_delete_{proj_id}")
+            InlineKeyboardButton(text="✅ Complete", callback_data=f"ui_proj_complete_{proj_id}")
         ],
         [
+            InlineKeyboardButton(text="🗑 Delete", callback_data=f"ui_proj_delete_{proj_id}"),
             InlineKeyboardButton(text="🔙 Back", callback_data="ui_projects_list")
         ]
     ]
