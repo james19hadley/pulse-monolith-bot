@@ -51,8 +51,8 @@ class User(Base):
     last_manual_report_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     
     # Catalyst Settings
-    catalyst_threshold_minutes: Mapped[float] = mapped_column(Float, default=60)
-    catalyst_interval_minutes: Mapped[float] = mapped_column(Float, default=20)
+    catalyst_threshold_minutes: Mapped[int] = mapped_column(Integer, default=60)
+    catalyst_interval_minutes: Mapped[int] = mapped_column(Integer, default=20)
     target_channel_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
     report_config: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)
 
@@ -105,17 +105,17 @@ class Project(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     title: Mapped[str] = mapped_column(String)
     status: Mapped[str] = mapped_column(String, default="active") # 'active', 'paused', 'completed'
-    target_value: Mapped[float] = mapped_column(Float, default=0)
-    current_value: Mapped[float] = mapped_column(Float, default=0)
+    target_value: Mapped[int] = mapped_column(Integer, default=0)
+    current_value: Mapped[int] = mapped_column(Integer, default=0)
     unit: Mapped[Optional[str]] = mapped_column(String, default="minutes")
     
     # --- Great Migration: Daily Quotas & Streaks ---
-    daily_target_value: Mapped[Optional[float]] = mapped_column(Float, nullable=True) # E.g., 15 (minutes or times)
+    daily_target_value: Mapped[Optional[int]] = mapped_column(Integer, nullable=True) # E.g., 15 (minutes or times)
     target_period: Mapped[str] = mapped_column(String, default="daily") # 'daily', 'weekly', 'monthly'
-    daily_progress: Mapped[float] = mapped_column(Float, default=0)
-    current_streak: Mapped[float] = mapped_column(Float, default=0)
+    daily_progress: Mapped[int] = mapped_column(Integer, default=0)
+    current_streak: Mapped[int] = mapped_column(Integer, default=0)
     last_completed_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
-    total_completions: Mapped[float] = mapped_column(Float, default=0)
+    total_completions: Mapped[int] = mapped_column(Integer, default=0)
     # -----------------------------------------------
     
     # Hierarchy
@@ -131,7 +131,7 @@ class Task(Base):
     project_id: Mapped[Optional[int]] = mapped_column(ForeignKey("projects.id", ondelete="SET NULL"), index=True, nullable=True)
     title: Mapped[str] = mapped_column(String)
     status: Mapped[str] = mapped_column(String, default="pending") # 'pending', 'completed', 'cancelled'
-    estimated_minutes: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    estimated_minutes: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     reminder_time: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     is_reminder_sent: Mapped[bool] = mapped_column(Boolean, default=False)
     is_focus_today: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -146,8 +146,8 @@ class TimeLog(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     session_id: Mapped[Optional[int]] = mapped_column(ForeignKey("sessions.id"), nullable=True)
     project_id: Mapped[Optional[int]] = mapped_column(ForeignKey("projects.id", ondelete="SET NULL"), nullable=True)
-    duration_minutes: Mapped[float] = mapped_column(Float)
-    progress_amount: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    duration_minutes: Mapped[int] = mapped_column(Integer)
+    progress_amount: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     progress_unit: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -178,8 +178,8 @@ class TokenUsage(Base):
     
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
-    prompt_tokens: Mapped[float] = mapped_column(Float, default=0)
-    completion_tokens: Mapped[float] = mapped_column(Float, default=0)
-    total_tokens: Mapped[float] = mapped_column(Float, default=0)
+    prompt_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    completion_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    total_tokens: Mapped[int] = mapped_column(Integer, default=0)
     model_name: Mapped[str] = mapped_column(String)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

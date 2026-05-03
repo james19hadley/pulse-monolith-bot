@@ -93,8 +93,8 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
         if extraction_item.is_absolute_progress and extraction_item.progress_amount is not None:
             if is_time_based:
                 # User set absolute time (e.g. 1.5 hours) -> we treat progress_amount as hours. Convert to target minutes.
-                target_minutes = extraction_item.progress_amount * 60
-                delta_minutes = target_minutes - current_db_minutes
+                target_minutes = int(extraction_item.progress_amount * 60)
+                delta_minutes = int(target_minutes - current_db_minutes)
                 
                 log_entry.duration_minutes = delta_minutes
                 log_entry.progress_amount = None
@@ -106,37 +106,37 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
                 setattr(extraction_item, 'is_absolute_duration', True)
             else:
                 # Other non-time unit absolute tracking
-                delta = extraction_item.progress_amount - (project.current_value or 0.0)
+                delta = int(extraction_item.progress_amount - (project.current_value or 0))
                 log_entry.progress_amount = delta
-                project.current_value = extraction_item.progress_amount
+                project.current_value = int(extraction_item.progress_amount)
                 logged_progress = delta
                 amount_to_add = delta
         elif extraction_item.progress_amount is not None:
-            project.current_value = max(0.0, (project.current_value or 0.0) + extraction_item.progress_amount)
-            amount_to_add = extraction_item.progress_amount
+            project.current_value = max(0, (project.current_value or 0) + int(extraction_item.progress_amount))
+            amount_to_add = int(extraction_item.progress_amount)
             
             if not project.unit and extraction_item.progress_unit:
                 project.unit = extraction_item.progress_unit
         else:
             # If no explicit progress, fallback to time
             if extraction_item.duration_minutes != 0:
-                amount_to_add = extraction_item.duration_minutes
+                amount_to_add = int(extraction_item.duration_minutes)
                 if is_time_based:
-                    project.current_value = max(0.0, (project.current_value or 0.0) + extraction_item.duration_minutes)
+                    project.current_value = max(0, (project.current_value or 0) + amount_to_add)
                 
         # 2. AUTO-FILL logic: If the user just said "did my habit" (0 mins, 0 progress extracted)
         if amount_to_add == 0 and project.daily_target_value is not None:
             remains = project.daily_target_value - (project.daily_progress or 0)
             if remains > 0:
-                amount_to_add = remains
+                amount_to_add = int(remains)
                 if is_time_based:
                     log_entry.duration_minutes = amount_to_add
                     extraction_item.duration_minutes = amount_to_add
-                    project.current_value = max(0.0, (project.current_value or 0.0) + amount_to_add)
+                    project.current_value = max(0, (project.current_value or 0) + amount_to_add)
                 else:
                     log_entry.progress_amount = amount_to_add
                     logged_progress = amount_to_add
-                    project.current_value = max(0.0, (project.current_value or 0.0) + amount_to_add)
+                    project.current_value = max(0, (project.current_value or 0) + amount_to_add)
 
         # 3. Update Daily target if applicable
         daily_msg = ""
