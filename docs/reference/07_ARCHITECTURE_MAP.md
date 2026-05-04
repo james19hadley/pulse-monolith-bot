@@ -11,9 +11,18 @@ This document contains a registry of unique identifiers (UIDs) used directly ins
 
 ## 📁 3. Handlers and Interactions (`src/bot/handlers/`)
 - **`[HND-PROJ-CREATE]`**: `src/bot/handlers/entities/projects/create.py` - The FSM telegram handler that asks the user for the project name and calls the `[SRV-PROJ-CREATE]` service upon completion.
+- **`[HND-PROJ-VIEW]`**: `src/bot/handlers/entities/projects/view.py` - Detailed project view rendering.
+- **`[HND-PROJ-TASKS]`**: `src/bot/handlers/entities/projects/tasks.py` - Task management at the project level.
+- **`[HND-PROJ-MOD]`**: `src/bot/handlers/entities/projects/modifications.py` - Project status changes (archive, complete, delete).
 
 ## 📁 4. Schedulers & Background Jobs (`src/scheduler/`)
-- **`[JOB-MORN-PLAN]`**: `src/scheduler/jobs.py` (`morning_planner_job`) - Pulls pending DB tasks and spoon-feeds priority items to the AI for a curated morning dm summary.
+- **`[JOB-BASE]`**: `src/scheduler/jobs/base.py` - Common configuration for background jobs.
+- **`[JOB-CATALYST]`**: `src/scheduler/jobs/catalyst.py` - Idle session pings.
+- **`[JOB-CLEANUP]`**: `src/scheduler/jobs/cleanup.py` - Stale session closing.
+- **`[JOB-REPORT]`**: `src/scheduler/jobs/reporting.py` - Daily accountability reports.
+- **`[JOB-REFLECT]`**: `src/scheduler/jobs/reflection.py` - Evening reflection nudges.
+- **`[JOB-REMIND]`**: `src/scheduler/jobs/reminders.py` - One-off task reminders.
+- **`[JOB-MORN-PLAN]`**: `src/scheduler/jobs/planner.py` - Pulls pending DB tasks and spoon-feeds priority items to the AI for a curated morning dm summary.
 
 ## 📁 5. Core & AI Layer (`src/core/`, `src/ai/`)
 - **`[CORE-SYS-CONFIG]`**: `src/core/config.py` - Contains all environment variables and the central USER_SETTINGS_REGISTRY.
@@ -23,6 +32,7 @@ This document contains a registry of unique identifiers (UIDs) used directly ins
 - **`[CORE-AI-BASE-PROV]`**: `src/ai/base_provider.py` - Abstract Base Class for LLM API integration.
 - **`[CORE-AI-MODELS]`**: `src/ai/models_registry.py` - LLM configuration specifying cost-efficient models for standard parsing.
 - **`[CORE-AI-PROVIDERS]`**: `src/ai/providers.py` - LLM Provider implementations (API connections and parsing).
+- **`[CORE-AI-SCHEMAS]`**: `src/ai/schemas.py` - Standardized Pydantic schemas for AI extraction and tool calling.
 - **`[CORE-AI-ROUTER]`**: `src/ai/router.py` - The central NLP router.
 - **`[CORE-AI-TOOLS]`**: `src/ai/tools.py` - Function-calling schemas representing intents.
 - **`[CORE-SYS-CONSTANTS]`**: `src/core/constants.py` - Hardcoded constants.
@@ -38,21 +48,30 @@ This document contains a registry of unique identifiers (UIDs) used directly ins
 
 ## 📁 8. Bot Handlers: Intent Classifiers (`src/bot/handlers/intents/`)
 - **`[HND-INTENT-CORE]`**: `src/bot/handlers/intents/intent_core.py` - Execution mapping for NLP intents.
-- **`[HND-INTENT-ENT]`**: `src/bot/handlers/intents/intent_entities.py` - Processes entity creation intents.
+- **`[HND-INTENT-ENT]`**: `src/bot/handlers/intents/intent_entities.py` - Delegation layer for entity creation intents.
+- **`[HND-INTENT-ENT-PROJ]`**: `src/bot/handlers/intents/entities/projects.py` - Project/Habit creation.
+- **`[HND-INTENT-ENT-INBOX]`**: `src/bot/handlers/intents/entities/inbox.py` - Inbox capture.
+- **`[HND-INTENT-ENT-TASK]`**: `src/bot/handlers/intents/entities/tasks.py` - Task creation logic.
+- **`[HND-INTENT-ENT-EDIT]`**: `src/bot/handlers/intents/entities/edit.py` - Entity editing/deletion.
 - **`[HND-INTENT-WORK]`**: `src/bot/handlers/intents/intent_log_work.py` - Processes work-logging intents.
 - **`[HND-INTENT-SESS]`**: `src/bot/handlers/intents/intent_session.py` - Processes NLP session commands.
 - **`[HND-INTENT-INBOX]`**: `src/bot/handlers/intents/intent_inbox.py` - Processes inbox cleanup intents.
 
 ## 📁 9. Bot Handlers: Entities & Menus (`src/bot/handlers/entities/`, `src/bot/handlers/`)
 - **`[HND-AI-ROUTER]`**: `src/bot/handlers/ai_router.py` - Intercepts all unhandled raw text and forwards it to Intent Router.
-- **`[HND-BOT-CORE]`**: `src/bot/handlers/core.py` - Root structural commands like /start or main menu fallbacks.
-- **`[HND-SESSIONS]`**: `src/bot/handlers/sessions.py` - Start/Stop/Pause logic for focus timers.
+- **`[HND-BOT-CORE]`**: `src/bot/handlers/core.py` - Delegation layer for root structural commands.
+- **`[HND-CORE-BASIC]`**: `src/bot/handlers/core/basic.py` - /start, /help, /faq.
+- **`[HND-CORE-UI]`**: `src/bot/handlers/core/ui.py` - Stats, Tasks, Inbox menus.
+- **`[HND-CORE-UNDO]`**: `src/bot/handlers/core/undo.py` - Smart Undo logic.
+- **`[HND-SESSIONS]`**: `src/bot/handlers/sessions.py` - Delegation layer for focus timers.
+- **`[HND-SESS-CMD]`**: `src/bot/handlers/sessions/commands.py` - Start/Stop/End session commands.
+- **`[HND-SESS-CB]`**: `src/bot/handlers/sessions/callbacks.py` - Project assignment and nudge callbacks.
 - **`[HND-SPINNER]`**: `src/bot/handlers/spinner.py` - Animated loading indicator for long-running AI operations.
-- **`[HND-UTILS]`**: `src/bot/handlers/utils.py` - Universal helper components (e.g. deleting previous messages on prompt answers).
+- **`[HND-UTILS]`**: `src/bot/handlers/utils.py` - Universal helper components.
 - **`[HND-ENT-CMDS]`**: `src/bot/handlers/entities/commands.py` - Specific textual commands like /new or /stats.
 - **`[HND-ENT-MENU]`**: `src/bot/handlers/entities/menu.py` - Entry points to entity sub-menus.
 - **`[HND-ENT-ROUTER]`**: `src/bot/handlers/entities/router.py` - Glues all entity routes together into 'entities_router'.
-- **`[HND-PROJ-ACTIONS]`**: `src/bot/handlers/entities/projects/actions.py` - Interaction buttons for specific Projects (delete, start tracking).
+- **`[HND-PROJ-ACTIONS]`**: `src/bot/handlers/entities/projects/actions.py` - Delegation layer for project actions.
 - **`[HND-PROJ-CREATE]`**: `src/bot/handlers/entities/projects/create.py` - Registration state machine for a new project.
 - **`[HND-PROJ-LIST]`**: `src/bot/handlers/entities/projects/list.py` - Displays a scrollable list of entities.
 - **`[HND-STATES]`**: `src/bot/states.py` - Stores Python classes defining Aiogram Finite State Machines.

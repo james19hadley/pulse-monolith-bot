@@ -8,8 +8,8 @@ Forces concrete implementations (Google, OpenAI) to adhere to the same parsing i
 from abc import ABC, abstractmethod
 from typing import Tuple, Optional, Any, List
 from src.core.constants import IntentType
-from src.ai.providers import (
-    IntentResponse, LogWorkParams, AddInboxParams, SessionControlParams,
+from src.ai.schemas import (
+    IntentResponse, LogWorkMultiParams, AddInboxParams, SessionControlParams,
     SystemConfigParams, ReportConfigParams, CreateEntitiesParams, 
     EditEntitiesParams, AddTasksParams, UpdateMemoryParams
 )
@@ -24,7 +24,7 @@ class BaseLLMProvider(ABC):
         pass
 
     @abstractmethod
-    def extract_log_work_parameters(self, text: str, active_projects_text: str) -> Tuple[Optional[LogWorkParams], dict]:
+    def extract_log_work_parameters(self, text: str, active_projects_text: str) -> Tuple[Optional[LogWorkMultiParams], dict]:
         pass
 
     @abstractmethod
@@ -48,6 +48,20 @@ class BaseLLMProvider(ABC):
         pass
 
     @abstractmethod
+    def extract_edit_entities(self, text: str, entities_text: str) -> Tuple[Optional[EditEntitiesParams], dict]:
+        pass
+
+    @abstractmethod
+    def extract_add_tasks_parameters(self, text: str, active_projects_text: str) -> Tuple[Optional[AddTasksParams], dict]:
+        pass
+
+    @abstractmethod
+    def extract_update_memory(self, text: str) -> Tuple[Optional[UpdateMemoryParams], dict]:
+        pass
+
+    @abstractmethod
+    def generate_chat_response(self, text: str, persona_prompt: str) -> Tuple[Optional[str], dict]:
+        pass
     def extract_edit_entities(self, text: str, entities_text: str) -> Tuple[Optional[EditEntitiesParams], dict]:
         pass
 
