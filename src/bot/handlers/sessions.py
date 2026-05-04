@@ -46,7 +46,7 @@ async def cmd_start_session(message: Message, command: CommandObject = None):
         from src.db.models import Project
         
         kb = []
-        projects = db.query(Project).filter(Project.user_id == user.id, Project.status == "active").order_by(Project.updated_at.desc()).limit(3).all()
+        projects = db.query(Project).filter(Project.user_id == user.id, Project.status == "active").order_by(Project.id.desc()).limit(3).all()
         for p in projects:
              kb.append([InlineKeyboardButton(text=p.title, callback_data=f"ses_proj_{p.id}")])
              
