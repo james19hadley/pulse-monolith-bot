@@ -9,6 +9,9 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
+import jinja2
+import aiohttp_jinja2
+from src.web.routes import routes as web_routes
 from typing import Any, Awaitable, Callable, Dict
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
@@ -115,6 +118,8 @@ async def main():
     if WEBHOOK_DOMAIN:
         logging.info(f"Setting up Webhook mode on {WEBHOOK_DOMAIN}...")
         app = web.Application()
+        aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader("src/web/templates"))
+        app.add_routes(web_routes)
         webhook_requests_handler = SimpleRequestHandler(
             secret_token=WEBHOOK_SECRET,
             dispatcher=dp,

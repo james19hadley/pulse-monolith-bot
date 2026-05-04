@@ -99,3 +99,7 @@ This document contains a registry of unique identifiers (UIDs) used directly ins
 ## 📁 13. Data Scripts & Migrations (`src/scripts/`)
 - **`[SCRIPT-MIGRATE-LANG]`**: `src/scripts/migrate_language.py` - Single-run migration script to populate a default language column in the database.
 - **`[SCRIPT-AUDIT-DOCS]`**: `src/scripts/audit_docs.py` - Automated CI/CD script to audit the Project Architecture mapping.
+
+## 📁 14. Web Dashboard & SaaS (`src/web/`)
+- **`[WEB-AUTH]`**: `src/web/auth.py` - JWT Token generation and verification for web sessions.
+- **`[WEB-ROUTES]`**: `src/web/routes.py` - aiohttp routes for landing page, dashboard, and Telegram Widget callback.

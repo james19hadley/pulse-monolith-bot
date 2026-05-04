@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Pulse Monolith</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            blue: '#0B1120',
+                            monolith: '#FF6B00',
+                            glow: '#FF8A33',
+                            rock: '#1E293B',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0B1120; color: #E2E8F0; }
+        .monolith-accent { border-left: 4px solid #FF6B00; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row">
+
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 bg-brand-rock border-r border-slate-800 flex flex-col">
+        <div class="p-6 border-b border-slate-800">
+            <h1 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-brand-monolith">MONOLITH</h1>
+        </div>
+        
+        <nav class="flex-grow p-4 flex flex-col gap-2">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg bg-brand-blue text-brand-glow font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                Dashboard
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800 text-sm flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold">{{ user.first_name[0] }}</div>
+                <span class="truncate">{{ user.first_name }}</span>
+            </div>
+            <a href="/auth/logout" class="text-slate-500 hover:text-red-400 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-6 md:p-12 overflow-y-auto">
+        <header class="mb-10">
+            <h2 class="text-3xl font-bold">Welcome back, {{ user.first_name }}.</h2>
+            <p class="text-slate-400 mt-2">Here is the state of your monolith.</p>
+        </header>
+
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="bg-brand-rock p-6 rounded-xl border border-slate-700/50 shadow-lg monolith-accent relative overflow-hidden">
+                <h3 class="text-slate-400 text-sm font-medium uppercase tracking-wider mb-2">Total Focus Time</h3>
+                <div class="text-4xl font-black text-slate-100">{{ total_hours }} <span class="text-xl text-brand-monolith">hrs</span></div>
+            </div>
+            
+            <div class="bg-brand-rock p-6 rounded-xl border border-slate-700/50 shadow-lg relative overflow-hidden">
+                <h3 class="text-slate-400 text-sm font-medium uppercase tracking-wider mb-2">Active Projects</h3>
+                <div class="text-4xl font-black text-slate-100">{{ projects|length }}</div>
+            </div>
+        </div>
+
+        <!-- Projects List -->
+        <h3 class="text-xl font-bold mb-6 flex items-center gap-3">
+            <svg class="w-6 h-6 text-brand-glow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            Active Directives
+        </h3>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {% for proj in projects %}
+            <div class="bg-brand-rock/50 hover:bg-brand-rock p-5 rounded-lg border border-slate-800 transition-colors">
+                <div class="flex justify-between items-start mb-2">
+                    <h4 class="font-bold text-lg text-slate-200">{{ proj.title }}</h4>
+                    {% if proj.target_value %}
+                    <span class="text-xs bg-slate-800 text-brand-glow px-2 py-1 rounded-full">{{ proj.target_value }} {{ proj.unit or 'min' }} target</span>
+                    {% endif %}
+                </div>
+                
+                {% if proj.target_value and proj.target_value > 0 %}
+                {% set progress = proj.current_value or 0 %}
+                {% set pct = (progress / proj.target_value) * 100 %}
+                <div class="w-full bg-slate-800 rounded-full h-2 mt-4 overflow-hidden">
+                    <div class="bg-gradient-to-r from-orange-600 to-brand-monolith h-2 rounded-full shadow-[0_0_10px_rgba(255,107,0,0.5)]" style="width: {{ pct if pct <= 100 else 100 }}%"></div>
+                </div>
+                {% else %}
+                <div class="text-slate-500 text-sm mt-4 italic">No specific target tracked.</div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="col-span-full p-8 text-center text-slate-500 bg-brand-rock/30 rounded-lg border border-slate-800 border-dashed">
+                You currently have no active projects. Talk to the bot to create one.
+            </div>
+            {% endfor %}
+        </div>
+
+    </main>
+
+</body>
+</html>
