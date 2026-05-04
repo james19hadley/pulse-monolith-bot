@@ -38,6 +38,7 @@ class SafeLoggingMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: Dict[str, Any]
     ) -> Any:
+        logging.info(f"Incoming event: {type(event).__name__}")
         # Logging Phase
         try:
             if event.message:
