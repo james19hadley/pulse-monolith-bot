@@ -101,9 +101,11 @@ async def ai_message_router(message: Message):
             await message.answer("⚠️ You haven't configured an API key for your chosen AI provider yet.\nPlease use the web dashboard or /settings.")
             return
 
-        from src.bot.handlers.spinner import ProcessingSpinner
-        spinner = ProcessingSpinner(message, "🧠 Обрабатываю запрос, пишу телепатические логинки...")
-        await spinner.start()
+        spinner = None
+        if getattr(user, 'show_ai_spinner', True):
+            from src.bot.handlers.spinner import ProcessingSpinner
+            spinner = ProcessingSpinner(message, "🧠 Обрабатываю запрос...")
+            await spinner.start()
 
         try:
             intents, tokens, err = await get_intents(message.text, provider_name, api_key, user.user_memory)
@@ -111,7 +113,7 @@ async def ai_message_router(message: Message):
                 log_tokens(db, user.telegram_id, tokens)
                 
             if err or not intents or IntentType.ERROR in intents:
-                await spinner.stop()
+                if spinner: await spinner.stop()
                 logger.error(f"Routing Error: {err}")
                 if err and ("API key" in str(err) or "API_KEY" in str(err) or "api_key" in str(err).lower() or "400" in str(err)):
                     await message.answer("⚠️ Неверный API ключ для выбранного провайдера. Пожалуйста, проверьте его в настройках.\n\nОтладка: " + str(err))
@@ -120,15 +122,18 @@ async def ai_message_router(message: Message):
                 return
             
             if IntentType.UNKNOWN_PROVIDER in intents:
-                await spinner.stop()
+                if spinner: await spinner.stop()
                 await message.answer(Prompts.UNKNOWN_COMMAND.format(text=message.text))
                 return
                 
             logger.info(f"User {user.telegram_id} intent(s) localized: {intents}")
             
-            # Stop the generic spinner, we hand over to specific handlers 
-            # (they will do their own parsing which might take a few secs, but user knows bot is alive)
-            await spinner.stop()
+            # If we only have ONE intent, we can keep the spinner alive to edit it later.
+            # But the handlers currently send their own responses. 
+            # To keep it simple and fix the "multiple messages" issue:
+            # We stop the spinner here if there's more than one intent,
+            # or if it's a chat intent (which is long).
+            if spinner: await spinner.stop()
             
             # Execute multiple intents sequentially
             for intent in intents:
@@ -139,6 +144,6 @@ async def ai_message_router(message: Message):
                     await message.answer(Prompts.UNKNOWN_COMMAND.format(text=message.text))
                 
         except Exception as e:
-            await spinner.stop()
+            if spinner: await spinner.stop()
             logger.error(f"Routing Error: {e}", exc_info=True)
             await message.answer(Prompts.ERROR_GLOBAL + f"\n\nОтладка Системы: {str(e)}")

@@ -133,6 +133,10 @@ def init_db():
                     conn.execute(sql_text("ALTER TABLE users ADD COLUMN last_evening_plan VARCHAR"))
                 except Exception:
                     pass
+                try:
+                    conn.execute(sql_text("ALTER TABLE users ADD COLUMN show_ai_spinner BOOLEAN DEFAULT TRUE"))
+                except Exception:
+                    pass
             else:
                 # PostgreSQL
                 columns_to_add = [
@@ -141,6 +145,7 @@ def init_db():
                     ("users", "talkativeness_level", "VARCHAR DEFAULT 'standard'"),
                     ("users", "reflection_config", "JSON"),
                     ("users", "last_evening_plan", "VARCHAR"),
+                    ("users", "show_ai_spinner", "BOOLEAN DEFAULT TRUE"),
                     ("projects", "daily_target_value", "INTEGER"),
                     ("projects", "daily_progress", "INTEGER DEFAULT 0"),
                     ("projects", "current_streak", "INTEGER DEFAULT 0"),

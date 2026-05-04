@@ -55,6 +55,7 @@ class User(Base):
     catalyst_interval_minutes: Mapped[int] = mapped_column(Integer, default=20)
     target_channel_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
     report_config: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)
+    show_ai_spinner: Mapped[bool] = mapped_column(Boolean, default=True)
 
     @property
     def api_keys(self) -> dict:

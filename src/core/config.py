@@ -88,6 +88,13 @@ USER_SETTINGS_REGISTRY = {
         "name": "Active LLM Provider",
         "description": "Which API to use (google, openai, anthropic)",
         "default": "google"
+    },
+    "show_spinner": {
+        "db_column": "show_ai_spinner",
+        "type": bool,
+        "name": "Show AI Spinner",
+        "description": "Show an animated spinner while the AI is thinking",
+        "default": True
     }
 }
 
