@@ -14,7 +14,7 @@ async def _handle_create_entities(message: Message, db, user, provider_name, api
     active_projs = db.query(Project).filter(Project.user_id == user.id, Project.status == "active").all()
     active_projects_text = "\n".join([f"[{p.id}] {p.title}" for p in active_projs])
     
-    extraction, tokens = extract_entities(message.text, provider_name, api_key, active_projects_text)
+    extraction, tokens = await extract_entities(message.text, provider_name, api_key, active_projects_text)
     
     if tokens:
         log_tokens(db, message.from_user.id, tokens)
@@ -108,7 +108,7 @@ async def _handle_add_inbox(message: Message, db, user, provider_name, api_key):
     from src.db.models import Inbox
     from src.bot.handlers.utils import log_tokens
     
-    extraction, tokens = extract_inbox(message.text, provider_name, api_key)
+    extraction, tokens = await extract_inbox(message.text, provider_name, api_key)
     
     if tokens:
         log_tokens(db, message.from_user.id, tokens)
@@ -147,8 +147,15 @@ async def _handle_add_tasks(message: Message, db, user, provider_name, api_key):
     local_now = datetime.now(timezone.utc).astimezone(user_tz)
     projects_text += f"\n\nCURRENT LOCAL TIME FOR USER: {local_now.isoformat()}"
     
-    # Extract tasks
-    extraction, tokens = extract_add_tasks(message.text, provider_name, api_key, projects_text)
+    from src.bot.handlers.spinner import ProcessingSpinner
+    spinner = ProcessingSpinner(message, "🧠 Извлекаю параметры задач (может занять время)...")
+    await spinner.start()
+    
+    try:
+        # Extract tasks
+        extraction, tokens = await extract_add_tasks(message.text, provider_name, api_key, projects_text)
+    finally:
+        await spinner.stop()
     
     if tokens:
         log_tokens(db, message.from_user.id, tokens)
@@ -245,7 +252,7 @@ async def _handle_edit_entities(message: Message, db, user, provider_name, api_k
     entities_text = "Your entities (Tasks have ordinal numbers for UX, but MUST be referenced by DB_ID):\n" + "\n".join(entities_list)
     
     # Extract edit requests
-    extraction, tokens = extract_edit_entities(message.text, provider_name, api_key, entities_text)
+    extraction, tokens = await extract_edit_entities(message.text, provider_name, api_key, entities_text)
     
     if tokens:
         log_tokens(db, message.from_user.id, tokens)

@@ -37,7 +37,14 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
         active_projects_text += f"\nCONTEXT (User's last logged activity): Logged {last_log.duration_minutes} minutes to project '{p_title}'."
 
     # 2. Call AI extraction
-    extraction, tokens = extract_log_work(message.text, provider_name, api_key, active_projects_text)
+    from src.bot.handlers.spinner import ProcessingSpinner
+    spinner = ProcessingSpinner(message, "🧠 Сохраняю во времени и пространстве...")
+    await spinner.start()
+    
+    try:
+        extraction, tokens = await extract_log_work(message.text, provider_name, api_key, active_projects_text)
+    finally:
+        await spinner.stop()
     
     if tokens:
         log_tokens(db, message.from_user.id, tokens)

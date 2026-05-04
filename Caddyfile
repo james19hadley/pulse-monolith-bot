@@ -4,7 +4,7 @@
 {$WEBHOOK_DOMAIN:localhost} {
     @adminBlock {
         path /admin/*
-        not remote_ip 127.0.0.1 192.168.1.1 10.0.0.1 92.208.108.220
+        not remote_ip 127.0.0.1 192.168.1.1 10.0.0.1 100.68.70.44
     }
     respond @adminBlock "403 Forbidden - Unauthorized IP" 403
 
@@ -19,7 +19,7 @@ pulsemonolith.com, www.pulsemonolith.com {
     # --- Bot Admin Security ---
     @adminBlock {
         path /admin/*
-        not remote_ip 127.0.0.1 192.168.1.1 10.0.0.1 92.208.108.220
+        not remote_ip 127.0.0.1 192.168.1.1 10.0.0.1 100.68.70.44
     }
     respond @adminBlock "403 Forbidden - Unauthorized IP" 403
 

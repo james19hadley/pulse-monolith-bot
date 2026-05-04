@@ -4,117 +4,118 @@ The central NLP router that passes user messages to the Intent classifier to fig
 @Architecture-Map: [CORE-AI-ROUTER]
 @Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
+import asyncio
 from typing import Optional, Tuple, Union, List
 from src.ai.providers import GoogleProvider, LogWorkMultiParams, AddInboxParams, SessionControlParams, ReportConfigParams, SystemConfigParams, CreateEntitiesParams, AddTasksParams, EditEntitiesParams, UpdateMemoryParams
 from src.core.constants import IntentType
 
-def get_intents(user_text: str, provider_name: str, api_key: str, user_memory: dict = None) -> Tuple[List[IntentType], dict, Optional[str]]:
+async def get_intents(user_text: str, provider_name: str, api_key: str, user_memory: dict = None) -> Tuple[List[IntentType], dict, Optional[str]]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
-            intents, tokens = provider.classify_intents(user_text, user_memory)
+            intents, tokens = await asyncio.to_thread(provider.classify_intents, user_text, user_memory)
             return intents, tokens, None
         except Exception as e:
             print(f'LLM Error: {e}')
             return [IntentType.ERROR], {}, str(e)
     return [IntentType.UNKNOWN_PROVIDER], {}, "Unknown provider"
 
-def extract_log_work(user_text: str, provider_name: str, api_key: str, active_projects_text: str) -> Tuple[Optional[LogWorkMultiParams], dict]:
+async def extract_log_work(user_text: str, provider_name: str, api_key: str, active_projects_text: str) -> Tuple[Optional[LogWorkMultiParams], dict]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
-            return provider.extract_log_work_parameters(user_text, active_projects_text)
+            return await asyncio.to_thread(provider.extract_log_work_parameters, user_text, active_projects_text)
         except Exception as e:
             print(f'LLM Extraction Error: {e}')
             return None, {}
     return None, {}
 
-def extract_inbox(user_text: str, provider_name: str, api_key: str) -> Tuple[Optional[AddInboxParams], dict]:
+async def extract_inbox(user_text: str, provider_name: str, api_key: str) -> Tuple[Optional[AddInboxParams], dict]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
-            return provider.extract_inbox_parameters(user_text)
+            return await asyncio.to_thread(provider.extract_inbox_parameters, user_text)
         except Exception as e:
             print(f'LLM Extraction Error: {e}')
             return None, {}
     return None, {}
 
-def extract_session_control(user_text: str, provider_name: str, api_key: str, active_projects_text: str = "") -> Tuple[Optional[SessionControlParams], dict]:
+async def extract_session_control(user_text: str, provider_name: str, api_key: str, active_projects_text: str = "") -> Tuple[Optional[SessionControlParams], dict]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
-            return provider.extract_session_control(user_text, active_projects_text)
+            return await asyncio.to_thread(provider.extract_session_control, user_text, active_projects_text)
         except Exception as e:
             print(f'LLM Extraction Error: {e}')
             return None, {}
     return None, {}
 
-def extract_report_config(user_text: str, provider_name: str, api_key: str) -> Tuple[Optional[ReportConfigParams], dict]:
+async def extract_report_config(user_text: str, provider_name: str, api_key: str) -> Tuple[Optional[ReportConfigParams], dict]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
-            return provider.extract_report_config(user_text)
+            return await asyncio.to_thread(provider.extract_report_config, user_text)
         except Exception as e:
             print(f'LLM Extraction Error: {e}')
             return None, {}
     return None, {}
 
-def extract_system_config(user_text: str, provider_name: str, api_key: str, registry_keys: list[str]) -> Tuple[Optional[SystemConfigParams], dict]:
+async def extract_system_config(user_text: str, provider_name: str, api_key: str, registry_keys: list[str]) -> Tuple[Optional[SystemConfigParams], dict]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
-            return provider.extract_system_config(user_text, registry_keys)
+            return await asyncio.to_thread(provider.extract_system_config, user_text, registry_keys)
         except Exception as e:
             print(f'LLM Extraction Error: {e}')
             return None, {}
     return None, {}
 
-def extract_entities(user_text: str, provider_name: str, api_key: str, active_projects_text: str = "") -> Tuple[Optional[Union[CreateEntitiesParams, AddTasksParams]], dict]:
+async def extract_entities(user_text: str, provider_name: str, api_key: str, active_projects_text: str = "") -> Tuple[Optional[Union[CreateEntitiesParams, AddTasksParams]], dict]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
-            return provider.extract_create_entities(user_text, active_projects_text)
+            return await asyncio.to_thread(provider.extract_create_entities, user_text, active_projects_text)
         except Exception as e:
             print(f'LLM Extraction Error: {e}')
             return None, {}
     return None, {}
 
-def generate_chat(user_text: str, provider_name: str, api_key: str, persona_prompt: str) -> Tuple[Optional[str], dict]:
+async def generate_chat(user_text: str, provider_name: str, api_key: str, persona_prompt: str) -> Tuple[Optional[str], dict]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
-            return provider.generate_chat_response(user_text, persona_prompt)
+            return await asyncio.to_thread(provider.generate_chat_response, user_text, persona_prompt)
         except Exception as e:
             print(f'LLM Chat Error: {e}')
             return None, {}
     return None, {}
 
 
-def extract_add_tasks(user_text: str, provider_name: str, api_key: str, active_projects_text: str) -> Tuple[Optional[AddTasksParams], dict]:
+async def extract_add_tasks(user_text: str, provider_name: str, api_key: str, active_projects_text: str) -> Tuple[Optional[AddTasksParams], dict]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
-            return provider.extract_add_tasks_parameters(user_text, active_projects_text)
+            return await asyncio.to_thread(provider.extract_add_tasks_parameters, user_text, active_projects_text)
         except Exception as e:
             print(f'LLM Extraction Error: {e}')
             return None, {}
     return None, {}
 
-def extract_edit_entities(user_text: str, provider_name: str, api_key: str, entities_text: str):
+async def extract_edit_entities(user_text: str, provider_name: str, api_key: str, entities_text: str):
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
-            return provider.extract_edit_entities(user_text, entities_text)
+            return await asyncio.to_thread(provider.extract_edit_entities, user_text, entities_text)
         except Exception as e:
             print(f'LLM Extraction Error: {e}')
             return None, {}
     return None, {}
 
-def extract_update_memory(user_text: str, provider_name: str, api_key: str) -> Tuple[Optional[UpdateMemoryParams], dict]:
+async def extract_update_memory(user_text: str, provider_name: str, api_key: str) -> Tuple[Optional[UpdateMemoryParams], dict]:
     if provider_name == 'google':
         provider = GoogleProvider(api_key=api_key)
         try:
-            return provider.extract_update_memory(user_text)
+            return await asyncio.to_thread(provider.extract_update_memory, user_text)
         except Exception as e:
             print(f'LLM Extraction Error: {e}')
             return None, {}

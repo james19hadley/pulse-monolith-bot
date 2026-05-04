@@ -18,3 +18,8 @@
 ### [Bug 3: Missing Context Query on Session Start]
 - [x] **Issue:** When the user clicks `▶️ Session` from the main menu, the bot starts a session but *does not* ask "Чем мы занимаемся?" as implemented in Sprint 40.
 - [x] **Fix:** Review `cmd_start_session` in `src/bot/handlers/sessions.py`. Ensure the bot follows up with the inline keyboard of active projects or a text prompt (e.g., `EntityState.waiting_for_session_context`) immediately after the timer starts.
+
+### [Bug 4: Telegram Webhook Timeout ("Silent Death")]
+- [x] **Issue:** Sending a complex request (e.g., creating 7 tasks) causes the synchronous Google Gemini API to block the `asyncio` event loop for minutes. Telegram sees a timeout (no response within 5 seconds), aborts the connection, and retries the webhook delivery repeatedly, causing duplicated tasks and a frozen bot state for other commands.
+- [x] **Fix:** Refactored `src/ai/router.py` to be fully asynchronous. Replaced direct `genai.Client` sync calls with `asyncio.to_thread` workers. Upgraded all AI calls from handlers (`src/bot/handlers/intents/*.py`) to `await` the router layer wrapper.
+- [x] **UX Polish:** Created `ProcessingSpinner` (`src/bot/handlers/spinner.py`) to show a non-blocking animated "Typing..." style indicator in Telegram, ensuring the user knows the AI is working natively even if the backend is doing heavy IO for >5 seconds.

@@ -23,7 +23,7 @@ async def _handle_session_control(message: Message, db, user, provider_name, api
     else:
         active_projects_text = "User's active projects:\n" + "\n".join([f"ID: {p.id}, Title: {p.title}" for p in projects])
 
-    params, tokens = extract_session_control(message.text, provider_name, api_key, active_projects_text)
+    params, tokens = await extract_session_control(message.text, provider_name, api_key, active_projects_text)
     if tokens:
         from src.bot.handlers.utils import log_tokens
         log_tokens(db, user.id, tokens)

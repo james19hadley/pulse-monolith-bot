@@ -12,7 +12,7 @@ from src.ai.router import generate_chat, extract_system_config, extract_report_c
 from src.bot.handlers.utils import log_tokens
 
 async def _handle_update_memory(message: Message, db, user, provider_name, api_key):
-    extraction, tokens = extract_update_memory(message.text, provider_name, api_key)
+    extraction, tokens = await extract_update_memory(message.text, provider_name, api_key)
     if tokens:
         log_tokens(db, user.telegram_id, tokens)
         
@@ -79,7 +79,7 @@ async def _handle_chat(message: Message, db, user, provider_name, api_key):
         
     persona_prompt += context_str
     
-    response_text, tokens = generate_chat(message.text, provider_name, api_key, persona_prompt)
+    response_text, tokens = await generate_chat(message.text, provider_name, api_key, persona_prompt)
     if tokens:
         log_tokens(db, message.from_user.id, tokens)
         
@@ -140,7 +140,7 @@ async def _handle_chat(message: Message, db, user, provider_name, api_key):
 
 async def _handle_config_update(message: Message, db, user, provider_name, api_key):
     settings_keys = list(USER_SETTINGS_REGISTRY.keys())
-    extraction, tokens = extract_system_config(message.text, provider_name, api_key, settings_keys)
+    extraction, tokens = await extract_system_config(message.text, provider_name, api_key, settings_keys)
     
     if tokens:
         log_tokens(db, message.from_user.id, tokens)
@@ -183,7 +183,7 @@ async def _handle_config_update(message: Message, db, user, provider_name, api_k
 
 
 async def _handle_config_report(message: Message, db, user, provider_name, api_key):
-    extraction, tokens = extract_report_config(message.text, provider_name, api_key)
+    extraction, tokens = await extract_report_config(message.text, provider_name, api_key)
     if tokens:
         from src.bot.handlers.utils import log_tokens
         log_tokens(db, message.from_user.id, tokens)
