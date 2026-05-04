@@ -52,7 +52,7 @@ async def _handle_project_status(message: Message, db, user, provider_name, api_
         
     # Temporary fallback until we build a full project search parameter extractor:
     # Just render the standard /projects list.
-    from src.bot.handlers.core import cmd_projects
+    from src.bot.handlers.entities.commands import cmd_projects
     await cmd_projects(message)
 
 async def _handle_chat(message: Message, db, user, provider_name, api_key):
