@@ -47,6 +47,7 @@ This document contains a registry of unique identifiers (UIDs) used directly ins
 - **`[HND-AI-ROUTER]`**: `src/bot/handlers/ai_router.py` - Intercepts all unhandled raw text and forwards it to Intent Router.
 - **`[HND-BOT-CORE]`**: `src/bot/handlers/core.py` - Root structural commands like /start or main menu fallbacks.
 - **`[HND-SESSIONS]`**: `src/bot/handlers/sessions.py` - Start/Stop/Pause logic for focus timers.
+- **`[HND-SPINNER]`**: `src/bot/handlers/spinner.py` - Animated loading indicator for long-running AI operations.
 - **`[HND-UTILS]`**: `src/bot/handlers/utils.py` - Universal helper components (e.g. deleting previous messages on prompt answers).
 - **`[HND-ENT-CMDS]`**: `src/bot/handlers/entities/commands.py` - Specific textual commands like /new or /stats.
 - **`[HND-ENT-MENU]`**: `src/bot/handlers/entities/menu.py` - Entry points to entity sub-menus.

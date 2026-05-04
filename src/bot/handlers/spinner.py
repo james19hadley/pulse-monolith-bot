@@ -1,3 +1,7 @@
+"""
+Animated loading indicator for long-running AI operations.
+@Architecture-Map: [HND-SPINNER]
+"""
 import asyncio
 from aiogram.types import Message
 
