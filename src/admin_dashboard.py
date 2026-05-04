@@ -106,6 +106,12 @@ async def dashboard_handler(request: web.Request):
         return web.Response(text=f"Error loading dashboard: {str(e)}", status=500)
 
 async def logs_handler(request: web.Request):
+    # Log the client IP for debugging 403 Forbidden issues
+    client_ip = request.remote
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    real_ip = request.headers.get("X-Real-IP")
+    logging.info(f"DEBUG: Logs access attempt from remote={client_ip}, X-Forwarded-For={forwarded_for}, X-Real-IP={real_ip}")
+    
     if not check_auth(request):
         return web.Response(
             status=401,

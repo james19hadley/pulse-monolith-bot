@@ -8,7 +8,11 @@
     }
     respond @adminBlock "403 Forbidden - Unauthorized IP" 403
 
-    reverse_proxy bot:8080
+    reverse_proxy bot:8080 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+    }
 }
 
 # ==========================================
@@ -26,10 +30,18 @@ pulsemonolith.com, www.pulsemonolith.com {
     # --- BOT ROUTING ---
     # Route all Telegram webhooks and admin panel requests to Python
     handle /webhook* {
-        reverse_proxy bot:8080
+        reverse_proxy bot:8080 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+        }
     }
     handle /admin/* {
-        reverse_proxy bot:8080
+        reverse_proxy bot:8080 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+        }
     }
 
     # --- SITE / LANDING ROUTING ---
