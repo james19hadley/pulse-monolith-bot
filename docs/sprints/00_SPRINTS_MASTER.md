@@ -77,3 +77,6 @@ Every new Sprint Markdown file must follow this strict structure to maintain con
 | [Sprint 44](44_TASKS_PERIODICITY.md) | Tasks, Periodicity, & Memory Space | 🟢 Completed |
 | [Sprint 45](45_DYNAMIC_REMINDERS.md) | Dynamic Reminders & Celery ETA | 🟢 Completed |
 | [Sprint 46](46_TASK_DURATIONS.md) | Task Durations & UX Optimization | 🟢 Completed |
+| [Sprint 47](47_GOOGLE_SHEETS_ANALYTICS.md) | Google Sheets Analytics (Macro-reflection) | 🟡 Active |
+| [Sprint 48](48_BUGS_AND_CHORES.md) | Bug Fixes & UX Polish | 🟢 Completed |
+| [Sprint 49](49_WEB_DASHBOARD_AND_LANDING.md) | Web Dashboard & SaaS Landing Page | ⚪ Planned |

@@ -1,3 +1,4 @@
+from aiogram import F
 """
 General settings menu handlers.
 
@@ -59,7 +60,7 @@ def get_control_panel_text(user) -> str:
 
 
 @router.message(Command("settings"))
-@router.message(lambda msg: msg.text == "⚙️ Settings")
+@router.message(F.text == "⚙️ Settings")
 async def cmd_general_settings(message: Message):
     if not message.from_user:
         return
@@ -176,7 +177,7 @@ async def cq_settings_stubs(callback: CallbackQuery, state: FSMContext):
 
 
 @router.message(Command("settings"))
-@router.message(lambda msg: msg.text == "⚙️ Settings")
+@router.message(F.text == "⚙️ Settings")
 async def cmd_settings(message: Message, command: CommandObject):
     """Update user preferences via config registry."""
     if not command.args:

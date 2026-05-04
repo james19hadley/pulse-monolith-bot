@@ -27,7 +27,7 @@ async def cmd_start(message: Message):
     await message.answer(welcome_message(has_key), parse_mode="HTML", reply_markup=get_main_menu(bool(user.active_session_id)))
 
 @router.message(Command("help"))
-@router.message(lambda msg: msg.text == "❓ Help")
+@router.message(F.text == "❓ Help")
 async def cmd_help(message: Message):
     help_text = """
 <b>Pulse Monolith - Manual Overrides</b>
@@ -175,7 +175,7 @@ async def cmd_inbox(message: Message, command):
         await message.answer(text, parse_mode="HTML")
 
 @router.message(Command("undo"))
-@router.message(lambda msg: msg.text == "↩️ Undo")
+@router.message(F.text == "↩️ Undo")
 async def cmd_undo(message: Message, state: FSMContext):
     from src.db.models import ActionLog, Project, TimeLog
     with SessionLocal() as db:
@@ -297,10 +297,14 @@ async def cmd_undo(message: Message, state: FSMContext):
                  InlineKeyboardButton(text="✅", callback_data="ui_undo_ok"),
                  InlineKeyboardButton(text="❌", callback_data="ui_undo_bad")
             ]])
+            
+            # If the session state changed, we need to send the main menu update. We can just send one message if we drop the inline buttons, OR send a silent menu update.
+            # But since inline buttons and reply keyboards can't mix, we just send a descriptive second message IF it was a session change.
             await message.answer(msg_text, reply_markup=markup, parse_mode="HTML")
             
-            from src.bot.keyboards import get_main_menu
-            await message.answer("Меню обновлено.", reply_markup=get_main_menu(bool(user.active_session_id)))
+            if action.previous_state_json.get("was_session_end"):
+                from src.bot.keyboards import get_main_menu
+                await message.answer("🔄 Главное меню обновлено (сессия возвращена).", reply_markup=get_main_menu(bool(user.active_session_id)))
             
         except Exception as e:
             db.rollback()

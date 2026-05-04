@@ -65,7 +65,16 @@ async def _handle_session_control(message: Message, db, user, provider_name, api
             else:
                 await message.answer("🔥 Сессия начата. (Не смог найти указанный проект). Не отвлекайся. Когда закончишь, просто скажи.", reply_markup=get_main_menu(True))
         else:
-            await message.answer("🔥 Сессия начата. Не отвлекайся. Когда закончишь, просто скажи.", reply_markup=get_main_menu(True))
+            await message.answer("� Сессия начата.", reply_markup=get_main_menu(True))
+            
+            from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+            kb = []
+            projects = db.query(Project).filter(Project.user_id == user.id, Project.status == "active").order_by(Project.updated_at.desc()).limit(3).all()
+            for p in projects:
+                 kb.append([InlineKeyboardButton(text=p.title, callback_data=f"ses_proj_{p.id}")])
+            kb.append([InlineKeyboardButton(text="Skip", callback_data="ses_proj_skip")])
+            markup = InlineKeyboardMarkup(inline_keyboard=kb)
+            await message.answer("⏱ Таймер запущен. Над чем работаем?", reply_markup=markup)
         
     elif action == "REST":
         if not active_session_id:

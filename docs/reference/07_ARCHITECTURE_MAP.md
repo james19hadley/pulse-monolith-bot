@@ -41,6 +41,7 @@ This document contains a registry of unique identifiers (UIDs) used directly ins
 - **`[HND-INTENT-ENT]`**: `src/bot/handlers/intents/intent_entities.py` - Processes entity creation intents.
 - **`[HND-INTENT-WORK]`**: `src/bot/handlers/intents/intent_log_work.py` - Processes work-logging intents.
 - **`[HND-INTENT-SESS]`**: `src/bot/handlers/intents/intent_session.py` - Processes NLP session commands.
+- **`[HND-INTENT-INBOX]`**: `src/bot/handlers/intents/intent_inbox.py` - Processes inbox cleanup intents.
 
 ## 📁 9. Bot Handlers: Entities & Menus (`src/bot/handlers/entities/`, `src/bot/handlers/`)
 - **`[HND-AI-ROUTER]`**: `src/bot/handlers/ai_router.py` - Intercepts all unhandled raw text and forwards it to Intent Router.

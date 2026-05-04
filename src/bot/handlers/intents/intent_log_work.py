@@ -27,6 +27,15 @@ async def _handle_log_work(message: Message, db, user, provider_name, api_key):
             progress_info = f", Current Progress: {p.daily_progress or 0}" if p.daily_target_value else ""
             active_projects_text += f"ID: {p.id}, Title: {p.title}{target_info}{progress_info}\n"
 
+    # Fetch the very last log entry so the AI can resolve context like "that was for project X"
+    last_log = db.query(TimeLog).filter(TimeLog.user_id == user.id).order_by(TimeLog.id.desc()).first()
+    if last_log:
+        p_title = "Unknown"
+        if last_log.project_id:
+            lp = db.query(Project).filter(Project.id == last_log.project_id).first()
+            p_title = lp.title if lp else str(last_log.project_id)
+        active_projects_text += f"\nCONTEXT (User's last logged activity): Logged {last_log.duration_minutes} minutes to project '{p_title}'."
+
     # 2. Call AI extraction
     extraction, tokens = extract_log_work(message.text, provider_name, api_key, active_projects_text)
     

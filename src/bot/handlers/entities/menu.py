@@ -1,3 +1,4 @@
+from aiogram import F
 """
 Main menus and navigation for projects/entities management.
 
@@ -17,7 +18,7 @@ from src.bot.keyboards import get_entities_main_keyboard, get_projects_tree_keyb
 
 router = Router()
 
-@router.message(lambda msg: msg.text == Buttons.PROJECTS)
+@router.message(F.text == Buttons.PROJECTS)
 async def cmd_projects_menu(message: Message, state: FSMContext):
     await state.clear()
     with SessionLocal() as db:
@@ -35,7 +36,7 @@ async def cmd_projects_menu(message: Message, state: FSMContext):
         )
 
 
-@router.message(lambda msg: msg.text == getattr(Buttons, "HABITS", "🎯 Habits"))
+@router.message(F.text == getattr(Buttons, "HABITS", "🎯 Habits"))
 async def cmd_habits_menu(message: Message, state: FSMContext):
     await state.clear()
     await message.answer("Habits have been migrated to 🗂️ Projects. Click Projects to view them.")
