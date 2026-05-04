@@ -1,5 +1,5 @@
 # ==========================================
-# 1. OLD DOMAIN
+# 1. OLD DOMAIN (backward compatibility + Telegram webhhoks)
 # ==========================================
 {$WEBHOOK_DOMAIN:localhost} {
     @adminBlock {
@@ -8,19 +8,49 @@
     }
     respond @adminBlock "403 Forbidden - Unauthorized IP" 403
 
-    reverse_proxy bot:8080
+    reverse_proxy bot:8080 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+    }
 }
 
 # ==========================================
-# 2. NEW COOL DOMAIN
+# 2. NEW COOL DOMAIN (Landing + Bot)
 # ==========================================
 pulsemonolith.com, www.pulsemonolith.com {
+
+    # --- Bot Admin Security ---
     @adminBlock {
         path /admin/*
         not remote_ip 127.0.0.1 100.68.70.44 185.194.64.106 172.16.0.0/12 100.64.0.0/10
     }
     respond @adminBlock "403 Forbidden - Unauthorized IP" 403
 
-    # Route everything to the bot/webapp container
-    reverse_proxy bot:8080
+    # --- BOT ROUTING ---
+    # Route all Telegram webhooks and admin panel requests to Python
+    handle /webhook* {
+        reverse_proxy bot:8080 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+        }
+    }
+    handle /admin/* {
+        reverse_proxy bot:8080 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+        }
+    }
+
+    # --- SITE / LANDING ROUTING ---
+    # All other requests (site root) are handled here by the Python web server
+    handle {
+        reverse_proxy bot:8080 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+        }
+    }
 }
