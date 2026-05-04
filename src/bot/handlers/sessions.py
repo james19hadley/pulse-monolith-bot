@@ -40,21 +40,20 @@ async def cmd_start_session(message: Message, command: CommandObject = None):
         user.active_session_id = session.id
         db.commit()
     
-    await message.answer("🟢 Сессия начата.", reply_markup=get_main_menu(True))
-    
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-    from src.db.models import Project
-    
-    kb = []
-    with SessionLocal() as db:
+        await message.answer("🟢 Сессия начата.", reply_markup=get_main_menu(True))
+        
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        from src.db.models import Project
+        
+        kb = []
         projects = db.query(Project).filter(Project.user_id == user.id, Project.status == "active").order_by(Project.updated_at.desc()).limit(3).all()
         for p in projects:
              kb.append([InlineKeyboardButton(text=p.title, callback_data=f"ses_proj_{p.id}")])
              
-    kb.append([InlineKeyboardButton(text="Skip", callback_data="ses_proj_skip")])
-    markup = InlineKeyboardMarkup(inline_keyboard=kb)
-        
-    await message.answer("⏱ Таймер запущен. Над чем работаем?", reply_markup=markup)
+        kb.append([InlineKeyboardButton(text="Skip", callback_data="ses_proj_skip")])
+        markup = InlineKeyboardMarkup(inline_keyboard=kb)
+            
+        await message.answer("⏱ Таймер запущен. Над чем работаем?", reply_markup=markup)
 
 from aiogram import F
 from aiogram.types import CallbackQuery
