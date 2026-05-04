@@ -49,10 +49,10 @@ This document contains a registry of unique identifiers (UIDs) used directly ins
 ## 📁 8. Bot Handlers: Intent Classifiers (`src/bot/handlers/intents/`)
 - **`[HND-INTENT-CORE]`**: `src/bot/handlers/intents/intent_core.py` - Execution mapping for NLP intents.
 - **`[HND-INTENT-ENT]`**: `src/bot/handlers/intents/intent_entities.py` - Delegation layer for entity creation intents.
-- **`[HND-INTENT-ENT-PROJ]`**: `src/bot/handlers/intents/entities/projects.py` - Project/Habit creation.
-- **`[HND-INTENT-ENT-INBOX]`**: `src/bot/handlers/intents/entities/inbox.py` - Inbox capture.
-- **`[HND-INTENT-ENT-TASK]`**: `src/bot/handlers/intents/entities/tasks.py` - Task creation logic.
-- **`[HND-INTENT-ENT-EDIT]`**: `src/bot/handlers/intents/entities/edit.py` - Entity editing/deletion.
+- **`[HND-INTENT-ENT-PROJ]`**: `src/bot/handlers/intents/handlers/projects.py` - Project/Habit creation.
+- **`[HND-INTENT-ENT-INBOX]`**: `src/bot/handlers/intents/handlers/inbox.py` - Inbox capture.
+- **`[HND-INTENT-ENT-TASK]`**: `src/bot/handlers/intents/handlers/tasks.py` - Task creation logic.
+- **`[HND-INTENT-ENT-EDIT]`**: `src/bot/handlers/intents/handlers/edit.py` - Entity editing/deletion.
 - **`[HND-INTENT-WORK]`**: `src/bot/handlers/intents/intent_log_work.py` - Processes work-logging intents.
 - **`[HND-INTENT-SESS]`**: `src/bot/handlers/intents/intent_session.py` - Processes NLP session commands.
 - **`[HND-INTENT-INBOX]`**: `src/bot/handlers/intents/intent_inbox.py` - Processes inbox cleanup intents.
