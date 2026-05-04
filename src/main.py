@@ -72,11 +72,13 @@ class SafeLoggingMiddleware(BaseMiddleware):
                     pass
 
 async def main():
+    logging.info("🚀 Pulse Monolith Bot is booting up...")
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
     dp = Dispatcher()
     dp.update.outer_middleware(SafeLoggingMiddleware())
     
     # Register handlers
+    logging.info(f"Registering {len(routers)} main routers...")
     for router in routers:
         dp.include_router(router)
     
@@ -110,6 +112,7 @@ async def main():
     await bot.delete_webhook(drop_pending_updates=True)
     
     if WEBHOOK_DOMAIN:
+        logging.info(f"Setting up Webhook mode on {WEBHOOK_DOMAIN}...")
         app = web.Application()
         webhook_requests_handler = SimpleRequestHandler(
             secret_token=WEBHOOK_SECRET,
@@ -122,7 +125,11 @@ async def main():
         app.router.add_get('/admin/dashboard', dashboard_handler)
         app.router.add_get('/admin/logs', logs_handler)        
         webhook_url = f"https://{WEBHOOK_DOMAIN}{WEBHOOK_PATH}"
-        print(f"⬛ Setting webhook to {webhook_url}...")
+        logging.info(f"Setting up Webhook mode on {webhook_url}...")
+        
+        # Log webhook setup details
+        logging.info(f"Webhook URL: {webhook_url}")
+        logging.info(f"Webhook Host: {WEBAPP_HOST}, Port: {WEBAPP_PORT}")
         
         # Explicitly ask Telegram to send all update types we setup
         await bot.set_webhook(
