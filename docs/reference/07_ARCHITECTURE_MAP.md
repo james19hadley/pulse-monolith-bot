@@ -59,11 +59,11 @@ This document contains a registry of unique identifiers (UIDs) used directly ins
 
 ## 📁 9. Bot Handlers: Entities & Menus (`src/bot/handlers/entities/`, `src/bot/handlers/`)
 - **`[HND-AI-ROUTER]`**: `src/bot/handlers/ai_router.py` - Intercepts all unhandled raw text and forwards it to Intent Router.
-- **`[HND-BOT-CORE]`**: `src/bot/handlers/core.py` - Delegation layer for root structural commands.
+- **`[HND-BOT-CORE]`**: `src/bot/handlers/core/router.py` - Delegation layer for root structural commands.
 - **`[HND-CORE-BASIC]`**: `src/bot/handlers/core/basic.py` - /start, /help, /faq.
 - **`[HND-CORE-UI]`**: `src/bot/handlers/core/ui.py` - Stats, Tasks, Inbox menus.
 - **`[HND-CORE-UNDO]`**: `src/bot/handlers/core/undo.py` - Smart Undo logic.
-- **`[HND-SESSIONS]`**: `src/bot/handlers/sessions.py` - Delegation layer for focus timers.
+- **`[HND-SESSIONS]`**: `src/bot/handlers/sessions/router.py` - Delegation layer for focus timers.
 - **`[HND-SESS-CMD]`**: `src/bot/handlers/sessions/commands.py` - Start/Stop/End session commands.
 - **`[HND-SESS-CB]`**: `src/bot/handlers/sessions/callbacks.py` - Project assignment and nudge callbacks.
 - **`[HND-SPINNER]`**: `src/bot/handlers/spinner.py` - Animated loading indicator for long-running AI operations.

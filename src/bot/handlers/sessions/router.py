@@ -6,10 +6,9 @@ Refactored to delegate logic to sub-modules.
 @Docs: docs/reference/07_ARCHITECTURE_MAP.md
 """
 from aiogram import Router
-from .sessions.commands import router as commands_router
-from .sessions.callbacks import router as callbacks_router
+from .commands import router as commands_router
+from .callbacks import router as callbacks_router
 
 router = Router()
 router.include_router(commands_router)
 router.include_router(callbacks_router)
-
