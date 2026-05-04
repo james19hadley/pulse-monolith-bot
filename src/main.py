@@ -137,6 +137,7 @@ async def main():
             secret_token=WEBHOOK_SECRET,
             allowed_updates=["message", "callback_query", "inline_query", "my_chat_member"]
         )
+        logging.info(f"✅ Webhook successfully set to {webhook_url}")
         
         runner = web.AppRunner(app)
         await runner.setup()
