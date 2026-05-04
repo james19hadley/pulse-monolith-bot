@@ -2,11 +2,6 @@
 # 1. OLD DOMAIN (backward compatibility + Telegram webhhoks)
 # ==========================================
 {$WEBHOOK_DOMAIN:localhost} {
-    @adminBlock {
-        path /admin/*
-        not remote_ip 127.0.0.1 192.168.0.0/16 172.16.0.0/12 10.0.0.0/8 100.64.0.0/10
-    }
-    respond @adminBlock "403 Forbidden - Unauthorized IP" 403
 
     reverse_proxy bot:8080 {
         header_up Host {host}
@@ -21,11 +16,6 @@
 pulsemonolith.com, www.pulsemonolith.com {
 
     # --- Bot Admin Security ---
-    @adminBlock {
-        path /admin/*
-        not remote_ip 127.0.0.1 192.168.0.0/16 172.16.0.0/12 10.0.0.0/8 100.64.0.0/10
-    }
-    respond @adminBlock "403 Forbidden - Unauthorized IP" 403
 
     # --- BOT ROUTING ---
     # Route all Telegram webhooks and admin panel requests to Python

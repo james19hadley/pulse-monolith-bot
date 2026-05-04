@@ -130,7 +130,7 @@ async def main():
         
         # Log webhook setup details
         logging.info(f"Webhook URL: {webhook_url}")
-        logging.info(f"Webhook Host: {WEBAPP_HOST}, Port: {WEBAPP_PORT}")
+        logging.info(f"Secret Token Length: {len(WEBHOOK_SECRET) if WEBHOOK_SECRET else 0}")
         
         # Explicitly ask Telegram to send all update types we setup
         await bot.set_webhook(
