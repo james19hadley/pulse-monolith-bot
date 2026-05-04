@@ -45,14 +45,12 @@ pulsemonolith.com, www.pulsemonolith.com {
     }
 
     # --- SITE / LANDING ROUTING ---
-    # All other requests (site root) are handled here
+    # All other requests (site root) are handled here by the Python web server
     handle {
-        # CURRENTLY: Serving static files from /opt/landing
-        root * /var/www/landing
-        file_server
-
-        # FUTURE (Once the SaaS with registration is ready):
-        # 1. Remove `root` and `file_server`
-        # 2. Add: reverse_proxy webapp:3000 (your new web app container)
+        reverse_proxy bot:8080 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+        }
     }
 }
